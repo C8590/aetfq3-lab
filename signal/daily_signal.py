@@ -879,6 +879,7 @@ def run_modular_signal_pipeline(
     signal_date: str | pd.Timestamp | None = None,
     risk_date: str | pd.Timestamp | None = None,
     current_position_path: str | Path = "config/current_position.yaml",
+    ml_decision_mode: str = "shadow",
     write_daily_csv: bool = True,
 ) -> dict[str, Any]:
     """Run the four modular signal engines as an additive daily workflow.
@@ -933,7 +934,7 @@ def run_modular_signal_pipeline(
         _write_contract("pre_selection_result.csv", PRE_SELECTION_RESULT_FIELDS, pre_selection_rows)
 
     try:
-        entry_rows = EntryEngine(generated_at=generated_at).run(pre_selection_rows, output_dir=output_path)
+        entry_rows = EntryEngine(generated_at=generated_at, ml_decision_mode=ml_decision_mode).run(pre_selection_rows, output_dir=output_path)
     except Exception as exc:  # noqa: BLE001
         warnings.append(f"买入模型降级：{exc}")
         entry_rows = []

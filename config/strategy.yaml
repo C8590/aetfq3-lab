@@ -55,3 +55,4 @@ strategy:
   min_data_completeness: 0.95
   max_stale_days: 7
   max_zero_amount_days: 0
+  ml_decision_mode: shadow

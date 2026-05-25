@@ -162,5 +162,47 @@ class PreSelectionEngineTest(unittest.TestCase):
         self.assertTrue(any("市场状态为防守" in row["reason"] for row in rows))
 
 
+    def test_candidate_pool_expands_beyond_legacy_top5_without_marking_all_selected(self) -> None:
+        pool = _large_pool()
+        market_data = {item["symbol"]: _frame(drift=0.002 + i * 0.0001) for i, item in enumerate(pool)}
+        for i, item in enumerate(pool):
+            item["ml_score"] = 100 - i
+        config = PreSelectionConfig(
+            min_trading_days=80,
+            min_avg_amount=1_000_000.0,
+            broad_recall_pool_top_n=80,
+            ml_recovered_pool_top_n=30,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            rows = PreSelectionEngine(etf_pool=pool, market_data=market_data, config=config).run(output_dir=tmp)
+
+        candidate_rows = [row for row in rows if _truthy(row["candidate_pool_flag"])]
+        legacy_rows = [row for row in rows if _truthy(row["legacy_selected"])]
+        selected_rows = [row for row in rows if _truthy(row["selected"])]
+        self.assertGreater(len(candidate_rows), 5)
+        self.assertEqual(len(legacy_rows), 5)
+        self.assertEqual(len(selected_rows), 5)
+        self.assertTrue(all(row["candidate_pool_rank"] for row in candidate_rows))
+        self.assertIn("LEGACY_TOP5", {row["candidate_source"] for row in candidate_rows})
+        self.assertIn("ML_RECOVERED", {row["candidate_source"] for row in candidate_rows})
+        self.assertTrue(any(_truthy(row["broad_recall_selected"]) and not _truthy(row["selected"]) for row in candidate_rows))
+
+
+def _large_pool() -> list[dict[str, object]]:
+    rows = []
+    for sector_index, sector in enumerate(["成长", "消费", "金融", "周期"]):
+        for item_index in range(3):
+            symbol = f"{510000 + sector_index * 10 + item_index:06d}"
+            rows.append({"symbol": symbol, "name": f"{sector}ETF{item_index}", "sector": sector})
+    return rows
+
+
+def _truthy(value: object) -> bool:
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in {"1", "true", "yes", "y", "是", "入选", "selected"}
+
+
 if __name__ == "__main__":
     unittest.main()

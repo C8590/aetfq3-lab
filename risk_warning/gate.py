@@ -37,7 +37,7 @@ WEIGHT_KEYS = (
     "建议权重",
 )
 BUY_PLAN_KEYS = ("buy_plan", "intraday_execution_plan")
-BUY_ACTION_KEYS = ("buy_action", "entry_action", "action", "交易动作")
+BUY_ACTION_KEYS = ("buy_action", "entry_action", "action", "final_buy_action", "ml_adjusted_action", "交易动作")
 
 
 def gate_from_level(risk_level: str) -> dict[str, Any]:
@@ -84,18 +84,107 @@ def _apply_to_row(row: Mapping[str, Any], gate: Mapping[str, Any]) -> dict[str, 
             "risk_warning_explain": gate.get("explain", ""),
         }
     )
+    _ensure_entry_diagnostic_fields(result)
 
     if level in {"R0", "R1"}:
+        _set_final_entry_fields(result, result.get("raw_entry_action"), result.get("raw_entry_target_weight"), "")
         return result
 
     if level == "R2":
         _scale_entry_fields(result, cap)
         result["risk_gate_action"] = "风险升高，建议降低仓位并提高买入门槛。"
+        if _raw_action_is_buy(result.get("raw_entry_action")):
+            _set_final_entry_fields(
+                result,
+                result.get("raw_entry_action"),
+                _first_weight(result)[1] if _first_weight(result)[1] is not None else result.get("raw_entry_target_weight"),
+                "RiskGate R2 仓位上限调整。",
+                control_override_reason="RiskGate R2 仓位上限调整。",
+            )
         return result
 
     result["risk_gate_action"] = explain
     _freeze_buy_fields(result, explain)
+    if _raw_action_is_buy(result.get("raw_entry_action")):
+        _set_final_entry_fields(
+            result,
+            "BLOCKED",
+            0.0,
+            explain,
+            control_override_reason=explain,
+            risk_gate_blocked=True,
+        )
     return result
+
+
+def _ensure_entry_diagnostic_fields(row: MutableMapping[str, Any]) -> None:
+    raw_action = str(row.get("raw_entry_action") or "").strip().upper()
+    if not raw_action:
+        raw_action = _entry_action_label(row.get("buy_action") or row.get("entry_action") or row.get("action"))
+    raw_weight = row.get("raw_entry_target_weight")
+    if raw_weight in (None, ""):
+        raw_weight = _first_weight(row)[1]
+    raw_confidence = row.get("raw_entry_confidence")
+    if raw_confidence in (None, ""):
+        raw_confidence = row.get("confidence", 0)
+    raw_reason = row.get("raw_entry_reason") or row.get("entry_reason") or row.get("reason") or ""
+    raw_block = row.get("raw_entry_block_reason") or (raw_reason if raw_action not in {"BUY", "PROBE"} else "")
+    row.setdefault("raw_entry_action", raw_action)
+    row.setdefault("raw_entry_target_weight", _replace_number(raw_weight, _number_value(raw_weight) or 0.0) if raw_weight not in (None, "") else 0.0)
+    row.setdefault("raw_entry_confidence", raw_confidence)
+    row.setdefault("raw_entry_reason", raw_reason)
+    row.setdefault("raw_entry_block_reason", raw_block)
+    row.setdefault("final_buy_action", raw_action)
+    row.setdefault("final_target_weight", row.get("raw_entry_target_weight", 0.0))
+    row.setdefault("final_block_reason", raw_block)
+    row.setdefault("control_override_reason", "")
+    row.setdefault("exit_priority_blocked", False)
+    row.setdefault("risk_gate_blocked", False)
+    row.setdefault("rule_action", raw_action)
+    row.setdefault("ml_adjusted_action", row.get("final_buy_action", raw_action))
+    row.setdefault("ml_decision_mode", "shadow")
+    row.setdefault("ml_adjustment", "")
+    row.setdefault("ml_adjustment_reason_cn", "")
+
+
+def _set_final_entry_fields(
+    row: MutableMapping[str, Any],
+    action: Any,
+    target_weight: Any,
+    block_reason: str,
+    *,
+    control_override_reason: str = "",
+    risk_gate_blocked: bool = False,
+) -> None:
+    final_action = str(action or row.get("raw_entry_action") or "OBSERVE").strip().upper()
+    row["final_buy_action"] = final_action
+    row["final_target_weight"] = _replace_number(target_weight, _number_value(target_weight) or 0.0) if target_weight not in (None, "") else 0.0
+    row["final_block_reason"] = block_reason
+    row["control_override_reason"] = control_override_reason
+    row["risk_gate_blocked"] = bool(risk_gate_blocked)
+    row["exit_priority_blocked"] = bool(row.get("exit_priority_blocked", False))
+
+
+def _entry_action_label(value: Any) -> str:
+    text = str(value or "").strip().lower()
+    raw_text = str(value or "").strip()
+    if not text:
+        return "OBSERVE"
+    if "avoid" in text:
+        return "AVOID"
+    if "禁止" in raw_text or "forbid" in text or "reject" in text:
+        return "REJECT"
+    if "试探" in raw_text or "probe" in text:
+        return "PROBE"
+    if any(token in raw_text for token in ("标准买入", "加强买入", "加仓", "买入")) or any(
+        token in text for token in ("standard", "add", "buy")
+    ):
+        return "BUY"
+    return "OBSERVE"
+
+
+def _raw_action_is_buy(value: Any) -> bool:
+    return str(value or "").strip().upper() in {"BUY", "PROBE"}
 
 
 def _scale_entry_fields(row: MutableMapping[str, Any], cap: float) -> None:

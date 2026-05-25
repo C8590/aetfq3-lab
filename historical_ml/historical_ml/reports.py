@@ -251,6 +251,8 @@ def _build_recommendations(complete: pd.DataFrame, config: HistoricalMLConfig) -
             q[col] = complete[col].quantile([0.2, 0.4, 0.6, 0.8]).to_dict()
 
     def metric(mask):
+        if isinstance(mask, pd.Series) and not mask.index.equals(complete.index) and len(mask) == len(complete):
+            mask = mask.to_numpy()
         sub = complete.loc[mask]
         if len(sub) < config.min_group_size_for_report:
             return None

@@ -76,6 +76,8 @@ class RealEntryAdapter:
         was_selected: list[bool] = []
         was_bought: list[bool] = []
         reasons: list[str] = []
+        raw_actions: list[str] = []
+        final_actions: list[str] = []
 
         for _, row in df.iterrows():
             code = self._symbol(row.get("code"))
@@ -85,11 +87,15 @@ class RealEntryAdapter:
             buy_action = str(entry_row.get("buy_action", ""))
             position_size = self._number(entry_row.get("position_size"))
             bought = buy_action in buy_actions and position_size > 0
+            raw_action = self._action_label(entry_row.get("raw_entry_action") or buy_action)
+            final_action = self._action_label(entry_row.get("final_buy_action") or raw_action)
 
             was_candidate.append(bool(pre_row))
             was_selected.append(selected)
             was_bought.append(bought)
             reasons.append(self._reason(pre_row, entry_row, selected, bought))
+            raw_actions.append(raw_action)
+            final_actions.append(final_action)
 
         out = df.assign(
             signal_date=signal_date,
@@ -98,6 +104,8 @@ class RealEntryAdapter:
             was_selected=was_selected,
             was_bought=was_bought,
             exclude_reason=reasons,
+            entry_raw_action=raw_actions,
+            final_action=final_actions,
             source=config.source,
         )
         return reorder_columns(out, ENTRY_CANDIDATE_COLUMNS)
@@ -275,6 +283,23 @@ class RealEntryAdapter:
             return value
         return str(value).strip().lower() in {"1", "true", "yes", "y", "selected"}
 
+    @staticmethod
+    def _action_label(value: Any) -> str:
+        text = str(value or "").strip()
+        upper = text.upper()
+        lower = text.lower()
+        if upper in {"BUY", "PROBE", "OBSERVE", "REJECT", "BLOCKED"}:
+            return upper
+        if "blocked" in lower:
+            return "BLOCKED"
+        if "probe" in lower:
+            return "PROBE"
+        if "forbid" in lower or "reject" in lower:
+            return "REJECT"
+        if "buy" in lower:
+            return "BUY"
+        return "OBSERVE"
+
 
 @dataclass
 class HeuristicEntryAdapter:
@@ -308,11 +333,13 @@ class HeuristicEntryAdapter:
         was_candidate = []
         was_selected = []
         was_bought = []
+        raw_actions: list[str] = []
+        final_actions: list[str] = []
         selected_by_sector: set[str] = set()
         selected_count = 0
 
         ranked = df.sort_values(["global_rank", "sector_rank", "etf_rank"]).copy()
-        decision_map: dict[str, tuple[bool, bool, bool, str]] = {}
+        decision_map: dict[str, tuple[bool, bool, bool, str, str, str]] = {}
 
         for _, row in ranked.iterrows():
             reason_parts = []
@@ -362,16 +389,23 @@ class HeuristicEntryAdapter:
                     bought = False
                     reason_parts.append("no_execution_date")
 
+            raw_action = "BUY" if selected else "OBSERVE"
+            if selected and market_state == "defense" and not config.defense_allows_bought:
+                raw_action = "REJECT"
+            final_action = raw_action if bought or raw_action in {"OBSERVE", "REJECT"} else "BLOCKED"
+
             if not reason_parts:
                 reason_parts.append("selected" if selected else "not_selected")
-            decision_map[code] = (candidate, selected, bought, "|".join(reason_parts))
+            decision_map[code] = (candidate, selected, bought, "|".join(reason_parts), raw_action, final_action)
 
         for _, row in df.iterrows():
-            candidate, selected, bought, reason = decision_map[str(row["code"])]
+            candidate, selected, bought, reason, raw_action, final_action = decision_map[str(row["code"])]
             was_candidate.append(candidate)
             was_selected.append(selected)
             was_bought.append(bought)
             reasons.append(reason)
+            raw_actions.append(raw_action)
+            final_actions.append(final_action)
 
         out = df.assign(
             signal_date=signal_date,
@@ -380,6 +414,8 @@ class HeuristicEntryAdapter:
             was_selected=was_selected,
             was_bought=was_bought,
             exclude_reason=reasons,
+            entry_raw_action=raw_actions,
+            final_action=final_actions,
             source=config.source,
         )
 

@@ -30,8 +30,14 @@ def read_price_data(path: str | Path) -> pd.DataFrame:
     df["code"] = df["code"].astype(str)
     df["name"] = df["name"].astype(str)
     df["sector"] = df["sector"].astype(str)
+    if "sector_l1" not in df.columns and "sector_level1" in df.columns:
+        df["sector_l1"] = df["sector_level1"]
     if "sector_l1" not in df.columns:
         df["sector_l1"] = df["sector"]
+    if "sector_level1" not in df.columns:
+        df["sector_level1"] = df["sector_l1"]
+    if "sector_level2" not in df.columns:
+        df["sector_level2"] = df["sector"]
     if "high" not in df.columns:
         df["high"] = df["close"]
     if "low" not in df.columns:

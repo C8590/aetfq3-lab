@@ -13,9 +13,12 @@ from contracts.signal_schema import BuyAction, ENTRY_SIGNAL_FIELDS, MarketState
 OUTPUT_FILE = "entry_signal.csv"
 INPUT_FILE = "pre_selection_result.csv"
 ML_SUGGESTIONS_FILE = Path("artifacts") / "historical_ml_61" / "generated" / "entry_calibration_suggestions.csv"
+ML_ENTRY_SCORES_FILE = Path("artifacts") / "historical_ml_61" / "generated" / "ml_entry_scores.csv"
+PARAMETER_LEVEL_ML_KEY = "__PARAMETER_LEVEL__"
 REQUIRED_OUTPUT_FIELDS = ENTRY_SIGNAL_FIELDS
 DEFAULT_ML_ADVICE = "无ML建议"
 DEFAULT_ML_REASON = "未找到历史校准建议，维持原 entry 判断。"
+VALID_ML_DECISION_MODES = {"disabled", "shadow", "advisory", "active_sim"}
 VALID_ML_ACTION_SUGGESTIONS = {
     "NO_ML",
     "KEEP_ORIGINAL",
@@ -43,6 +46,9 @@ class MLAdvice:
     ml_confidence: float = 0.0
     ml_reason: str = DEFAULT_ML_REASON
     ml_action_suggestion: str = "NO_ML"
+    ml_score: float | str = ""
+    p_good_entry: float | str = ""
+    p_bad_entry: float | str = ""
 
 
 class EntryEngine:
@@ -54,11 +60,15 @@ class EntryEngine:
         target_weight: float = 1.00,
         generated_at: str | None = None,
         ml_suggestions_path: str | Path | None = None,
+        ml_scores_path: str | Path | None = None,
+        ml_decision_mode: str = "shadow",
     ) -> None:
         self.first_buy_weight = _clip_ratio(first_buy_weight)
         self.target_weight = _clip_ratio(target_weight)
         self.generated_at = generated_at
         self.ml_suggestions_path = Path(ml_suggestions_path) if ml_suggestions_path is not None else None
+        self.ml_scores_path = Path(ml_scores_path) if ml_scores_path is not None else None
+        self.ml_decision_mode = _normalize_ml_decision_mode(ml_decision_mode)
 
     def run(
         self,
@@ -68,10 +78,16 @@ class EntryEngine:
         """Return rows that match REQUIRED_OUTPUT_FIELDS and write entry_signal.csv."""
         out_dir = Path(output_dir) if output_dir is not None else Path("output")
         rows = list(pre_selection_rows) if pre_selection_rows is not None else self._read_pre_selection(out_dir)
-        ml_suggestions = self._read_ml_suggestions(out_dir)
+        if any("candidate_pool_flag" in row for row in rows):
+            candidate_rows = [row for row in rows if _truthy(row.get("candidate_pool_flag"))]
+            rows = candidate_rows or rows
+        trade_dates = {_text(row.get("trade_date"))[:10] for row in rows if _text(row.get("trade_date"))}
+        ml_suggestions = {} if self.ml_decision_mode == "disabled" else self._read_ml_suggestions(out_dir, trade_dates)
         generated_at = self.generated_at or datetime.now().isoformat(timespec="seconds")
 
         results = [self._build_output_row(row, generated_at, ml_suggestions) for row in rows]
+        if self.ml_decision_mode == "advisory":
+            results.sort(key=lambda item: _number(item.get("ml_score"), default=-999999.0), reverse=True)
         out_dir.mkdir(parents=True, exist_ok=True)
         self._write_csv(out_dir / OUTPUT_FILE, results)
         return results
@@ -83,17 +99,28 @@ class EntryEngine:
         with input_path.open("r", encoding="utf-8-sig", newline="") as file:
             return [dict(row) for row in csv.DictReader(file)]
 
-    def _read_ml_suggestions(self, output_dir: Path) -> dict[str, MLAdvice]:
+    def _read_ml_suggestions(self, output_dir: Path, trade_dates: set[str] | None = None) -> dict[str, MLAdvice]:
         input_path = self._resolve_ml_suggestions_path(output_dir)
-        if input_path is None:
-            return {}
-
         suggestions: dict[str, MLAdvice] = {}
-        with input_path.open("r", encoding="utf-8-sig", newline="") as file:
-            for row in csv.DictReader(file):
-                symbol = _symbol(_first_text(row, "etf_code", "code", "symbol"))
-                if symbol:
-                    suggestions[symbol] = _ml_advice_from_row(row)
+        parameter_rows: list[dict[str, Any]] = []
+        if input_path is not None:
+            with input_path.open("r", encoding="utf-8-sig", newline="") as file:
+                for row in csv.DictReader(file):
+                    symbol = _symbol(_first_text(row, "etf_code", "code", "symbol"))
+                    if symbol:
+                        suggestions[symbol] = _ml_advice_from_row(row)
+                    elif _is_parameter_level_ml_row(row):
+                        parameter_rows.append(dict(row))
+        if parameter_rows:
+            suggestions[PARAMETER_LEVEL_ML_KEY] = _parameter_level_ml_advice(parameter_rows)
+        for score_path in self._resolve_ml_score_paths(output_dir):
+            with score_path.open("r", encoding="utf-8-sig", newline="") as file:
+                for row in csv.DictReader(file):
+                    if not _score_row_matches_trade_dates(row, trade_dates):
+                        continue
+                    symbol = _symbol(_first_text(row, "etf_code", "code", "symbol"))
+                    if symbol:
+                        suggestions[symbol] = _merge_ml_advice(suggestions.get(symbol, MLAdvice()), _ml_advice_from_row(row))
         return suggestions
 
     def _resolve_ml_suggestions_path(self, output_dir: Path) -> Path | None:
@@ -104,8 +131,6 @@ class EntryEngine:
             [
                 output_dir / ML_SUGGESTIONS_FILE,
                 output_dir.parent / ML_SUGGESTIONS_FILE,
-                Path.cwd() / ML_SUGGESTIONS_FILE,
-                ML_SUGGESTIONS_FILE,
             ]
         )
 
@@ -123,6 +148,32 @@ class EntryEngine:
                 return resolved
         return None
 
+    def _resolve_ml_score_paths(self, output_dir: Path) -> list[Path]:
+        candidates: list[Path] = []
+        if self.ml_scores_path is not None:
+            candidates.append(self.ml_scores_path)
+        candidates.extend(
+            [
+                output_dir / ML_ENTRY_SCORES_FILE,
+                output_dir.parent / ML_ENTRY_SCORES_FILE,
+            ]
+        )
+
+        paths: list[Path] = []
+        seen: set[Path] = set()
+        for candidate in candidates:
+            path = candidate if candidate.is_absolute() else Path.cwd() / candidate
+            try:
+                resolved = path.resolve()
+            except OSError:
+                resolved = path
+            if resolved in seen:
+                continue
+            seen.add(resolved)
+            if resolved.exists():
+                paths.append(resolved)
+        return paths
+
     def _build_output_row(
         self,
         row: Mapping[str, Any],
@@ -130,12 +181,24 @@ class EntryEngine:
         ml_suggestions: Mapping[str, MLAdvice] | None = None,
     ) -> dict[str, Any]:
         decision = self._decide(row)
-        ml_advice = (ml_suggestions or {}).get(_symbol(row.get("symbol")), MLAdvice())
+        ml_lookup = ml_suggestions or {}
+        ml_advice = ml_lookup.get(_symbol(row.get("symbol")), ml_lookup.get(PARAMETER_LEVEL_ML_KEY, MLAdvice()))
         entry_reason = (
             f"趋势成熟度：{decision.maturity}；买点质量：{decision.quality}；"
             f"理由：{decision.reason}；警示：{decision.warning}；"
             f"首买权重：{self.first_buy_weight:.0%}；目标权重：{self.target_weight:.0%}"
         )
+        raw_action = _raw_entry_action(decision.buy_action)
+        ml_adjusted_action, ml_adjustment, ml_adjustment_reason, final_weight = self._apply_ml_decision(
+            rule_action=raw_action,
+            rule_weight=round(decision.position_size, 4),
+            ml_advice=ml_advice,
+        )
+        final_action = ml_adjusted_action
+        raw_block_reason = "" if raw_action in {"BUY", "PROBE"} else decision.reason
+        final_block_reason = raw_block_reason if final_action not in {"BUY", "PROBE"} else ""
+        if self.ml_decision_mode == "active_sim" and ml_adjustment.startswith("ML_DOWNGRADED"):
+            final_block_reason = ml_adjustment_reason
         return {
             "trade_date": _text(row.get("trade_date")),
             "symbol": _symbol(row.get("symbol")),
@@ -146,13 +209,57 @@ class EntryEngine:
             "position_size": round(decision.position_size, 4),
             "confidence": round(decision.confidence, 4),
             "entry_reason": entry_reason,
+            "raw_entry_action": raw_action,
+            "raw_entry_target_weight": round(decision.position_size, 4),
+            "raw_entry_confidence": round(decision.confidence, 4),
+            "raw_entry_reason": entry_reason,
+            "raw_entry_block_reason": raw_block_reason,
+            "final_buy_action": final_action,
+            "final_target_weight": round(final_weight, 4),
+            "final_block_reason": final_block_reason,
+            "control_override_reason": "",
+            "exit_priority_blocked": False,
+            "risk_gate_blocked": False,
+            "ml_score": ml_advice.ml_score,
+            "p_good_entry": ml_advice.p_good_entry,
+            "p_bad_entry": ml_advice.p_bad_entry,
             "ml_entry_advice": ml_advice.ml_entry_advice,
             "ml_confidence": round(ml_advice.ml_confidence, 4),
             "ml_reason": ml_advice.ml_reason,
             "ml_action_suggestion": ml_advice.ml_action_suggestion,
+            "ml_decision_mode": self.ml_decision_mode,
+            "ml_adjustment": ml_adjustment,
+            "ml_adjustment_reason_cn": ml_adjustment_reason,
+            "rule_action": raw_action,
+            "ml_adjusted_action": ml_adjusted_action,
             "source_file": INPUT_FILE,
             "generated_at": generated_at,
         }
+
+    def _apply_ml_decision(
+        self,
+        *,
+        rule_action: str,
+        rule_weight: float,
+        ml_advice: MLAdvice,
+    ) -> tuple[str, str, str, float]:
+        action = str(ml_advice.ml_action_suggestion or "NO_ML").strip().upper()
+        if self.ml_decision_mode == "disabled":
+            return rule_action, "ML_DISABLED", "ML decision mode disabled; rule_action kept.", rule_weight
+        if action in {"", "NO_ML", "KEEP_ORIGINAL"}:
+            return rule_action, "ML_KEEP_RULE", "ML has no actionable override; rule_action kept.", rule_weight
+        if self.ml_decision_mode == "shadow":
+            return rule_action, "ML_SHADOW_ONLY", "shadow mode only displays ML; final_buy_action kept from rule_action.", rule_weight
+        if self.ml_decision_mode == "advisory":
+            return rule_action, "ML_ADVISORY_ONLY", "advisory mode may affect explanation or ordering only; final_buy_action kept from rule_action.", rule_weight
+
+        if action == "UPGRADE_PROBE" and rule_action in {"OBSERVE", "REJECT", "AVOID"}:
+            return "PROBE", "ML_RECOVERED", "active_sim: ML_RECOVERED PROBE from ml_entry_scores.", self.first_buy_weight
+        if action in {"DOWNGRADE_WATCH", "WAIT_PULLBACK"} and rule_action in {"BUY", "PROBE"}:
+            return "OBSERVE", "ML_DOWNGRADED", "active_sim: ML_DOWNGRADED OBSERVE because ml_entry_scores show weaker entry quality.", 0.0
+        if action == "FORBID_CHASE" and rule_action in {"BUY", "PROBE"}:
+            return "AVOID", "ML_DOWNGRADED", "active_sim: ML_DOWNGRADED AVOID because ml_entry_scores warn against chasing.", 0.0
+        return rule_action, "ML_KEEP_RULE", "active_sim: ML did not change the rule_action.", rule_weight
 
     def _decide(self, row: Mapping[str, Any]) -> EntryDecision:
         selected = _truthy(row.get("selected"))
@@ -217,15 +324,19 @@ class EntryEngine:
             )
 
         if maturity == "启动期":
-            action = BuyAction.PROBE_BUY.value if quality == "突破确认" and score >= 65 else BuyAction.WATCH.value
+            probe_allowed = (
+                (quality == "突破确认" and score >= 65)
+                or (market_state == MarketState.ATTACK.value and selected and score >= 35)
+            )
+            action = BuyAction.PROBE_BUY.value if probe_allowed else BuyAction.WATCH.value
             size = self.first_buy_weight if action == BuyAction.PROBE_BUY.value else 0.0
             return EntryDecision(
                 buy_action=action,
                 position_size=size,
-                confidence=0.48 if size else 0.32,
+                confidence=0.50 if size else 0.32,
                 maturity=maturity,
                 quality=quality,
-                reason="右侧趋势刚启动，先观察强度，突破有效时只做试探仓。",
+                reason="右侧趋势刚启动，进攻市场的入选强势候选允许先做小仓试探；其余情况继续观察强度。",
                 warning="启动期容易假突破，首买后需等待二次确认。",
             )
 
@@ -375,6 +486,15 @@ def _first_text(row: Mapping[str, Any], *keys: str) -> str:
     return ""
 
 
+def _score_row_matches_trade_dates(row: Mapping[str, Any], trade_dates: set[str] | None) -> bool:
+    if not trade_dates:
+        return True
+    row_date = _first_text(row, "trade_date", "date")
+    if not row_date:
+        return True
+    return row_date[:10] in trade_dates
+
+
 def _has_any(row: Mapping[str, Any], *keys: str) -> bool:
     return any(key in row and _text(row.get(key)) != "" for key in keys)
 
@@ -383,12 +503,67 @@ def _ml_advice_from_row(row: Mapping[str, Any]) -> MLAdvice:
     raw_action = _first_text(row, "ml_action_suggestion", "action_suggestion")
     advice = _first_text(row, "ml_entry_advice", "entry_advice", "advice")
     action = _normalize_ml_action_suggestion(raw_action, advice)
+    p_good = _first_present(row, "p_good_entry", "prob_good_entry")
+    p_bad = _first_present(row, "p_bad_entry", "prob_bad_entry")
+    ml_score = _first_present(row, "ml_score", "score")
     return MLAdvice(
         ml_entry_advice=advice or _advice_from_ml_action(action),
         ml_confidence=_clip_ratio(_first_present(row, "ml_confidence", "confidence")),
         ml_reason=_first_text(row, "ml_reason", "reason") or "历史校准建议存在但原因字段缺失，维持原 entry 判断。",
         ml_action_suggestion=action,
+        ml_score="" if ml_score in (None, "") else round(_number(ml_score), 6),
+        p_good_entry="" if p_good in (None, "") else round(_clip_ratio(p_good), 6),
+        p_bad_entry="" if p_bad in (None, "") else round(_clip_ratio(p_bad), 6),
     )
+
+
+def _merge_ml_advice(base: MLAdvice, override: MLAdvice) -> MLAdvice:
+    return MLAdvice(
+        ml_entry_advice=override.ml_entry_advice or base.ml_entry_advice,
+        ml_confidence=override.ml_confidence if override.ml_confidence else base.ml_confidence,
+        ml_reason=override.ml_reason or base.ml_reason,
+        ml_action_suggestion=override.ml_action_suggestion if override.ml_action_suggestion != "NO_ML" else base.ml_action_suggestion,
+        ml_score=override.ml_score if override.ml_score != "" else base.ml_score,
+        p_good_entry=override.p_good_entry if override.p_good_entry != "" else base.p_good_entry,
+        p_bad_entry=override.p_bad_entry if override.p_bad_entry != "" else base.p_bad_entry,
+    )
+
+
+def _is_parameter_level_ml_row(row: Mapping[str, Any]) -> bool:
+    return any(_text(row.get(key)) for key in ("parameter_area", "current_pattern", "suggested_action", "suggestion_id"))
+
+
+def _parameter_level_ml_advice(rows: Sequence[Mapping[str, Any]]) -> MLAdvice:
+    count = len(rows)
+    snippets: list[str] = []
+    scores: list[float] = []
+    for row in rows[:5]:
+        area = _first_text(row, "parameter_area", "suggestion_id") or "parameter"
+        action = _first_text(row, "suggested_action", "notes", "current_pattern") or "review"
+        snippets.append(f"{area}: {action}")
+    for row in rows:
+        scores.append(_ml_confidence_score(_first_present(row, "confidence", "ml_confidence")))
+    confidence = max(scores) if scores else 0.0
+    suffix = "; ".join(snippets)
+    if count > len(snippets):
+        suffix = f"{suffix}; +{count - len(snippets)} more"
+    return MLAdvice(
+        ml_entry_advice=f"ML parameter-level suggestions loaded ({count}); observe only: {suffix}",
+        ml_confidence=confidence,
+        ml_reason="historical_ml suggestions are parameter-level and have no ETF code/symbol binding; entry displays them read-only and does not change buy_action, final_buy_action, or target_weight.",
+        ml_action_suggestion="KEEP_ORIGINAL",
+    )
+
+
+def _ml_confidence_score(value: Any) -> float:
+    text = _text(value).lower()
+    if text in {"high", "strong"}:
+        return 0.9
+    if text in {"medium", "mid"}:
+        return 0.6
+    if text in {"low", "weak"}:
+        return 0.3
+    return _clip_ratio(value)
 
 
 def _normalize_ml_action_suggestion(raw_action: str, advice: str = "") -> str:
@@ -408,6 +583,11 @@ def _normalize_ml_action_suggestion(raw_action: str, advice: str = "") -> str:
     if "维持" in text or "保持" in text or "KEEP" in action:
         return "KEEP_ORIGINAL"
     return "KEEP_ORIGINAL"
+
+
+def _normalize_ml_decision_mode(value: Any) -> str:
+    mode = str(value or "shadow").strip().lower()
+    return mode if mode in VALID_ML_DECISION_MODES else "shadow"
 
 
 def _advice_from_ml_action(action: str) -> str:
@@ -459,3 +639,18 @@ def _buy_price(row: Mapping[str, Any]) -> float | None:
 
 def _format_price(value: float | None) -> str:
     return "" if value is None else f"{value:.3f}"
+
+
+def _raw_entry_action(action: Any) -> str:
+    text = _text(action).strip().lower()
+    if not text:
+        return "OBSERVE"
+    if _text(action) == BuyAction.PROBE_BUY.value or "probe" in text or "试探" in _text(action):
+        return "PROBE"
+    if _text(action) in {BuyAction.STANDARD_BUY.value, BuyAction.ADD_BUY.value} or any(
+        token in text for token in ("standard", "add", "buy")
+    ):
+        return "BUY"
+    if _text(action) == BuyAction.FORBID_BUY.value or "forbid" in text or "禁止" in _text(action) or "reject" in text:
+        return "REJECT"
+    return "OBSERVE"

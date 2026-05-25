@@ -220,7 +220,10 @@ class PageAcceptanceDisplayTest(unittest.TestCase):
             self.assertIn("ML动作建议", frame.columns)
             self.assertIn("仅供观察，不自动修改交易参数。", frame.iloc[0].astype(str).to_string())
         self.assertEqual(candidate.iloc[0]["ML观察建议"], "建议等待回踩")
-        self.assertEqual(buy.iloc[0]["ML动作建议"], "WAIT_PULLBACK")
+        self.assertEqual(candidate.iloc[0]["ML动作建议"], "建议等待回踩")
+        self.assertEqual(buy.iloc[0]["ML动作建议"], "建议等待回踩")
+        self.assertNotIn("WAIT_PULLBACK", candidate.iloc[0].astype(str).to_string())
+        self.assertNotIn("WAIT_PULLBACK", buy.iloc[0].astype(str).to_string())
 
     def test_v2_name_matching_handles_numeric_and_string_codes_consistently(self) -> None:
         entry = pd.DataFrame([{"symbol": 159558, "name": ""}])

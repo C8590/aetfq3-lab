@@ -40,9 +40,13 @@ class PreSelectionConfig:
     max_zero_amount_days: int = 0
     max_abs_daily_return: float = 0.12
     max_candidates: int = 5
+    legacy_selected_top_n: int = 5
     balanced_candidates: int = 3
     defense_candidates: int = 0
     min_candidate_score: float = 0.0
+    broad_recall_pool_top_n: int = 80
+    ml_recovered_pool_top_n: int = 30
+    sector_recall_top_n_per_sector: int = 1
     min_effective_etf_count: int = 3
     min_sector_etf_count: int = 3
     min_sector_breadth: float = 0.25
@@ -64,6 +68,7 @@ class _EtfMetrics:
     volatility: float
     max_drawdown: float
     above_trend: bool
+    ml_score: float
 
 
 class PreSelectionEngine:
@@ -257,6 +262,7 @@ class PreSelectionEngine:
             "sector": str(row.get("sector") or row.get("category") or row.get("theme") or "未分类"),
             "category": str(row.get("category") or ""),
             "asset_class": str(row.get("asset_class") or ""),
+            "ml_score": row.get("ml_score", row.get("entry_ml_score", row.get("historical_ml_score", ""))),
         }
 
     def _resolve_signal_date(self, market_data: Mapping[str, pd.DataFrame]) -> pd.Timestamp:
@@ -294,6 +300,9 @@ class PreSelectionEngine:
         max_drawdown = self._max_drawdown(history.get("close"), self.config.drawdown_window)
         moving_average = self._tail_mean(history.get("close"), self.config.trend_window)
         above_trend = bool(np.isfinite(close) and np.isfinite(moving_average) and close > moving_average)
+        ml_score = self._optional_float(
+            item.get("ml_score", item.get("entry_ml_score", item.get("historical_ml_score")))
+        )
 
         return _EtfMetrics(
             symbol=symbol,
@@ -310,6 +319,7 @@ class PreSelectionEngine:
             volatility=volatility,
             max_drawdown=max_drawdown,
             above_trend=above_trend,
+            ml_score=ml_score,
         )
 
     def _filter_reasons(self, history: pd.DataFrame, signal_date: pd.Timestamp) -> list[str]:
@@ -393,7 +403,17 @@ class PreSelectionEngine:
                 and sector_breadth >= self.config.min_sector_breadth
                 and raw_score > self.config.min_candidate_score
             )
-            rankable.append({"symbol": item.symbol, "score": raw_score, "eligible": eligible})
+            rankable.append(
+                {
+                    "symbol": item.symbol,
+                    "score": raw_score,
+                    "eligible": eligible,
+                    "filter_passed": item.filter_passed,
+                    "sector_rank": sector_rank,
+                    "sector_score": sector_score,
+                    "ml_score": item.ml_score,
+                }
+            )
             rows_by_symbol[item.symbol] = {
                 "trade_date": str(signal_date.date()),
                 "symbol": item.symbol,
@@ -403,6 +423,12 @@ class PreSelectionEngine:
                 "score": round(raw_score * 100.0, 4) if np.isfinite(raw_score) else 0.0,
                 "rank": "",
                 "selected": False,
+                "candidate_pool_flag": False,
+                "candidate_source": "",
+                "legacy_selected": False,
+                "broad_recall_selected": False,
+                "ml_recovered": False,
+                "candidate_pool_rank": "",
                 "reason": "",
                 "generated_at": generated_at,
                 "_eligible": eligible,
@@ -421,14 +447,50 @@ class PreSelectionEngine:
             rows_by_symbol[str(row["symbol"])]["rank"] = rank
 
         candidate_limit = self._candidate_limit(market_state)
+        legacy_limit = min(max(0, self.config.legacy_selected_top_n), candidate_limit)
         selected_symbols = [
             str(row["symbol"])
             for row in ranked
             if bool(row["eligible"]) and candidate_limit > 0
-        ][:candidate_limit]
+        ][:legacy_limit]
+        broad_recall_symbols = [
+            str(row["symbol"])
+            for row in ranked
+            if bool(row["filter_passed"]) and candidate_limit > 0
+        ][: max(0, self.config.broad_recall_pool_top_n)]
+        ml_recovered_symbols = [
+            str(row["symbol"])
+            for row in sorted(
+                [row for row in ranked if bool(row["filter_passed"]) and np.isfinite(float(row.get("ml_score", np.nan))) and float(row.get("ml_score", np.nan)) > 0],
+                key=lambda row: float(row.get("ml_score", 0.0)),
+                reverse=True,
+            )
+            if candidate_limit > 0
+        ][: max(0, self.config.ml_recovered_pool_top_n)]
+        sector_recall_symbols = self._sector_recall_symbols(ranked, candidate_limit)
+        candidate_pool_symbols = set(selected_symbols) | set(broad_recall_symbols) | set(ml_recovered_symbols) | set(sector_recall_symbols)
 
         for symbol in selected_symbols:
             rows_by_symbol[symbol]["selected"] = True
+            rows_by_symbol[symbol]["legacy_selected"] = True
+        for symbol in broad_recall_symbols:
+            rows_by_symbol[symbol]["broad_recall_selected"] = True
+        for symbol in ml_recovered_symbols:
+            rows_by_symbol[symbol]["ml_recovered"] = True
+        for symbol in candidate_pool_symbols:
+            rows_by_symbol[symbol]["candidate_pool_flag"] = True
+
+        ranked_pool = [row for row in ranked if str(row["symbol"]) in candidate_pool_symbols]
+        for pool_rank, row in enumerate(ranked_pool, start=1):
+            symbol = str(row["symbol"])
+            rows_by_symbol[symbol]["candidate_pool_rank"] = pool_rank
+            rows_by_symbol[symbol]["candidate_source"] = self._candidate_source(
+                symbol,
+                selected_symbols,
+                broad_recall_symbols,
+                ml_recovered_symbols,
+                sector_recall_symbols,
+            )
 
         rows: list[dict[str, Any]] = []
         for symbol in [str(row["symbol"]) for row in ranked]:
@@ -436,6 +498,43 @@ class PreSelectionEngine:
             row["reason"] = self._reason(row, bool(row["selected"]), market_state, candidate_limit)
             rows.append({field: row[field] for field in REQUIRED_OUTPUT_FIELDS})
         return rows
+
+    def _sector_recall_symbols(self, ranked: Sequence[Mapping[str, Any]], candidate_limit: int) -> list[str]:
+        if candidate_limit <= 0 or self.config.sector_recall_top_n_per_sector <= 0:
+            return []
+        by_sector_rank: dict[int, list[Mapping[str, Any]]] = {}
+        for row in ranked:
+            if not bool(row.get("filter_passed")):
+                continue
+            sector_rank = int(row.get("sector_rank") or 0)
+            if sector_rank <= 0:
+                continue
+            if float(row.get("sector_score") or 0.0) <= 0:
+                continue
+            by_sector_rank.setdefault(sector_rank, []).append(row)
+        symbols: list[str] = []
+        for sector_rank in sorted(by_sector_rank):
+            for row in by_sector_rank[sector_rank][: self.config.sector_recall_top_n_per_sector]:
+                symbols.append(str(row["symbol"]))
+        return symbols
+
+    @staticmethod
+    def _candidate_source(
+        symbol: str,
+        legacy_symbols: Sequence[str],
+        broad_symbols: Sequence[str],
+        ml_symbols: Sequence[str],
+        sector_symbols: Sequence[str],
+    ) -> str:
+        if symbol in legacy_symbols:
+            return "LEGACY_TOP5"
+        if symbol in ml_symbols:
+            return "ML_RECOVERED"
+        if symbol in broad_symbols:
+            return "BROAD_RECALL"
+        if symbol in sector_symbols:
+            return "SECTOR_RECALL"
+        return ""
 
     def _candidate_limit(self, market_state: str) -> int:
         if market_state == MarketState.ATTACK.value:
@@ -489,6 +588,14 @@ class PreSelectionEngine:
             return 0.0
         clean = pd.to_numeric(series, errors="coerce").dropna()
         return float(clean.iloc[-1]) if not clean.empty else 0.0
+
+    @staticmethod
+    def _optional_float(value: Any) -> float:
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            return float("nan")
+        return number if np.isfinite(number) else float("nan")
 
     @staticmethod
     def _tail_mean(series: pd.Series | None, window: int) -> float:

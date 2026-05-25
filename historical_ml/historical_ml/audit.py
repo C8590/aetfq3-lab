@@ -14,6 +14,7 @@ from .validators import (
 
 REPLAY_TABLES = [
     "daily_etf_samples",
+    "daily_ml_universe_samples",
     "daily_sector_samples",
     "daily_decision_snapshot",
     "entry_candidate_samples_unlabeled",

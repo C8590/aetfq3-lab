@@ -219,6 +219,135 @@ def test_v21_display_values_do_not_expose_raw_codes() -> None:
     assert "None" not in text
 
 
+def test_v21_entry_action_table_localizes_raw_suggestion_codes() -> None:
+    rows = app._v21_entry_action_display_records(
+        [
+            {"raw_entry_action": "PROBE", "final_buy_action": "BUY", "entry_action": "BLOCKED"},
+            {"raw_entry_action": "OBSERVE", "final_buy_action": "NO_BUY", "entry_action": "NONE"},
+        ]
+    )
+    frame = app._v21_frame(
+        rows,
+        {
+            "raw_entry_action_display": "entry 原始建议",
+            "final_buy_action_display": "总控最终裁决",
+            "entry_action_display": "兼容买入动作",
+        },
+    )
+    text = " ".join(frame.astype(str).to_numpy().ravel().tolist())
+
+    for translated in ("试探买入", "观察", "买入", "被阻断", "不买入"):
+        assert translated in text
+    for raw_code in ("PROBE", "OBSERVE", "BUY", "BLOCKED", "NO_BUY", "NONE"):
+        assert raw_code not in text
+    assert rows[0]["raw_entry_action"] == "PROBE"
+
+
+def test_v21_entry_funnel_and_non_selected_reason_distribution() -> None:
+    decision = {
+        "all_market_valid_etf_count": 180,
+        "candidate_etfs": [{"etf_code": "159915"}],
+        "entry_actions": [
+            {
+                "etf_code": "159915",
+                "pre_selected": True,
+                "raw_entry_action": "PROBE",
+                "final_buy_action": "PROBE",
+                "ml_action_suggestion": "KEEP_ORIGINAL",
+                "ml_confidence": 0.6,
+            },
+            {
+                "etf_code": "510300",
+                "pre_selected": False,
+                "raw_entry_action": "OBSERVE",
+                "final_buy_action": "OBSERVE",
+                "ml_action_suggestion": "NO_ML",
+                "raw_entry_block_reason": "未进入 pre_selection：排名不足",
+            },
+        ],
+    }
+
+    funnel = dict(app._v21_entry_action_funnel(decision, [{"etf_code": "159915", "side": "BUY"}]))
+    reasons = app._v21_non_selected_reason_distribution(decision)
+
+    assert funnel["全市场有效 ETF"] == 180
+    assert funnel["旧规则前5"] == 1
+    assert funnel["买入候选池"] == 1
+    assert funnel["试探买入"] == 1
+    assert funnel["观察"] == 1
+    assert funnel["订单草稿"] == 1
+    assert funnel["ML 评分命中数"] == 1
+    assert reasons.iloc[0]["数量"] == 1
+    assert "排名不足" in reasons.iloc[0]["非入选原因"]
+
+
+def test_v21_learning_page_exposes_historical_ml_sample_label_and_suggestion_summary() -> None:
+    source = inspect.getsource(app.render_v21_learning)
+
+    assert "historical_ml 样本数" in source
+    assert "标签分布" in source
+    assert "模型版本" in source
+    assert "特征版本" in source
+    assert "topN precision" in source
+    assert "bad entry rate" in source
+    assert "ML 推荐 / 降级 / 恢复 ETF" in source
+    assert "校准建议摘要" in source
+    assert "_hml_suggestion_summary_text" in source
+
+
+def test_v21_historical_ml_summary_helpers_localize_ml_layers() -> None:
+    scores = pd.DataFrame(
+        [
+            {
+                "trade_date": "2026-05-20",
+                "code": "159915",
+                "name": "创业板ETF",
+                "ml_score": 68.0,
+                "p_good_entry": 0.72,
+                "p_bad_entry": 0.05,
+                "ml_action_suggestion": "UPGRADE_PROBE",
+                "ml_reason_cn": "good_entry 概率占优",
+                "ml_rank_global": 1,
+                "auto_label": "good_entry",
+                "model_version": "entry_quality_v1",
+                "feature_version": "daily_ml_universe_features_v1",
+            },
+            {
+                "trade_date": "2026-05-20",
+                "code": "510300",
+                "ml_score": -42.0,
+                "p_good_entry": 0.08,
+                "p_bad_entry": 0.71,
+                "ml_action_suggestion": "DOWNGRADE_WATCH",
+                "ml_reason_cn": "bad_entry 概率偏高",
+                "ml_rank_global": 2,
+                "auto_label": "bad_entry",
+                "model_version": "entry_quality_v1",
+                "feature_version": "daily_ml_universe_features_v1",
+            },
+        ]
+    )
+    frame = app._hml_ml_suggestion_frame(
+        [{"etf_code": "588000", "ml_adjustment": "ML_RECOVERED", "ml_action_suggestion": "UPGRADE_PROBE", "ml_adjustment_reason_cn": "active_sim 恢复试探"}],
+        scores,
+        pd.DataFrame(),
+    )
+    text = " ".join(frame.astype(str).to_numpy().ravel().tolist())
+    model_version, feature_version = app._hml_model_feature_versions(scores)
+
+    assert "ML 推荐 ETF" in text
+    assert "ML 降级 ETF" in text
+    assert "ML 恢复 ETF" in text
+    assert "建议升级试探" in text
+    assert "建议降级观察" in text
+    assert "UPGRADE_PROBE" not in text
+    assert "DOWNGRADE_WATCH" not in text
+    assert app._hml_topn_precision_text(scores, pd.DataFrame()).startswith("top5")
+    assert app._hml_bad_entry_rate_text(scores, pd.DataFrame(), pd.DataFrame()) == "50.0%"
+    assert model_version == "entry_quality_v1"
+    assert feature_version == "daily_ml_universe_features_v1"
+
+
 def test_v21_page_reads_snapshots_without_strategy_generation() -> None:
     page_source = inspect.getsource(app.render_page)
     loader_source = inspect.getsource(app.load_v21_frontend_snapshots)
@@ -465,9 +594,39 @@ def test_v21_status_formats_dates_for_beijing_display() -> None:
     assert "+08:00" not in status["generated_at"]
 
 
+def test_v21_frontend_loads_and_renders_ml_sim_observation_view(tmp_path: Path) -> None:
+    (tmp_path / "daily_decision_snapshot.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "risk_gate_snapshot.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "portfolio_snapshot.json").write_text("[]", encoding="utf-8")
+    (tmp_path / "order_intent.json").write_text("[]", encoding="utf-8")
+    (tmp_path / "learning_summary.json").write_text("[]", encoding="utf-8")
+    (tmp_path / "historical_ml_summary.json").write_text("[]", encoding="utf-8")
+    (tmp_path / "v21_backend_status.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "ml_sim_daily_comparison.json").write_text(
+        '[{"code":"512000","ml_adjustment_type":"ML_RECOVERED"}]',
+        encoding="utf-8",
+    )
+    (tmp_path / "ml_sim_summary.json").write_text(
+        '{"ml_recovered_count":1,"ml_downgraded_count":0,"adjustment_counts":{"ML_RECOVERED":1}}',
+        encoding="utf-8",
+    )
+
+    snapshots = app.load_v21_frontend_snapshots(tmp_path)
+    source = inspect.getsource(app.render_v21_ml_sim)
+    page_source = inspect.getsource(app.render_page)
+
+    assert snapshots["ml_sim_daily_comparison"][0]["code"] == "512000"
+    assert snapshots["ml_sim_summary"]["ml_recovered_count"] == 1
+    assert "ML_SIM 仅观察，不作为正式交易指令" in source
+    assert "ML_SIM 对照" in page_source
+
+
 def test_v21_position_editor_remains_form_submit_once_model() -> None:
     source = inspect.getsource(app.render_current_position_module)
+    portfolio_source = inspect.getsource(app.render_v21_portfolio)
 
     assert 'with st.form("position_editor_form"' in source
     assert "form_submit_button" in source
     assert "position_rows" in source
+    assert callable(app.load_etf_names)
+    assert "load_etf_names(PROJECT_ROOT)" in portfolio_source

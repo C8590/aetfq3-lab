@@ -68,3 +68,917 @@ etfs:
   - {code: "511880", name: "银华日利货币ETF", asset_class: "货币", sector_l1: "防御资产", sector_l2: "债券现金", sector: "债券现金", theme: "货币", risk_group: "防御资产", aliases: ["货币", "现金"]}
   - {code: "511990", name: "华宝添益货币ETF", asset_class: "货币", sector_l1: "防御资产", sector_l2: "债券现金", sector: "债券现金", theme: "货币", risk_group: "防御资产", aliases: ["货币", "现金"]}
   - {code: "159001", name: "易方达保证金货币ETF", asset_class: "货币", sector_l1: "防御资产", sector_l2: "债券现金", sector: "债券现金", theme: "货币", risk_group: "防御资产", aliases: ["货币", "现金"]}
+  - code: '159558'
+    name: 半导体设备ETF易方达
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 芯片半导体
+    risk_group: 科技成长
+    aliases:
+    - 芯片半导体
+    - 科技成长
+    - 半导体设备ETF易方达
+  - code: '562590'
+    name: 半导体设备ETF华夏
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 芯片半导体
+    risk_group: 科技成长
+    aliases:
+    - 芯片半导体
+    - 科技成长
+    - 半导体设备ETF华夏
+  - code: '560780'
+    name: 半导体设备ETF广发
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 芯片半导体
+    risk_group: 科技成长
+    aliases:
+    - 芯片半导体
+    - 科技成长
+    - 半导体设备ETF广发
+  - code: '588810'
+    name: 科创芯片ETF富国
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 芯片半导体
+    risk_group: 科技成长
+    aliases:
+    - 芯片半导体
+    - 科技成长
+    - 科创芯片ETF富国
+  - code: '588990'
+    name: 科创芯片ETF博时
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 芯片半导体
+    risk_group: 科技成长
+    aliases:
+    - 芯片半导体
+    - 科技成长
+    - 科创芯片ETF博时
+  - code: '588160'
+    name: 科创新材料ETF南方
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 先进制造
+    sector: 先进制造
+    theme: 新能源制造
+    risk_group: 先进制造
+    aliases:
+    - 新能源制造
+    - 先进制造
+    - 科创新材料ETF南方
+  - code: '516300'
+    name: 中证1000ETF华泰柏瑞
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 中小盘宽基
+    sector: 中小盘宽基
+    theme: 中证1000
+    risk_group: 中小盘宽基
+    aliases:
+    - 中证1000
+    - 中小盘宽基
+    - 中证1000ETF华泰柏瑞
+  - code: '511670'
+    name: 华泰天天金ETF
+    asset_class: 货币
+    sector_l1: 防御资产
+    sector_l2: 债券现金
+    sector: 债券现金
+    theme: 货币现金
+    risk_group: 债券现金
+    aliases:
+    - 货币现金
+    - 债券现金
+    - 华泰天天金ETF
+  - code: '159638'
+    name: 高端装备ETF嘉实
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 先进制造
+    sector: 先进制造
+    theme: 高端制造
+    risk_group: 先进制造
+    aliases:
+    - 高端制造
+    - 先进制造
+    - 高端装备ETF嘉实
+  - code: '563360'
+    name: A500ETF华泰柏瑞
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 大盘宽基
+    sector: 大盘宽基
+    theme: 中证A500
+    risk_group: 大盘宽基
+    aliases:
+    - 中证A500
+    - 大盘宽基
+    - A500ETF华泰柏瑞
+  - code: '588200'
+    name: 科创芯片ETF嘉实
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 芯片半导体
+    risk_group: 科技成长
+    aliases:
+    - 芯片半导体
+    - 科技成长
+    - 科创芯片ETF嘉实
+  - code: '159338'
+    name: 中证A500ETF国泰
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 大盘宽基
+    sector: 大盘宽基
+    theme: 中证A500
+    risk_group: 大盘宽基
+    aliases:
+    - 中证A500
+    - 大盘宽基
+    - 中证A500ETF国泰
+  - code: '159352'
+    name: A500ETF南方
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 大盘宽基
+    sector: 大盘宽基
+    theme: 中证A500
+    risk_group: 大盘宽基
+    aliases:
+    - 中证A500
+    - 大盘宽基
+    - A500ETF南方
+  - code: '159516'
+    name: 半导体设备ETF国泰
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 芯片半导体
+    risk_group: 科技成长
+    aliases:
+    - 芯片半导体
+    - 科技成长
+    - 半导体设备ETF国泰
+  - code: '510310'
+    name: 沪深300ETF易方达
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 大盘宽基
+    sector: 大盘宽基
+    theme: 沪深300
+    risk_group: 大盘宽基
+    aliases:
+    - 沪深300
+    - 大盘宽基
+    - 沪深300ETF易方达
+  - code: '159919'
+    name: 沪深300ETF嘉实
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 大盘宽基
+    sector: 大盘宽基
+    theme: 沪深300
+    risk_group: 大盘宽基
+    aliases:
+    - 沪深300
+    - 大盘宽基
+    - 沪深300ETF嘉实
+  - code: '512050'
+    name: A500ETF华夏
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 大盘宽基
+    sector: 大盘宽基
+    theme: 中证A500
+    risk_group: 大盘宽基
+    aliases:
+    - 中证A500
+    - 大盘宽基
+    - A500ETF华夏
+  - code: '159361'
+    name: A500ETF易方达
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 大盘宽基
+    sector: 大盘宽基
+    theme: 中证A500
+    risk_group: 大盘宽基
+    aliases:
+    - 中证A500
+    - 大盘宽基
+    - A500ETF易方达
+  - code: '562500'
+    name: 机器人ETF华夏
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 数字科技
+    risk_group: 科技成长
+    aliases:
+    - 数字科技
+    - 科技成长
+    - 机器人ETF华夏
+  - code: '159755'
+    name: 电池ETF广发
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 先进制造
+    sector: 先进制造
+    theme: 新能源制造
+    risk_group: 先进制造
+    aliases:
+    - 新能源制造
+    - 先进制造
+    - 电池ETF广发
+  - code: '159870'
+    name: 化工ETF鹏华
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 资源周期
+    sector: 资源周期
+    theme: 资源周期
+    risk_group: 资源周期
+    aliases:
+    - 资源周期
+    - 化工ETF鹏华
+  - code: '512500'
+    name: 中证500ETF华夏
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 大盘宽基
+    sector: 大盘宽基
+    theme: A股
+    risk_group: 大盘宽基
+    aliases:
+    - A股
+    - 大盘宽基
+    - 中证500ETF华夏
+  - code: '159922'
+    name: 中证500ETF嘉实
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 大盘宽基
+    sector: 大盘宽基
+    theme: A股
+    risk_group: 大盘宽基
+    aliases:
+    - A股
+    - 大盘宽基
+    - 中证500ETF嘉实
+  - code: '560010'
+    name: 中证1000ETF广发
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 中小盘宽基
+    sector: 中小盘宽基
+    theme: 中证1000
+    risk_group: 中小盘宽基
+    aliases:
+    - 中证1000
+    - 中小盘宽基
+    - 中证1000ETF广发
+  - code: '159530'
+    name: 机器人ETF易方达
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 数字科技
+    risk_group: 科技成长
+    aliases:
+    - 数字科技
+    - 科技成长
+    - 机器人ETF易方达
+  - code: '515050'
+    name: UC通信ETF华夏
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 数字科技
+    risk_group: 科技成长
+    aliases:
+    - 数字科技
+    - 科技成长
+    - UC通信ETF华夏
+  - code: '515220'
+    name: 煤炭ETF国泰
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 资源周期
+    sector: 资源周期
+    theme: 资源周期
+    risk_group: 资源周期
+    aliases:
+    - 资源周期
+    - 煤炭ETF国泰
+  - code: '159363'
+    name: 创业板人工智能ETF华宝
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 数字科技
+    risk_group: 科技成长
+    aliases:
+    - 数字科技
+    - 科技成长
+    - 创业板人工智能ETF华宝
+  - code: '512690'
+    name: 酒ETF鹏华
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 医药消费
+    sector: 医药消费
+    theme: 消费农业
+    risk_group: 医药消费
+    aliases:
+    - 消费农业
+    - 医药消费
+    - 酒ETF鹏华
+  - code: '159351'
+    name: A500ETF嘉实
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 大盘宽基
+    sector: 大盘宽基
+    theme: 中证A500
+    risk_group: 大盘宽基
+    aliases:
+    - 中证A500
+    - 大盘宽基
+    - A500ETF嘉实
+  - code: '588220'
+    name: 科创100ETF鹏华
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 中小盘宽基
+    sector: 中小盘宽基
+    theme: 宽基
+    risk_group: 中小盘宽基
+    aliases:
+    - 宽基
+    - 中小盘宽基
+    - 科创100ETF鹏华
+  - code: '159992'
+    name: 创新药ETF银华
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 医药消费
+    sector: 医药消费
+    theme: 医药医疗
+    risk_group: 医药消费
+    aliases:
+    - 医药医疗
+    - 医药消费
+    - 创新药ETF银华
+  - code: '159566'
+    name: 储能电池ETF易方达
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 先进制造
+    sector: 先进制造
+    theme: 新能源制造
+    risk_group: 先进制造
+    aliases:
+    - 新能源制造
+    - 先进制造
+    - 储能电池ETF易方达
+  - code: '159633'
+    name: 中证1000ETF易方达
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 中小盘宽基
+    sector: 中小盘宽基
+    theme: 中证1000
+    risk_group: 中小盘宽基
+    aliases:
+    - 中证1000
+    - 中小盘宽基
+    - 中证1000ETF易方达
+  - code: '159611'
+    name: 电力ETF广发
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 公用环保
+    sector: 公用环保
+    theme: 公用环保
+    risk_group: 公用环保
+    aliases:
+    - 公用环保
+    - 电力ETF广发
+  - code: '563220'
+    name: A500ETF富国
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 大盘宽基
+    sector: 大盘宽基
+    theme: 中证A500
+    risk_group: 大盘宽基
+    aliases:
+    - 中证A500
+    - 大盘宽基
+    - A500ETF富国
+  - code: '588290'
+    name: 科创芯片ETF华安
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 芯片半导体
+    risk_group: 科技成长
+    aliases:
+    - 芯片半导体
+    - 科技成长
+    - 科创芯片ETF华安
+  - code: '563300'
+    name: 中证2000ETF华泰柏瑞
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 中小盘宽基
+    sector: 中小盘宽基
+    theme: 中证2000
+    risk_group: 中小盘宽基
+    aliases:
+    - 中证2000
+    - 中小盘宽基
+    - 中证2000ETF华泰柏瑞
+  - code: '588170'
+    name: 科创半导体ETF华夏
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 芯片半导体
+    risk_group: 科技成长
+    aliases:
+    - 芯片半导体
+    - 科技成长
+    - 科创半导体ETF华夏
+  - code: '563800'
+    name: A500ETF广发
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 大盘宽基
+    sector: 大盘宽基
+    theme: 中证A500
+    risk_group: 大盘宽基
+    aliases:
+    - 中证A500
+    - 大盘宽基
+    - A500ETF广发
+  - code: '588050'
+    name: 科创50ETF工银
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 科创50
+    risk_group: 科技成长
+    aliases:
+    - 科创50
+    - 科技成长
+    - 科创50ETF工银
+  - code: '159813'
+    name: 半导体ETF鹏华
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 芯片半导体
+    risk_group: 科技成长
+    aliases:
+    - 芯片半导体
+    - 科技成长
+    - 半导体ETF鹏华
+  - code: '159852'
+    name: 软件ETF嘉实
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 数字科技
+    risk_group: 科技成长
+    aliases:
+    - 数字科技
+    - 科技成长
+    - 软件ETF嘉实
+  - code: '512070'
+    name: 证券保险ETF易方达
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 金融地产
+    sector: 金融地产
+    theme: 金融地产
+    risk_group: 金融地产
+    aliases:
+    - 金融地产
+    - 证券保险ETF易方达
+  - code: '159952'
+    name: 创业板ETF广发
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 创业板
+    risk_group: 科技成长
+    aliases:
+    - 创业板
+    - 科技成长
+    - 创业板ETF广发
+  - code: '512710'
+    name: 军工龙头ETF富国
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 先进制造
+    sector: 先进制造
+    theme: 高端制造
+    risk_group: 先进制造
+    aliases:
+    - 高端制造
+    - 先进制造
+    - 军工龙头ETF富国
+  - code: '159796'
+    name: 电池ETF汇添富
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 先进制造
+    sector: 先进制造
+    theme: 新能源制造
+    risk_group: 先进制造
+    aliases:
+    - 新能源制造
+    - 先进制造
+    - 电池ETF汇添富
+  - code: '510100'
+    name: 上证50ETF易方达
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 大盘宽基
+    sector: 大盘宽基
+    theme: 上证50
+    risk_group: 大盘宽基
+    aliases:
+    - 上证50
+    - 大盘宽基
+    - 上证50ETF易方达
+  - code: '159901'
+    name: 深证100ETF易方达
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 大盘宽基
+    sector: 大盘宽基
+    theme: 深证100
+    risk_group: 大盘宽基
+    aliases:
+    - 深证100
+    - 大盘宽基
+    - 深证100ETF易方达
+  - code: '560860'
+    name: 工业有色ETF万家
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 资源周期
+    sector: 资源周期
+    theme: 资源周期
+    risk_group: 资源周期
+    aliases:
+    - 资源周期
+    - 工业有色ETF万家
+  - code: '516150'
+    name: 稀土ETF嘉实
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 资源周期
+    sector: 资源周期
+    theme: 资源周期
+    risk_group: 资源周期
+    aliases:
+    - 资源周期
+    - 稀土ETF嘉实
+  - code: '515120'
+    name: 创新药ETF广发
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 医药消费
+    sector: 医药消费
+    theme: 医药医疗
+    risk_group: 医药消费
+    aliases:
+    - 医药医疗
+    - 医药消费
+    - 创新药ETF广发
+  - code: '515980'
+    name: 人工智能ETF华富
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 数字科技
+    risk_group: 科技成长
+    aliases:
+    - 数字科技
+    - 科技成长
+    - 人工智能ETF华富
+  - code: '159781'
+    name: 科创创业ETF易方达
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 中小盘宽基
+    sector: 中小盘宽基
+    theme: 宽基
+    risk_group: 中小盘宽基
+    aliases:
+    - 宽基
+    - 中小盘宽基
+    - 科创创业ETF易方达
+  - code: '588060'
+    name: 科创50ETF广发
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 科创50
+    risk_group: 科技成长
+    aliases:
+    - 科创50
+    - 科技成长
+    - 科创50ETF广发
+  - code: '159583'
+    name: 通信ETF富国
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 数字科技
+    risk_group: 科技成长
+    aliases:
+    - 数字科技
+    - 科技成长
+    - 通信ETF富国
+  - code: '561980'
+    name: 半导体设备ETF招商
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 芯片半导体
+    risk_group: 科技成长
+    aliases:
+    - 芯片半导体
+    - 科技成长
+    - 半导体设备ETF招商
+  - code: '159770'
+    name: 机器人ETF天弘
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 数字科技
+    risk_group: 科技成长
+    aliases:
+    - 数字科技
+    - 科技成长
+    - 机器人ETF天弘
+  - code: '588800'
+    name: 科创100ETF华夏
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 中小盘宽基
+    sector: 中小盘宽基
+    theme: 宽基
+    risk_group: 中小盘宽基
+    aliases:
+    - 宽基
+    - 中小盘宽基
+    - 科创100ETF华夏
+  - code: '588790'
+    name: 科创AIETF博时
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 数字科技
+    risk_group: 科技成长
+    aliases:
+    - 数字科技
+    - 科技成长
+    - 科创AIETF博时
+  - code: '515080'
+    name: 中证红利ETF招商
+    asset_class: 权益
+    sector_l1: 防御资产
+    sector_l2: 红利低波
+    sector: 红利低波
+    theme: 红利
+    risk_group: 红利低波
+    aliases:
+    - 红利
+    - 红利低波
+    - 中证红利ETF招商
+  - code: '588090'
+    name: 科创50ETF华泰柏瑞
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 科创50
+    risk_group: 科技成长
+    aliases:
+    - 科创50
+    - 科技成长
+    - 科创50ETF华泰柏瑞
+  - code: '159851'
+    name: 金融科技ETF华宝
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 金融地产
+    sector: 金融地产
+    theme: 金融地产
+    risk_group: 金融地产
+    aliases:
+    - 金融地产
+    - 金融科技ETF华宝
+  - code: '159682'
+    name: 创业板50ETF景顺
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 创业板
+    risk_group: 科技成长
+    aliases:
+    - 创业板
+    - 科技成长
+    - 创业板50ETF景顺
+  - code: '159381'
+    name: 创业板人工智能ETF华夏
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 数字科技
+    risk_group: 科技成长
+    aliases:
+    - 数字科技
+    - 科技成长
+    - 创业板人工智能ETF华夏
+  - code: '516650'
+    name: 有色金属ETF华夏
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 资源周期
+    sector: 资源周期
+    theme: 资源周期
+    risk_group: 资源周期
+    aliases:
+    - 资源周期
+    - 有色金属ETF华夏
+  - code: '588030'
+    name: 科创100ETF博时
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 中小盘宽基
+    sector: 中小盘宽基
+    theme: 宽基
+    risk_group: 中小盘宽基
+    aliases:
+    - 宽基
+    - 中小盘宽基
+    - 科创100ETF博时
+  - code: '159732'
+    name: 消费电子ETF华夏
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 医药消费
+    sector: 医药消费
+    theme: 消费农业
+    risk_group: 医药消费
+    aliases:
+    - 消费农业
+    - 医药消费
+    - 消费电子ETF华夏
+  - code: '159841'
+    name: 证券ETF天弘
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 金融地产
+    sector: 金融地产
+    theme: 金融地产
+    risk_group: 金融地产
+    aliases:
+    - 金融地产
+    - 证券ETF天弘
+  - code: '159629'
+    name: 中证1000ETF富国
+    asset_class: 权益
+    sector_l1: 宽基指数
+    sector_l2: 中小盘宽基
+    sector: 中小盘宽基
+    theme: 中证1000
+    risk_group: 中小盘宽基
+    aliases:
+    - 中证1000
+    - 中小盘宽基
+    - 中证1000ETF富国
+  - code: '159865'
+    name: 养殖ETF国泰
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 医药消费
+    sector: 医药消费
+    theme: 消费农业
+    risk_group: 医药消费
+    aliases:
+    - 消费农业
+    - 医药消费
+    - 养殖ETF国泰
+  - code: '516020'
+    name: 化工ETF华宝
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 资源周期
+    sector: 资源周期
+    theme: 资源周期
+    risk_group: 资源周期
+    aliases:
+    - 资源周期
+    - 化工ETF华宝
+  - code: '159801'
+    name: 芯片ETF广发
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 芯片半导体
+    risk_group: 科技成长
+    aliases:
+    - 芯片半导体
+    - 科技成长
+    - 芯片ETF广发
+  - code: '561910'
+    name: 电池ETF招商
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 先进制造
+    sector: 先进制造
+    theme: 新能源制造
+    risk_group: 先进制造
+    aliases:
+    - 新能源制造
+    - 先进制造
+    - 电池ETF招商
+  - code: '588750'
+    name: 科创芯片ETF汇添富
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 科技成长
+    sector: 科技成长
+    theme: 芯片半导体
+    risk_group: 科技成长
+    aliases:
+    - 芯片半导体
+    - 科技成长
+    - 科创芯片ETF汇添富
+  - code: '560280'
+    name: 工程机械ETF广发
+    asset_class: 权益
+    sector_l1: 行业主题
+    sector_l2: 先进制造
+    sector: 先进制造
+    theme: 高端制造
+    risk_group: 先进制造
+    aliases:
+    - 高端制造
+    - 先进制造
+    - 工程机械ETF广发
+  - code: '563020'
+    name: 红利低波ETF易方达
+    asset_class: 权益
+    sector_l1: 防御资产
+    sector_l2: 红利低波
+    sector: 红利低波
+    theme: 红利
+    risk_group: 红利低波
+    aliases:
+    - 红利
+    - 红利低波
+    - 红利低波ETF易方达

@@ -130,6 +130,48 @@ class EntryEngineTest(unittest.TestCase):
         self.assertIn("趋势成熟度：过热期", row["entry_reason"])
         self.assertIn("不允许新开重仓", row["entry_reason"])
 
+    def test_attack_r0_strong_candidate_allows_probe_instead_of_plain_watch(self) -> None:
+        row = EntryEngine(first_buy_weight=0.30, target_weight=0.90, generated_at="fixed").run(
+            [
+                _row(
+                    market_state=MarketState.ATTACK.value,
+                    score=42,
+                    rank=1,
+                    selected=True,
+                    momentum_20=0.01,
+                    momentum_60=0.01,
+                    distance_ma20=0.01,
+                    pct_chg=0.005,
+                    consecutive_up_days=1,
+                )
+            ],
+            output_dir=tempfile.mkdtemp(),
+        )[0]
+
+        self.assertEqual(row["raw_entry_action"], "PROBE")
+        self.assertEqual(row["final_buy_action"], "PROBE")
+        self.assertGreater(row["raw_entry_target_weight"], 0)
+        self.assertNotEqual(row["buy_action"], BuyAction.WATCH.value)
+
+    def test_attack_candidate_overheat_does_not_emit_raw_probe(self) -> None:
+        row = EntryEngine(generated_at="fixed").run(
+            [
+                _row(
+                    market_state=MarketState.ATTACK.value,
+                    score=92,
+                    rank=1,
+                    selected=True,
+                    momentum_20=0.18,
+                    distance_ma20=0.12,
+                    pct_chg=0.075,
+                )
+            ],
+            output_dir=tempfile.mkdtemp(),
+        )[0]
+
+        self.assertIn(row["raw_entry_action"], {"OBSERVE", "REJECT"})
+        self.assertEqual(row["raw_entry_target_weight"], 0.0)
+
     def test_forbid_chasing_after_excessive_surge(self) -> None:
         row = EntryEngine(generated_at="fixed").run(
             [
@@ -161,6 +203,36 @@ class EntryEngineTest(unittest.TestCase):
 
         self.assertEqual(rows[0]["buy_action"], BuyAction.WATCH.value)
         self.assertIn("未进入预选候选池", rows[0]["entry_reason"])
+
+    def test_recall_pool_rows_enter_entry_but_do_not_expand_buy_count(self) -> None:
+        pre_rows = []
+        for i in range(8):
+            pre_rows.append(
+                _row(
+                    symbol=f"{510000 + i:06d}",
+                    name=f"ETF{i}",
+                    market_state=MarketState.ATTACK.value,
+                    score=80 - i,
+                    rank=i + 1,
+                    selected=i < 5,
+                    candidate_pool_flag=True,
+                    candidate_source="LEGACY_TOP5" if i < 5 else "BROAD_RECALL",
+                    legacy_selected=i < 5,
+                    broad_recall_selected=True,
+                    ml_recovered=False,
+                    candidate_pool_rank=i + 1,
+                    momentum_20=0.02,
+                    momentum_60=0.03,
+                    distance_ma20=0.01,
+                )
+            )
+
+        rows = EntryEngine(generated_at="fixed").run(pre_rows, output_dir=tempfile.mkdtemp())
+
+        self.assertEqual(len(rows), 8)
+        actionable = [row for row in rows if row["raw_entry_action"] in {"BUY", "PROBE"} and row["raw_entry_target_weight"] > 0]
+        self.assertLessEqual(len(actionable), 5)
+        self.assertTrue(all(row["buy_action"] == BuyAction.WATCH.value for row in rows[5:]))
 
     def test_missing_ml_file_uses_default_fields_without_changing_entry_action(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -227,6 +299,139 @@ class EntryEngineTest(unittest.TestCase):
         self.assertEqual(row["ml_action_suggestion"], "UPGRADE_PROBE")
         self.assertEqual(row["ml_entry_advice"], "建议升级小仓试探")
 
+    def test_shadow_ml_entry_scores_do_not_change_final_buy_action(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            ml_path = Path(tmp) / "artifacts" / "historical_ml_61" / "generated" / "ml_entry_scores.csv"
+            _write_ml_file(
+                ml_path,
+                [
+                    {
+                        "code": "510300",
+                        "p_good_entry": 0.82,
+                        "p_bad_entry": 0.08,
+                        "ml_score": 74.5,
+                        "ml_action_suggestion": "UPGRADE_PROBE",
+                    }
+                ],
+            )
+
+            row = EntryEngine(generated_at="fixed", ml_decision_mode="shadow").run([_row(selected=False, score=55)], output_dir=tmp)[0]
+
+        self.assertEqual(row["rule_action"], "OBSERVE")
+        self.assertEqual(row["final_buy_action"], "OBSERVE")
+        self.assertEqual(row["ml_adjusted_action"], "OBSERVE")
+        self.assertEqual(row["ml_decision_mode"], "shadow")
+        self.assertEqual(row["ml_adjustment"], "ML_SHADOW_ONLY")
+        self.assertEqual(row["ml_score"], 74.5)
+        self.assertEqual(row["p_good_entry"], 0.82)
+        self.assertEqual(row["p_bad_entry"], 0.08)
+
+    def test_ml_entry_scores_match_current_trade_date_only(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            ml_path = Path(tmp) / "artifacts" / "historical_ml_61" / "generated" / "ml_entry_scores.csv"
+            _write_ml_file(
+                ml_path,
+                [
+                    {
+                        "trade_date": "2026-05-17",
+                        "code": "510300",
+                        "p_good_entry": 0.82,
+                        "p_bad_entry": 0.08,
+                        "ml_score": 74.5,
+                        "ml_action_suggestion": "UPGRADE_PROBE",
+                    }
+                ],
+            )
+
+            row = EntryEngine(generated_at="fixed", ml_decision_mode="shadow").run([_row()], output_dir=tmp)[0]
+
+        self.assertEqual(row["ml_score"], "")
+        self.assertEqual(row["ml_action_suggestion"], "NO_ML")
+
+    def test_active_sim_ml_scores_can_recover_observe_to_probe(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            ml_path = Path(tmp) / "artifacts" / "historical_ml_61" / "generated" / "ml_entry_scores.csv"
+            _write_ml_file(
+                ml_path,
+                [
+                    {
+                        "code": "510300",
+                        "p_good_entry": 0.76,
+                        "p_bad_entry": 0.05,
+                        "ml_score": 62.0,
+                        "ml_action_suggestion": "UPGRADE_PROBE",
+                    }
+                ],
+            )
+
+            row = EntryEngine(first_buy_weight=0.25, generated_at="fixed", ml_decision_mode="active_sim").run(
+                [_row(selected=False, score=55)],
+                output_dir=tmp,
+            )[0]
+
+        self.assertEqual(row["rule_action"], "OBSERVE")
+        self.assertEqual(row["ml_adjustment"], "ML_RECOVERED")
+        self.assertEqual(row["ml_adjusted_action"], "PROBE")
+        self.assertEqual(row["final_buy_action"], "PROBE")
+        self.assertEqual(row["final_target_weight"], 0.25)
+        self.assertIn("ML_RECOVERED PROBE", row["ml_adjustment_reason_cn"])
+
+    def test_active_sim_ml_scores_can_downgrade_buy_to_observe(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            ml_path = Path(tmp) / "artifacts" / "historical_ml_61" / "generated" / "ml_entry_scores.csv"
+            _write_ml_file(
+                ml_path,
+                [
+                    {
+                        "code": "510300",
+                        "p_good_entry": 0.09,
+                        "p_bad_entry": 0.72,
+                        "ml_score": -41.0,
+                        "ml_action_suggestion": "DOWNGRADE_WATCH",
+                    }
+                ],
+            )
+
+            row = EntryEngine(generated_at="fixed", ml_decision_mode="active_sim").run(
+                [_row(score=78, momentum_20=0.04, momentum_60=0.06, breakout_confirmed=True)],
+                output_dir=tmp,
+            )[0]
+
+        self.assertEqual(row["rule_action"], "BUY")
+        self.assertEqual(row["ml_adjustment"], "ML_DOWNGRADED")
+        self.assertEqual(row["ml_adjusted_action"], "OBSERVE")
+        self.assertEqual(row["final_buy_action"], "OBSERVE")
+        self.assertEqual(row["final_target_weight"], 0.0)
+        self.assertIn("ML_DOWNGRADED OBSERVE", row["ml_adjustment_reason_cn"])
+
+    def test_parameter_level_ml_suggestions_are_read_only_observation(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            ml_path = Path(tmp) / "artifacts" / "historical_ml_61" / "generated" / "entry_calibration_suggestions.csv"
+            _write_ml_file(
+                ml_path,
+                [
+                    {
+                        "suggestion_id": "CAL-001",
+                        "parameter_area": "trend_maturity",
+                        "current_pattern": "overheat stage has elevated bad_rate",
+                        "suggested_action": "require pullback confirmation",
+                        "confidence": "high",
+                    }
+                ],
+            )
+
+            row = EntryEngine(generated_at="fixed").run(
+                [_row(score=78, momentum_20=0.04, momentum_60=0.06, breakout_confirmed=True)],
+                output_dir=tmp,
+            )[0]
+
+        self.assertEqual(row["buy_action"], BuyAction.STANDARD_BUY.value)
+        self.assertEqual(row["final_buy_action"], "BUY")
+        self.assertGreater(row["final_target_weight"], 0)
+        self.assertEqual(row["ml_action_suggestion"], "KEEP_ORIGINAL")
+        self.assertIn("parameter-level suggestions loaded", row["ml_entry_advice"])
+        self.assertIn("does not change buy_action", row["ml_reason"])
+
     def test_ml_downgrade_watch_does_not_rewrite_original_entry_action(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             ml_path = Path(tmp) / "artifacts" / "historical_ml_61" / "generated" / "entry_calibration_suggestions.csv"
@@ -262,8 +467,18 @@ class EntryEngineTest(unittest.TestCase):
         self.assertEqual(list(rows[0].keys()), list(REQUIRED_OUTPUT_FIELDS))
         self.assertEqual(list(written[0].keys()), list(REQUIRED_OUTPUT_FIELDS))
         self.assertEqual(
-            list(REQUIRED_OUTPUT_FIELDS)[-6:-2],
-            ["ml_entry_advice", "ml_confidence", "ml_reason", "ml_action_suggestion"],
+            list(REQUIRED_OUTPUT_FIELDS)[-11:-2],
+            [
+                "ml_entry_advice",
+                "ml_confidence",
+                "ml_reason",
+                "ml_action_suggestion",
+                "ml_decision_mode",
+                "ml_adjustment",
+                "ml_adjustment_reason_cn",
+                "rule_action",
+                "ml_adjusted_action",
+            ],
         )
 
 

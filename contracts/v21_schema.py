@@ -23,9 +23,28 @@ DAILY_DECISION_FIELDS = (
     "allow_entry",
     "freeze_entry",
     "manual_takeover_required",
+    "active_exit_count",
+    "actual_position_exit_count",
+    "exit_priority_blocked",
+    "exit_block_reason",
+    "exit_block_release_condition",
+    "blocked_by_exit_symbols",
+    "has_real_position_to_exit",
+    "exit_action_type",
     "selected_sectors",
     "ml_observation_status",
     "ml_entry_advice",
+    "all_market_valid_etf_count",
+    "historical_price_covered_etf_count",
+    "ml_feature_ready_etf_count",
+    "ml_scored_etf_count",
+    "ml_score_direct_hit_count",
+    "ml_score_missing_count",
+    "ml_score_missing_reason_distribution",
+    "broad_recall_pool_count",
+    "ml_recovered_pool_count",
+    "entry_candidate_pool_count",
+    "order_intent_count",
     "candidate_etfs",
     "actual_buy_etfs",
     "entry_actions",
@@ -101,6 +120,35 @@ ORDER_INTENT_FIELDS = (
     "explain",
 )
 
+ML_SIM_COMPARISON_FIELDS = (
+    "trade_date",
+    "code",
+    "name",
+    "sector_level1",
+    "sector_level2",
+    "legacy_action",
+    "ml_sim_action",
+    "final_action",
+    "ml_score",
+    "p_good_entry",
+    "p_bad_entry",
+    "ml_adjustment_type",
+    "ml_adjustment_reason_cn",
+    "risk_level",
+    "risk_blocked",
+    "exit_blocked",
+    "order_intent_in_legacy",
+    "order_intent_in_ml_sim",
+    "review_priority",
+    "future_return_1d",
+    "future_return_3d",
+    "future_return_5d",
+    "future_return_10d",
+    "future_max_drawdown_10d",
+    "outperform_market_10d",
+    "outperform_sector_10d",
+)
+
 PORTFOLIO_SNAPSHOT_FIELDS = (
     "trade_date",
     "etf_code",
@@ -129,9 +177,28 @@ class DailyDecision:
     allow_entry: bool = True
     freeze_entry: bool = False
     manual_takeover_required: bool = False
+    active_exit_count: int = 0
+    actual_position_exit_count: int = 0
+    exit_priority_blocked: bool = False
+    exit_block_reason: str = ""
+    exit_block_release_condition: str = ""
+    blocked_by_exit_symbols: list[str] = field(default_factory=list)
+    has_real_position_to_exit: bool = False
+    exit_action_type: str = ""
     selected_sectors: list[str] = field(default_factory=list)
     ml_observation_status: str = ""
     ml_entry_advice: str = ""
+    all_market_valid_etf_count: int = 0
+    historical_price_covered_etf_count: int = 0
+    ml_feature_ready_etf_count: int = 0
+    ml_scored_etf_count: int = 0
+    ml_score_direct_hit_count: int = 0
+    ml_score_missing_count: int = 0
+    ml_score_missing_reason_distribution: dict[str, int] = field(default_factory=dict)
+    broad_recall_pool_count: int = 0
+    ml_recovered_pool_count: int = 0
+    entry_candidate_pool_count: int = 0
+    order_intent_count: int = 0
     candidate_etfs: list[dict[str, Any]] = field(default_factory=list)
     actual_buy_etfs: list[dict[str, Any]] = field(default_factory=list)
     entry_actions: list[dict[str, Any]] = field(default_factory=list)

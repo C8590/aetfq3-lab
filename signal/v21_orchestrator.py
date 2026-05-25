@@ -19,8 +19,10 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 import yaml
 
+from signal.entry.diagnostics import write_entry_diagnostics, write_entry_signal_coverage_report
 from contracts.v21_schema import (
     DAILY_DECISION_FIELDS,
+    ML_SIM_COMPARISON_FIELDS,
     ORDER_INTENT_FIELDS,
     PORTFOLIO_SNAPSHOT_FIELDS,
     RISK_GATE_FIELDS,
@@ -47,12 +49,24 @@ OUTPUT_FILES = (
     "learning_summary.json",
     "historical_ml_summary.csv",
     "historical_ml_summary.json",
+    "ml_sim_daily_comparison.csv",
+    "ml_sim_daily_comparison.json",
+    "ml_sim_summary.json",
+    "ml_sim_review_queue.csv",
+    "entry_diagnostics.csv",
+    "entry_diagnostics.json",
+    "entry_signal_coverage_report.csv",
+    "entry_signal_coverage_report.md",
     "v21_backend_status.json",
 )
 
 SAFE_EXECUTION_MODES = {"SIMULATION", "DRAFT", "MANUAL_CONFIRM"}
 RISK_FREEZE_LEVELS = {"R3", "R4", "P0"}
 ML_OBSERVATION_NOTICE = "仅供观察，不自动修改交易参数。"
+HISTORICAL_ML_SUGGESTIONS_FILE = Path("artifacts") / "historical_ml_61" / "generated" / "entry_calibration_suggestions.csv"
+HISTORICAL_ML_COVERAGE_REPORT_FILE = Path("artifacts") / "historical_ml_61" / "generated" / "historical_ml_universe_coverage_report.json"
+HISTORICAL_ML_ENTRY_SCORES_FILE = Path("artifacts") / "historical_ml_61" / "generated" / "ml_entry_scores.csv"
+ML_SIM_NOTICE = "ML_SIM 仅观察，不作为正式交易指令。"
 
 
 def run_v21_backend_pipeline(
@@ -104,6 +118,7 @@ def run_v21_backend_pipeline(
 
     market_state = _first_text(pre_rows, "market_state", default=_first_text(entry, "market_state", default="未知"))
     selected_rows = [row for row in pre_rows if _truthy(row.get("selected"))]
+    candidate_pool_rows = _candidate_pool_rows(pre_rows)
     selected_symbols = {_symbol(row.get("symbol") or row.get("etf_code") or row.get("code")) for row in selected_rows}
     selected_sectors = _unique(row.get("sector") for row in selected_rows)
     entry_by_symbol = {
@@ -115,7 +130,7 @@ def run_v21_backend_pipeline(
             row,
             entry_by_symbol.get(_symbol(row.get("symbol") or row.get("etf_code") or row.get("code")), {}),
         )
-        for row in selected_rows
+        for row in candidate_pool_rows
     ]
 
     portfolio = _build_portfolio_snapshot(
@@ -125,9 +140,10 @@ def run_v21_backend_pipeline(
         trade_date=effective_date,
         account_total_asset=account_total_asset,
     )
-    exit_actions = _build_exit_actions(exits)
-    high_priority_exit = any(_is_high_priority_exit(row) for row in exits)
-    entry_actions = _build_entry_actions(entry, selected_symbols, v21_risk, high_priority_exit)
+    exit_actions = _build_exit_actions(exits, portfolio)
+    exit_block = _build_exit_priority_block(exit_actions)
+    high_priority_exit = bool(exit_block["exit_priority_blocked"])
+    entry_actions = _build_entry_actions(entry, selected_symbols, v21_risk, exit_block)
     actual_buy_etfs = [item for item in entry_actions if item["actual_buy"]]
     ml_observation_status = _ml_observation_status(entry)
     ml_entry_advice = _ml_entry_advice_summary(entry, selected_symbols)
@@ -145,10 +161,18 @@ def run_v21_backend_pipeline(
         qmt_available=qmt_available,
         qmt_note=qmt_note,
     )
+    funnel_counts = _build_ml_funnel_counts(
+        out_dir=out_dir,
+        pre_rows=pre_rows,
+        entry_rows=entry,
+        entry_actions=entry_actions,
+        candidate_etfs=candidate_etfs,
+        order_intents=order_intents,
+    )
 
     allow_entry = not v21_risk.freeze_entry and not v21_risk.manual_takeover_required and not high_priority_exit
     if high_priority_exit:
-        fallback_reasons.append("exit 出现清仓或风险退出建议，总控暂停新增买入并优先处理退出。")
+        fallback_reasons.append(str(exit_block["exit_block_reason"]))
     if v21_risk.freeze_entry:
         fallback_reasons.append("风险门控冻结买入，entry 信号只保留为观察和解释，不进入实际买入。")
     if not historical:
@@ -163,9 +187,18 @@ def run_v21_backend_pipeline(
         allow_entry=allow_entry,
         freeze_entry=bool(v21_risk.freeze_entry),
         manual_takeover_required=bool(v21_risk.manual_takeover_required),
+        active_exit_count=int(exit_block["active_exit_count"]),
+        actual_position_exit_count=int(exit_block["actual_position_exit_count"]),
+        exit_priority_blocked=high_priority_exit,
+        exit_block_reason=str(exit_block["exit_block_reason"]),
+        exit_block_release_condition=str(exit_block["exit_block_release_condition"]),
+        blocked_by_exit_symbols=list(exit_block["blocked_by_exit_symbols"]),
+        has_real_position_to_exit=bool(exit_block["has_real_position_to_exit"]),
+        exit_action_type=str(exit_block["exit_action_type"]),
         selected_sectors=selected_sectors,
         ml_observation_status=ml_observation_status,
         ml_entry_advice=ml_entry_advice,
+        **funnel_counts,
         candidate_etfs=candidate_etfs,
         actual_buy_etfs=actual_buy_etfs,
         entry_actions=entry_actions,
@@ -174,11 +207,19 @@ def run_v21_backend_pipeline(
         learning_summary=learning_summary,
         historical_ml_summary=historical_summary,
         order_intent_summary=order_intents,
-        explain=_decision_explain(market_state, v21_risk, candidate_etfs, actual_buy_etfs, exit_actions, high_priority_exit),
+        explain=_decision_explain(market_state, v21_risk, candidate_etfs, actual_buy_etfs, exit_actions, exit_block),
         warnings=_unique(warnings),
         fallback_reason=_join_reason(fallback_reasons),
         generated_at=generated_at,
     ).to_dict()
+    entry_diagnostics = write_entry_diagnostics(
+        output_dir=out_dir,
+        trade_date=effective_date,
+        pre_selection_rows=pre_rows,
+        entry_actions=entry_actions,
+        risk=v21_risk.to_dict(),
+    )
+    entry_coverage = write_entry_signal_coverage_report(output_dir=out_dir, diagnostics_rows=entry_diagnostics)
 
     _write_table(out_dir / "daily_decision_snapshot.csv", DAILY_DECISION_FIELDS, [decision])
     _write_json(out_dir / "daily_decision_snapshot.json", decision)
@@ -192,6 +233,20 @@ def run_v21_backend_pipeline(
     _write_json(out_dir / "learning_summary.json", learning_summary)
     _write_table(out_dir / "historical_ml_summary.csv", TRAINING_SAMPLE_FIELDS, historical_summary)
     _write_json(out_dir / "historical_ml_summary.json", historical_summary)
+    ml_sim_comparison, ml_sim_summary, ml_sim_review_queue = _build_ml_sim_outputs(
+        out_dir=out_dir,
+        trade_date=effective_date,
+        pre_rows=pre_rows,
+        entry_rows=entry,
+        entry_actions=entry_actions,
+        risk=v21_risk,
+        exit_block=exit_block,
+        order_intents=order_intents,
+    )
+    _write_table(out_dir / "ml_sim_daily_comparison.csv", ML_SIM_COMPARISON_FIELDS, ml_sim_comparison)
+    _write_json(out_dir / "ml_sim_daily_comparison.json", ml_sim_comparison)
+    _write_json(out_dir / "ml_sim_summary.json", ml_sim_summary)
+    _write_table(out_dir / "ml_sim_review_queue.csv", ML_SIM_COMPARISON_FIELDS, ml_sim_review_queue)
 
     status = {
         "trade_date": effective_date,
@@ -216,10 +271,13 @@ def run_v21_backend_pipeline(
         ],
         "fallback_reason": decision["fallback_reason"],
         "warnings": decision["warnings"],
+        "entry_coverage": entry_coverage,
         "strategy_logic_modified": False,
         "entry_threshold_modified": False,
         "live_auto_order_enabled": False,
         "qmt_execution_available": qmt_available,
+        "funnel_counts": funnel_counts,
+        "ml_sim_summary": ml_sim_summary,
     }
     _write_json(out_dir / "v21_backend_status.json", status)
 
@@ -230,6 +288,11 @@ def run_v21_backend_pipeline(
         "order_intent": order_intents,
         "learning_summary": learning_summary,
         "historical_ml_summary": historical_summary,
+        "ml_sim_daily_comparison": ml_sim_comparison,
+        "ml_sim_summary": ml_sim_summary,
+        "ml_sim_review_queue": ml_sim_review_queue,
+        "entry_diagnostics": entry_diagnostics,
+        "entry_coverage": entry_coverage,
         "status": status,
     }
 
@@ -261,21 +324,116 @@ def _resolve_historical_rows(
     if rows is not None:
         return [dict(row) for row in rows]
     candidates = (
+        out_dir / HISTORICAL_ML_SUGGESTIONS_FILE,
+        out_dir.parent / HISTORICAL_ML_SUGGESTIONS_FILE,
         out_dir / "entry_calibration_suggestions.csv",
         out_dir / "historical_ml_summary.csv",
-        Path("historical_ml") / "output" / "entry_calibration_suggestions.csv",
-        Path("historical_ml") / "artifacts" / "entry_calibration_suggestions.csv",
+        out_dir.parent / "artifacts" / "historical_ml_61" / "entry_calibration_suggestions.csv",
+        out_dir.parent / "historical_ml" / "output" / "entry_calibration_suggestions.csv",
+        out_dir.parent / "historical_ml" / "artifacts" / "entry_calibration_suggestions.csv",
     )
+    seen: set[Path] = set()
     for path in candidates:
-        if path.exists():
+        resolved = path if path.is_absolute() else Path.cwd() / path
+        try:
+            resolved = resolved.resolve()
+        except OSError:
+            pass
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        if resolved.exists():
             try:
-                return pd.read_csv(path, dtype=str).fillna("").to_dict("records")
+                return pd.read_csv(resolved, dtype=str).fillna("").to_dict("records")
             except Exception as exc:  # noqa: BLE001
                 warnings.append(f"historical_ml 摘要读取失败，已降级为空建议：{exc}")
                 fallback_reasons.append("historical_ml 摘要读取失败，总控不中断。")
                 return []
     warnings.append("historical_ml 摘要缺失，已降级为空建议。")
     return []
+
+
+def _build_ml_funnel_counts(
+    *,
+    out_dir: Path,
+    pre_rows: Sequence[Mapping[str, Any]],
+    entry_rows: Sequence[Mapping[str, Any]],
+    entry_actions: Sequence[Mapping[str, Any]],
+    candidate_etfs: Sequence[Mapping[str, Any]],
+    order_intents: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    coverage = _load_ml_coverage_report(out_dir)
+    pre_symbols = {_symbol(row.get("symbol") or row.get("etf_code") or row.get("code")) for row in pre_rows}
+    pre_symbols.discard("")
+    entry_symbols = {_symbol(row.get("symbol") or row.get("etf_code") or row.get("code")) for row in entry_rows}
+    entry_symbols.discard("")
+    entry_pool_count = len(entry_symbols) or len(entry_actions) or len(candidate_etfs)
+    ml_direct_hit = sum(1 for item in entry_actions if _has_ml_score(item))
+    missing_count = max(entry_pool_count - ml_direct_hit, 0)
+    missing_distribution = coverage.get("ml_score_missing_reason_distribution")
+    if not isinstance(missing_distribution, Mapping) or not missing_distribution:
+        missing_distribution = {"missing_ml_score": missing_count} if missing_count else {"none": 0}
+
+    return {
+        "all_market_valid_etf_count": _count_from_coverage(coverage, "all_market_valid_etf_count", len(pre_symbols) or entry_pool_count),
+        "historical_price_covered_etf_count": _count_from_coverage(coverage, "historical_price_covered_etf_count", ml_direct_hit),
+        "ml_feature_ready_etf_count": _count_from_coverage(coverage, "ml_feature_ready_etf_count", ml_direct_hit),
+        "ml_scored_etf_count": _count_from_coverage(coverage, "ml_scored_etf_count", ml_direct_hit),
+        "ml_score_direct_hit_count": _count_from_coverage(coverage, "ml_score_direct_hit_count", ml_direct_hit),
+        "ml_score_missing_count": _count_from_coverage(coverage, "ml_score_missing_count", missing_count),
+        "ml_score_missing_reason_distribution": {str(k): int(_number(v, 0)) for k, v in dict(missing_distribution).items()},
+        "broad_recall_pool_count": _count_from_coverage(coverage, "broad_recall_pool_count", sum(1 for row in pre_rows if _bool(row.get("broad_recall_selected")))),
+        "ml_recovered_pool_count": _count_from_coverage(
+            coverage,
+            "ml_recovered_pool_count",
+            sum(1 for row in pre_rows if _bool(row.get("ml_recovered")))
+            + sum(1 for row in entry_actions if str(row.get("ml_adjustment") or "").upper() == "ML_RECOVERED"),
+        ),
+        "entry_candidate_pool_count": _count_from_coverage(coverage, "entry_candidate_pool_count", entry_pool_count),
+        "order_intent_count": _count_from_coverage(coverage, "order_intent_count", len(order_intents)),
+    }
+
+
+def _load_ml_coverage_report(out_dir: Path) -> dict[str, Any]:
+    candidates = (
+        out_dir / "historical_ml_universe_coverage_report.json",
+        out_dir / HISTORICAL_ML_COVERAGE_REPORT_FILE,
+        out_dir.parent / HISTORICAL_ML_COVERAGE_REPORT_FILE,
+    )
+    seen: set[Path] = set()
+    for path in candidates:
+        resolved = path if path.is_absolute() else Path.cwd() / path
+        try:
+            resolved = resolved.resolve()
+        except OSError:
+            pass
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        if not resolved.exists():
+            continue
+        try:
+            payload = json.loads(resolved.read_text(encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            continue
+        if isinstance(payload, Mapping):
+            return dict(payload)
+    return {}
+
+
+def _count_from_coverage(coverage: Mapping[str, Any], key: str, default: int) -> int:
+    value = coverage.get(key)
+    if value in (None, ""):
+        return int(default)
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return int(default)
+
+
+def _has_ml_score(item: Mapping[str, Any]) -> bool:
+    value = item.get("ml_score")
+    return value not in (None, "") and str(value).strip() != ""
 
 
 def _resolve_holdings(
@@ -373,25 +531,63 @@ def _build_entry_actions(
     entry_rows: Sequence[Mapping[str, Any]],
     selected_symbols: set[str],
     risk: V21RiskGate,
-    high_priority_exit: bool,
+    exit_block: Mapping[str, Any],
 ) -> list[dict[str, Any]]:
     actions: list[dict[str, Any]] = []
     for row in entry_rows:
         symbol = _symbol(row.get("symbol") or row.get("etf_code") or row.get("code"))
         action = str(row.get("buy_action") or row.get("entry_action") or row.get("action") or "")
         target_weight = _ratio(row.get("position_size") or row.get("target_weight") or row.get("suggested_weight"))
-        intended_buy = symbol in selected_symbols and _is_buy_action(action) and target_weight > 0
-        actionable = intended_buy
-        block_reason = ""
-        if intended_buy and risk.freeze_entry:
+        raw_action = _entry_intent_label(row.get("raw_entry_action") or action)
+        rule_action = _entry_intent_label(row.get("rule_action") or raw_action)
+        ml_adjusted_action = _entry_intent_label(row.get("ml_adjusted_action") or row.get("final_buy_action") or rule_action)
+        ml_decision_mode = str(row.get("ml_decision_mode") or "shadow").strip().lower()
+        raw_target_weight = _ratio(row.get("raw_entry_target_weight") if row.get("raw_entry_target_weight") not in (None, "") else target_weight)
+        raw_confidence = _number(row.get("raw_entry_confidence"), _number(row.get("confidence"), ""))
+        raw_reason = str(row.get("raw_entry_reason") or row.get("entry_reason") or row.get("explain") or "")
+        raw_block_reason = str(row.get("raw_entry_block_reason") or (raw_reason if raw_action not in {"BUY", "PROBE"} else ""))
+        row_final_action = _entry_intent_label(row.get("final_buy_action") or ml_adjusted_action or raw_action)
+        row_final_weight = _ratio(row.get("final_target_weight") if row.get("final_target_weight") not in (None, "") else target_weight)
+        active_sim_buy = ml_decision_mode == "active_sim" and row_final_action in {"BUY", "PROBE"} and row_final_weight > 0
+        intended_buy = (symbol in selected_symbols and raw_action in {"BUY", "PROBE"} and raw_target_weight > 0) or active_sim_buy
+        risk_gate_blocked = _bool(row.get("risk_gate_blocked")) or (
+            intended_buy and (bool(risk.freeze_entry) or bool(risk.manual_takeover_required))
+        )
+        exit_priority_blocked = intended_buy and _bool(exit_block.get("exit_priority_blocked"))
+        final_block_reason = str(row.get("final_block_reason") or row.get("block_reason") or "")
+        control_override_reason = str(row.get("control_override_reason") or "")
+        if risk_gate_blocked:
+            final_block_reason = final_block_reason or (
+                "RiskGate 要求人工接管，entry 不进入实际买入。"
+                if risk.manual_takeover_required
+                else "RiskGate 冻结买入，entry 不进入实际买入。"
+            )
+            control_override_reason = control_override_reason or final_block_reason
+        elif exit_priority_blocked:
+            exit_reason = str(exit_block.get("exit_block_reason") or "exit 优先处理，暂停新增买入")
+            release_condition = str(exit_block.get("exit_block_release_condition") or "")
+            final_block_reason = final_block_reason or (
+                f"{exit_reason}；解除条件：{release_condition}" if release_condition else exit_reason
+            )
+            control_override_reason = control_override_reason or final_block_reason
+
+        if intended_buy and (risk_gate_blocked or exit_priority_blocked):
+            final_action = "BLOCKED"
+            final_target_weight = 0.0
             actionable = False
-            block_reason = "RiskGate 冻结买入，entry 不进入实际买入。"
-        elif intended_buy and risk.manual_takeover_required:
+        elif intended_buy:
+            final_action = row_final_action
+            if final_action not in {"BUY", "PROBE"}:
+                if not (ml_decision_mode == "active_sim" and str(row.get("ml_adjustment") or "").startswith("ML_DOWNGRADED")):
+                    final_action = raw_action
+            final_target_weight = row_final_weight
+            actionable = final_action in {"BUY", "PROBE"} and final_target_weight > 0
+        else:
+            final_action = row_final_action
+            if final_action in {"BUY", "PROBE", "BLOCKED"} and not final_block_reason:
+                final_action = raw_action if raw_action in {"OBSERVE", "REJECT", "AVOID"} else "OBSERVE"
+            final_target_weight = 0.0
             actionable = False
-            block_reason = "RiskGate 要求人工接管，entry 不进入自动买入。"
-        elif intended_buy and high_priority_exit:
-            actionable = False
-            block_reason = "exit 清仓或风险退出优先，暂停新增买入。"
         actions.append(
             {
                 "etf_code": symbol,
@@ -399,14 +595,41 @@ def _build_entry_actions(
                 "entry_action": action,
                 "target_weight": target_weight,
                 "confidence": _number(row.get("confidence"), ""),
+                "raw_entry_action": raw_action,
+                "raw_entry_target_weight": raw_target_weight,
+                "raw_entry_confidence": raw_confidence,
+                "raw_entry_reason": raw_reason,
+                "raw_entry_block_reason": raw_block_reason,
+                "rule_action": rule_action,
+                "ml_adjusted_action": ml_adjusted_action,
+                "final_buy_action": final_action,
+                "final_target_weight": final_target_weight,
+                "final_block_reason": final_block_reason,
+                "control_override_reason": control_override_reason,
+                "active_exit_count": int(_number(exit_block.get("active_exit_count"), 0)),
+                "actual_position_exit_count": int(_number(exit_block.get("actual_position_exit_count"), 0)),
+                "exit_priority_blocked": exit_priority_blocked,
+                "exit_block_reason": str(exit_block.get("exit_block_reason") or ""),
+                "exit_block_release_condition": str(exit_block.get("exit_block_release_condition") or ""),
+                "blocked_by_exit_symbols": list(exit_block.get("blocked_by_exit_symbols") or []),
+                "has_real_position_to_exit": bool(exit_block.get("has_real_position_to_exit")),
+                "exit_action_type": str(exit_block.get("exit_action_type") or ""),
+                "risk_gate_blocked": risk_gate_blocked,
+                "ml_score": row.get("ml_score", ""),
+                "p_good_entry": row.get("p_good_entry", ""),
+                "p_bad_entry": row.get("p_bad_entry", ""),
                 "ml_entry_advice": str(row.get("ml_entry_advice") or "无ML建议"),
                 "ml_confidence": _number(row.get("ml_confidence"), 0),
                 "ml_reason": str(row.get("ml_reason") or "未找到历史校准建议，维持原 entry 判断。"),
                 "ml_action_suggestion": str(row.get("ml_action_suggestion") or "NO_ML"),
+                "ml_decision_mode": ml_decision_mode,
+                "ml_adjustment": str(row.get("ml_adjustment") or ""),
+                "ml_adjustment_reason_cn": str(row.get("ml_adjustment_reason_cn") or ""),
                 "ml_observation_notice": ML_OBSERVATION_NOTICE,
+                "pre_selected": symbol in selected_symbols,
                 "intended_buy": intended_buy,
                 "actual_buy": actionable,
-                "block_reason": block_reason,
+                "block_reason": final_block_reason,
                 "explain": str(row.get("entry_reason") or row.get("explain") or "entry 输出无额外说明。"),
                 "source_signal": str(row.get("source_file") or "entry_signal.csv"),
             }
@@ -447,24 +670,275 @@ def _ml_entry_advice_summary(entry_rows: Sequence[Mapping[str, Any]], selected_s
     return " | ".join(items) if items else f"无ML建议（{ML_OBSERVATION_NOTICE}）"
 
 
-def _build_exit_actions(exit_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+def _build_ml_sim_outputs(
+    *,
+    out_dir: Path,
+    trade_date: str,
+    pre_rows: Sequence[Mapping[str, Any]],
+    entry_rows: Sequence[Mapping[str, Any]],
+    entry_actions: Sequence[Mapping[str, Any]],
+    risk: V21RiskGate,
+    exit_block: Mapping[str, Any],
+    order_intents: Sequence[Mapping[str, Any]],
+) -> tuple[list[dict[str, Any]], dict[str, Any], list[dict[str, Any]]]:
+    pre_by_symbol = {_symbol(row.get("symbol") or row.get("etf_code") or row.get("code")): row for row in pre_rows}
+    action_by_symbol = {str(row.get("etf_code") or ""): row for row in entry_actions}
+    score_by_symbol = _load_ml_entry_scores(out_dir, trade_date)
+    legacy_order_symbols = {
+        str(row.get("etf_code") or "")
+        for row in order_intents
+        if str(row.get("side") or "").upper() == "BUY" and str(row.get("action") or "").upper() != "BLOCKED_BUY"
+    }
+    risk_level = str(risk.risk_level or "R0").upper()
+    global_risk_block = risk_level in RISK_FREEZE_LEVELS or bool(risk.freeze_entry) or bool(risk.manual_takeover_required)
+    global_exit_block = _bool(exit_block.get("exit_priority_blocked"))
+
+    rows: list[dict[str, Any]] = []
+    for entry_row in entry_rows:
+        symbol = _symbol(entry_row.get("symbol") or entry_row.get("etf_code") or entry_row.get("code"))
+        if not symbol:
+            continue
+        pre_row = pre_by_symbol.get(symbol, {})
+        action_row = action_by_symbol.get(symbol, {})
+        score_row = score_by_symbol.get(symbol, {})
+        merged = {**score_row, **dict(entry_row), **action_row}
+        legacy_action = _entry_intent_label(
+            entry_row.get("rule_action")
+            or entry_row.get("raw_entry_action")
+            or entry_row.get("buy_action")
+            or entry_row.get("entry_action")
+        )
+        official_final = _entry_intent_label(action_row.get("final_buy_action") or entry_row.get("final_buy_action") or legacy_action)
+        ml_sim_action, ml_reason = _ml_sim_action(legacy_action, merged)
+        risk_blocked = _bool(action_row.get("risk_gate_blocked")) or global_risk_block
+        exit_blocked = _bool(action_row.get("exit_priority_blocked")) or global_exit_block
+        adjustment_type = _ml_sim_adjustment_type(
+            legacy_action=legacy_action,
+            ml_sim_action=ml_sim_action,
+            entry_row=merged,
+            pre_selected=_truthy(pre_row.get("selected")) or _bool(action_row.get("pre_selected")),
+            risk_blocked=risk_blocked,
+            exit_blocked=exit_blocked,
+        )
+        reason = str(merged.get("ml_adjustment_reason_cn") or merged.get("ml_reason_cn") or merged.get("ml_reason") or ml_reason or ML_SIM_NOTICE)
+        if adjustment_type == "ML_CONFLICT_WITH_RISK":
+            reason = f"{ML_SIM_NOTICE} ML_SIM wants a buy/probe candidate, but RiskGate or exit priority blocks it. {reason}"
+        elif adjustment_type == "ML_MISSING_SCORE":
+            reason = f"{ML_SIM_NOTICE} No usable ml_entry_scores row; legacy_v21 remains unchanged."
+        else:
+            reason = f"{ML_SIM_NOTICE} {reason}"
+        row = {
+            "trade_date": trade_date,
+            "code": symbol,
+            "name": str(merged.get("etf_name") or merged.get("name") or pre_row.get("name") or ""),
+            "sector_level1": str(pre_row.get("sector_level1") or pre_row.get("sector_l1") or pre_row.get("sector") or ""),
+            "sector_level2": str(pre_row.get("sector_level2") or pre_row.get("sector") or ""),
+            "legacy_action": legacy_action,
+            "ml_sim_action": ml_sim_action,
+            "final_action": official_final,
+            "ml_score": merged.get("ml_score", ""),
+            "p_good_entry": merged.get("p_good_entry", ""),
+            "p_bad_entry": merged.get("p_bad_entry", ""),
+            "ml_adjustment_type": adjustment_type,
+            "ml_adjustment_reason_cn": reason,
+            "risk_level": risk_level,
+            "risk_blocked": risk_blocked,
+            "exit_blocked": exit_blocked,
+            "order_intent_in_legacy": symbol in legacy_order_symbols,
+            "order_intent_in_ml_sim": _ml_sim_order_intent_flag(ml_sim_action, risk_blocked, exit_blocked),
+            "review_priority": _ml_sim_review_priority(adjustment_type, merged),
+            "future_return_1d": "",
+            "future_return_3d": "",
+            "future_return_5d": "",
+            "future_return_10d": "",
+            "future_max_drawdown_10d": "",
+            "outperform_market_10d": "",
+            "outperform_sector_10d": "",
+        }
+        rows.append(row)
+
+    rows = sorted(rows, key=lambda item: (str(item["review_priority"]), -_number(item.get("ml_score"), -999999), str(item["code"])))
+    review_queue = [
+        row
+        for row in rows
+        if row["ml_adjustment_type"] not in {"ML_UNCHANGED"}
+        or row["review_priority"] in {"P0", "P1"}
+    ]
+    summary = _ml_sim_summary(trade_date, rows, review_queue)
+    return rows, summary, review_queue
+
+
+def _load_ml_entry_scores(out_dir: Path, trade_date: str) -> dict[str, dict[str, Any]]:
+    candidates = (
+        out_dir / "ml_entry_scores.csv",
+        out_dir / HISTORICAL_ML_ENTRY_SCORES_FILE,
+        out_dir.parent / HISTORICAL_ML_ENTRY_SCORES_FILE,
+    )
+    seen: set[Path] = set()
+    for path in candidates:
+        resolved = path if path.is_absolute() else Path.cwd() / path
+        try:
+            resolved = resolved.resolve()
+        except OSError:
+            pass
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        if not resolved.exists():
+            continue
+        try:
+            frame = pd.read_csv(resolved, dtype=str).fillna("")
+        except Exception:
+            continue
+        if "trade_date" in frame.columns:
+            dated = frame.loc[frame["trade_date"].astype(str).str.slice(0, 10).eq(str(trade_date)[:10])]
+            if not dated.empty:
+                frame = dated
+        return {
+            _symbol(row.get("code") or row.get("etf_code") or row.get("symbol")): dict(row)
+            for row in frame.to_dict("records")
+            if _symbol(row.get("code") or row.get("etf_code") or row.get("symbol"))
+        }
+    return {}
+
+
+def _ml_sim_action(legacy_action: str, row: Mapping[str, Any]) -> tuple[str, str]:
+    suggestion = str(row.get("ml_action_suggestion") or "NO_ML").strip().upper()
+    if suggestion == "UPGRADE_PROBE" and legacy_action not in {"BUY", "PROBE"}:
+        return "PROBE", "ML score suggests recovering this ETF into a simulation-only probe candidate."
+    if suggestion in {"DOWNGRADE_WATCH", "WAIT_PULLBACK"} and legacy_action in {"BUY", "PROBE"}:
+        return "OBSERVE", "ML score suggests downgrading a legacy buy/probe to observation in simulation."
+    if suggestion == "FORBID_CHASE" and legacy_action in {"BUY", "PROBE"}:
+        return "AVOID", "ML score warns against chasing this legacy buy/probe in simulation."
+    return legacy_action, "ML_SIM keeps the legacy_v21 action."
+
+
+def _ml_sim_adjustment_type(
+    *,
+    legacy_action: str,
+    ml_sim_action: str,
+    entry_row: Mapping[str, Any],
+    pre_selected: bool,
+    risk_blocked: bool,
+    exit_blocked: bool,
+) -> str:
+    if ml_sim_action in {"BUY", "PROBE"} and (risk_blocked or exit_blocked):
+        return "ML_CONFLICT_WITH_RISK"
+    if not _has_ml_score(entry_row):
+        return "ML_MISSING_SCORE"
+    suggestion = str(entry_row.get("ml_action_suggestion") or "").strip().upper()
+    if suggestion == "UPGRADE_PROBE" and legacy_action not in {"BUY", "PROBE"}:
+        return "ML_RECOVERED" if pre_selected else "ML_UPGRADED_TO_BUY_CANDIDATE"
+    if suggestion == "FORBID_CHASE" and legacy_action in {"BUY", "PROBE"}:
+        return "ML_FILTERED_BAD_ENTRY"
+    if suggestion in {"DOWNGRADE_WATCH", "WAIT_PULLBACK"} and legacy_action in {"BUY", "PROBE"}:
+        return "ML_DOWNGRADED"
+    if ml_sim_action != legacy_action:
+        return "ML_DOWNGRADED" if legacy_action in {"BUY", "PROBE"} else "ML_RECOVERED"
+    return "ML_UNCHANGED"
+
+
+def _ml_sim_order_intent_flag(action: str, risk_blocked: bool, exit_blocked: bool) -> bool:
+    return action in {"BUY", "PROBE"} and not risk_blocked and not exit_blocked
+
+
+def _ml_sim_review_priority(adjustment_type: str, row: Mapping[str, Any]) -> str:
+    if adjustment_type == "ML_CONFLICT_WITH_RISK":
+        return "P0"
+    if adjustment_type in {"ML_RECOVERED", "ML_UPGRADED_TO_BUY_CANDIDATE", "ML_DOWNGRADED", "ML_FILTERED_BAD_ENTRY"}:
+        return "P1"
+    if adjustment_type == "ML_MISSING_SCORE":
+        return "P2"
+    score = _number(row.get("ml_score"), 0.0)
+    return "P2" if abs(score) >= 40 else "P3"
+
+
+def _ml_sim_summary(trade_date: str, rows: Sequence[Mapping[str, Any]], review_queue: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    counts: dict[str, int] = {}
+    for row in rows:
+        key = str(row.get("ml_adjustment_type") or "ML_UNCHANGED")
+        counts[key] = counts.get(key, 0) + 1
+    recovered = [
+        dict(row)
+        for row in sorted(rows, key=lambda item: _number(item.get("ml_score"), -999999), reverse=True)
+        if row.get("ml_adjustment_type") in {"ML_RECOVERED", "ML_UPGRADED_TO_BUY_CANDIDATE"}
+    ][:10]
+    downgraded = [
+        dict(row)
+        for row in sorted(rows, key=lambda item: _number(item.get("p_bad_entry"), 0), reverse=True)
+        if row.get("ml_adjustment_type") in {"ML_DOWNGRADED", "ML_FILTERED_BAD_ENTRY"}
+    ][:10]
+    return {
+        "trade_date": trade_date,
+        "mode": "V2.1_ML_SIM",
+        "observation_notice": ML_SIM_NOTICE,
+        "total_rows": len(rows),
+        "review_queue_count": len(review_queue),
+        "ml_recovered_count": counts.get("ML_RECOVERED", 0) + counts.get("ML_UPGRADED_TO_BUY_CANDIDATE", 0),
+        "ml_downgraded_count": counts.get("ML_DOWNGRADED", 0) + counts.get("ML_FILTERED_BAD_ENTRY", 0),
+        "adjustment_counts": counts,
+        "top_ml_recovered": recovered,
+        "top_ml_downgraded": downgraded,
+        "official_decision_policy": "legacy_v21/current control_center safety remains final; ML_SIM does not trigger QMT.",
+    }
+
+
+def _build_exit_actions(exit_rows: Sequence[Mapping[str, Any]], portfolio: Sequence[PortfolioSnapshot]) -> list[dict[str, Any]]:
+    portfolio_by_symbol = {item.etf_code: item for item in portfolio}
     actions: list[dict[str, Any]] = []
     for row in exit_rows:
+        symbol = _symbol(row.get("symbol") or row.get("etf_code") or row.get("code"))
+        holding = portfolio_by_symbol.get(symbol)
         action = str(row.get("sell_action") or row.get("exit_action") or row.get("action") or "")
         reduce_ratio = _ratio(row.get("reduce_ratio") or row.get("delta_weight"))
-        actionable = _is_exit_action(action, reduce_ratio)
+        active_exit = _is_exit_action(action, reduce_ratio)
+        high_priority_exit = _is_high_priority_exit(row)
+        has_real_position = _portfolio_has_real_position(holding)
+        actionable = active_exit and has_real_position
+        actual_position_exit = actionable
+        priority_blocking = actual_position_exit and high_priority_exit
+        explain = str(row.get("exit_reason") or row.get("explain") or "exit 输出无额外说明。")
+        action_type = _exit_action_type(action, explain, reduce_ratio)
         actions.append(
             {
-                "etf_code": _symbol(row.get("symbol") or row.get("etf_code") or row.get("code")),
+                "etf_code": symbol,
                 "etf_name": str(row.get("name") or row.get("etf_name") or ""),
                 "exit_action": action,
+                "exit_action_type": action_type,
                 "reduce_ratio": reduce_ratio,
+                "active_exit": active_exit,
+                "high_priority_exit": high_priority_exit,
+                "has_real_position_to_exit": has_real_position,
+                "actual_position_exit": actual_position_exit,
+                "priority_blocking_exit": priority_blocking,
                 "actual_exit": actionable,
-                "explain": str(row.get("exit_reason") or row.get("explain") or "exit 输出无额外说明。"),
+                "exit_block_reason": _exit_item_reason(symbol, row, action_type, explain) if priority_blocking else "",
+                "exit_block_release_condition": _exit_release_condition(symbol) if priority_blocking else "",
+                "explain": explain,
                 "source_signal": str(row.get("source_file") or "exit_signal.csv"),
             }
         )
     return actions
+
+
+def _build_exit_priority_block(exit_actions: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    active = [item for item in exit_actions if _bool(item.get("active_exit"))]
+    actual = [item for item in active if _bool(item.get("actual_position_exit"))]
+    blocking = [item for item in actual if _bool(item.get("priority_blocking_exit"))]
+    symbols = [str(item.get("etf_code") or "") for item in blocking if str(item.get("etf_code") or "")]
+    reasons = [str(item.get("exit_block_reason") or "") for item in blocking if str(item.get("exit_block_reason") or "")]
+    releases = [str(item.get("exit_block_release_condition") or "") for item in blocking if str(item.get("exit_block_release_condition") or "")]
+    action_types = _unique(item.get("exit_action_type") for item in blocking)
+    return {
+        "active_exit_count": len(active),
+        "actual_position_exit_count": len(actual),
+        "exit_priority_blocked": bool(blocking),
+        "exit_block_reason": "；".join(reasons),
+        "exit_block_release_condition": "；".join(releases),
+        "blocked_by_exit_symbols": symbols,
+        "has_real_position_to_exit": bool(actual),
+        "exit_action_type": " | ".join(action_types),
+    }
 
 
 def _build_portfolio_snapshot(
@@ -597,7 +1071,7 @@ def _build_order_intents(
         symbol = str(entry.get("etf_code") or "")
         holding = portfolio_by_symbol.get(symbol)
         current_weight = holding.current_weight if holding else 0.0
-        target_weight = _ratio(entry.get("target_weight"))
+        target_weight = _ratio(entry.get("final_target_weight") if entry.get("final_target_weight") not in (None, "") else entry.get("target_weight"))
         passed = bool(entry.get("actual_buy")) and not risk_block
         block_reason = str(entry.get("block_reason") or risk_block or "")
         if not entry.get("intended_buy") and not passed:
@@ -697,9 +1171,9 @@ def _historical_sample(row: Mapping[str, Any]) -> TrainingSample:
         exit_action=str(row.get("exit_action") or ""),
         confidence=row.get("confidence") or "",
         ml_entry_advice=str(row.get("ml_entry_advice") or "无ML建议"),
-        ml_confidence=row.get("ml_confidence") or 0,
-        ml_reason=str(row.get("ml_reason") or "未找到历史校准建议，维持原 entry 判断。"),
-        ml_action_suggestion=str(row.get("ml_action_suggestion") or "NO_ML"),
+        ml_confidence=row.get("ml_confidence") or row.get("confidence") or 0,
+        ml_reason=str(row.get("ml_reason") or _historical_ml_reason(row)),
+        ml_action_suggestion=str(row.get("ml_action_suggestion") or _historical_ml_action(row)),
         trend_maturity=str(row.get("trend_maturity") or ""),
         entry_quality=str(row.get("entry_quality") or row.get("parameter_area") or ""),
         post_924_regime=_post_924(row.get("trade_date") or row.get("signal_date")),
@@ -712,6 +1186,18 @@ def _historical_sample(row: Mapping[str, Any]) -> TrainingSample:
         calibration_suggestion=str(row.get("calibration_suggestion") or row.get("suggested_action") or row.get("notes") or ""),
         explain=str(row.get("explain") or row.get("notes") or row.get("suggestion_id") or ""),
     )
+
+
+def _historical_ml_reason(row: Mapping[str, Any]) -> str:
+    if row.get("parameter_area") or row.get("suggested_action"):
+        return "historical_ml 输出参数级校准建议；总控只读汇总，不写回 entry 参数，不参与当日交易裁决。"
+    return "未找到历史校准建议，维持原 entry 判断。"
+
+
+def _historical_ml_action(row: Mapping[str, Any]) -> str:
+    if row.get("parameter_area") or row.get("suggested_action"):
+        return "KEEP_ORIGINAL"
+    return "NO_ML"
 
 
 def _write_table(path: Path, fields: Sequence[str], rows: Sequence[Mapping[str, Any]]) -> None:
@@ -760,7 +1246,7 @@ def _decision_explain(
     candidates: Sequence[Mapping[str, Any]],
     buys: Sequence[Mapping[str, Any]],
     exits: Sequence[Mapping[str, Any]],
-    high_priority_exit: bool,
+    exit_block: Mapping[str, Any],
 ) -> str:
     parts = [
         f"今日市场状态为{market_state or '未知'}。",
@@ -768,8 +1254,8 @@ def _decision_explain(
     ]
     if risk.freeze_entry:
         parts.append("风险门控已冻结买入，entry 不得进入实际买入。")
-    elif high_priority_exit:
-        parts.append("exit 出现清仓或风险退出建议，总控优先处理退出并暂停新增买入。")
+    elif _bool(exit_block.get("exit_priority_blocked")):
+        parts.append(f"{exit_block.get('exit_block_reason')}解除条件：{exit_block.get('exit_block_release_condition')}。")
     else:
         parts.append("风险门控未冻结买入，entry 可在候选池内形成订单草稿。")
     parts.append(f"候选 ETF 数量为{len(candidates)}，实际买入建议数量为{len(buys)}，退出动作数量为{len([item for item in exits if item.get('actual_exit')])}。")
@@ -785,13 +1271,33 @@ def _candidate_payload(row: Mapping[str, Any], entry_row: Mapping[str, Any] | No
         "sector": str(row.get("sector") or ""),
         "rank": row.get("rank") or "",
         "score": row.get("score") or "",
+        "candidate_pool_flag": _bool(row.get("candidate_pool_flag")) if "candidate_pool_flag" in row else _truthy(row.get("selected")),
+        "candidate_source": str(row.get("candidate_source") or ("LEGACY_TOP5" if _truthy(row.get("selected")) else "")),
+        "legacy_selected": _bool(row.get("legacy_selected")) if "legacy_selected" in row else _truthy(row.get("selected")),
+        "broad_recall_selected": _bool(row.get("broad_recall_selected")),
+        "ml_recovered": _bool(row.get("ml_recovered")),
+        "candidate_pool_rank": row.get("candidate_pool_rank") or "",
         "ml_entry_advice": str(entry_row.get("ml_entry_advice") or "无ML建议"),
         "ml_confidence": _number(entry_row.get("ml_confidence"), 0),
         "ml_reason": str(entry_row.get("ml_reason") or "未找到历史校准建议，维持原 entry 判断。"),
         "ml_action_suggestion": str(entry_row.get("ml_action_suggestion") or "NO_ML"),
+        "ml_score": entry_row.get("ml_score", ""),
+        "p_good_entry": entry_row.get("p_good_entry", ""),
+        "p_bad_entry": entry_row.get("p_bad_entry", ""),
+        "ml_decision_mode": str(entry_row.get("ml_decision_mode") or "shadow"),
+        "ml_adjustment": str(entry_row.get("ml_adjustment") or ""),
+        "ml_adjustment_reason_cn": str(entry_row.get("ml_adjustment_reason_cn") or ""),
+        "rule_action": _entry_intent_label(entry_row.get("rule_action") or entry_row.get("raw_entry_action")),
+        "ml_adjusted_action": _entry_intent_label(entry_row.get("ml_adjusted_action") or entry_row.get("final_buy_action")),
         "ml_observation_notice": ML_OBSERVATION_NOTICE,
         "explain": str(row.get("reason") or row.get("explain") or ""),
     }
+
+
+def _candidate_pool_rows(pre_rows: Sequence[Mapping[str, Any]]) -> list[Mapping[str, Any]]:
+    if any("candidate_pool_flag" in row for row in pre_rows):
+        return [row for row in pre_rows if _bool(row.get("candidate_pool_flag"))]
+    return [row for row in pre_rows if _truthy(row.get("selected"))]
 
 
 def _is_buy_action(action: str) -> bool:
@@ -802,6 +1308,54 @@ def _is_buy_action(action: str) -> bool:
     if any(token in text for token in blocked):
         return False
     return any(token in text for token in ("买入", "加仓", "buy", "probe", "standard", "add"))
+
+
+def _entry_intent_label(value: Any) -> str:
+    text = str(value or "").strip()
+    upper = text.upper()
+    lower = text.lower()
+    if upper in {"BUY", "PROBE", "OBSERVE", "REJECT", "AVOID", "BLOCKED"}:
+        return upper
+    if "avoid" in lower:
+        return "AVOID"
+    if any(token in text for token in ("冻结", "阻断", "暂停")) or "blocked" in lower:
+        return "BLOCKED"
+    if "禁止" in text or "forbid" in lower or "reject" in lower:
+        return "REJECT"
+    if "试探" in text or "probe" in lower:
+        return "PROBE"
+    if any(token in text for token in ("标准买入", "加强买入", "加仓", "买入")) or any(
+        token in lower for token in ("standard", "add", "buy")
+    ):
+        return "BUY"
+    return "OBSERVE"
+
+
+def _portfolio_has_real_position(holding: PortfolioSnapshot | None) -> bool:
+    if holding is None:
+        return False
+    return _number(holding.current_weight, 0.0) > 0
+
+
+def _exit_action_type(action: str, reason: str, reduce_ratio: float) -> str:
+    text = f"{action} {reason}".lower()
+    if any(token in text for token in ("清仓", "clear")) or reduce_ratio >= 0.999:
+        return "清仓退出"
+    if any(token in text for token in ("风险退出", "止损", "risk", "stop")):
+        return "风险退出"
+    if any(token in text for token in ("减仓", "reduce")) or reduce_ratio > 0:
+        return "减仓退出"
+    return "退出观察"
+
+
+def _exit_item_reason(symbol: str, row: Mapping[str, Any], action_type: str, reason: str) -> str:
+    name = str(row.get("name") or row.get("etf_name") or "")
+    label = f"{symbol} {name}".strip()
+    return f"exit 优先处理：{label} 存在实际持仓需要{action_type}，原因：{reason}"
+
+
+def _exit_release_condition(symbol: str) -> str:
+    return f"{symbol} 持仓卖出完成且持仓数量/权重归零，或下一次 exit 不再给出清仓/风险退出信号后解除"
 
 
 def _is_exit_action(action: str, reduce_ratio: float = 0.0) -> bool:

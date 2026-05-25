@@ -1,0 +1,143 @@
+{
+  "report_name": "baseline_v21_legacy_report",
+  "baseline": "V2.1 legacy",
+  "generated_date": "2026-05-24",
+  "owner": "aetfv2_08_control_center",
+  "collaborators": [
+    "aetfv2_01_pre_selection",
+    "aetfv2_02_entry",
+    "aetfv2_05_historical_ml"
+  ],
+  "guardrails": {
+    "changed_trading_logic": false,
+    "changed_buy_probe_thresholds": false,
+    "refreshed_market_data": false,
+    "triggered_qmt": false,
+    "wrote_output": false,
+    "changed_final_buy_action": false
+  },
+  "source_files": {
+    "pre_selection_result_csv": {
+      "path": "output/pre_selection_result.csv",
+      "rows": 1160,
+      "sha256": "F2982BA36C013D9F7B403F523F989E88FA5583EFB0E0C00E15B713767A12B44A"
+    },
+    "entry_signal_csv": {
+      "path": "output/entry_signal.csv",
+      "rows": 1160,
+      "sha256": "DD7CD3A52D9DDD5451A32A01306512990888B5F00C50C7B7DEEFD85BF92090E3"
+    },
+    "historical_ml_summary_json": {
+      "path": "output/historical_ml_summary.json",
+      "rows": 9,
+      "parse": "ok_utf8",
+      "sha256": "FEEBA8FE364BA113E1A27D8E1D03673C20C86A2BBB42814810E648DDB349B2E5"
+    },
+    "etf_universe_snapshot_csv": {
+      "path": "output/etf_universe_snapshot.csv",
+      "rows": 1458,
+      "usage": "read-only auxiliary count for market_etf_count"
+    }
+  },
+  "metrics": {
+    "market_etf_count": 1458,
+    "effective_sample_count": 1160,
+    "pre_selection_selected_count": 5,
+    "entry_probe_count": 5,
+    "entry_observe_count": 1155,
+    "final_probe_count": 5,
+    "final_blocked_count": 0,
+    "no_ml_count": 0,
+    "historical_ml_summary_count": 9,
+    "historical_ml_keep_original_count": 9,
+    "entry_keep_original_count": 1160
+  },
+  "selected_probe_rows": [
+    {
+      "symbol": "560780",
+      "name": "半导体设备ETF广发",
+      "rank": 1,
+      "score": 41.9116,
+      "final_buy_action": "PROBE",
+      "final_target_weight": 0.3
+    },
+    {
+      "symbol": "562590",
+      "name": "半导体设备ETF华夏",
+      "rank": 2,
+      "score": 41.8598,
+      "final_buy_action": "PROBE",
+      "final_target_weight": 0.3
+    },
+    {
+      "symbol": "159558",
+      "name": "半导体设备ETF易方达",
+      "rank": 3,
+      "score": 41.6865,
+      "final_buy_action": "PROBE",
+      "final_target_weight": 0.3
+    },
+    {
+      "symbol": "588810",
+      "name": "科创芯片ETF富国",
+      "rank": 8,
+      "score": 36.6527,
+      "final_buy_action": "PROBE",
+      "final_target_weight": 0.3
+    },
+    {
+      "symbol": "588990",
+      "name": "科创芯片ETF博时",
+      "rank": 9,
+      "score": 36.4486,
+      "final_buy_action": "PROBE",
+      "final_target_weight": 0.3
+    }
+  ],
+  "pre_selection_cap_evidence": {
+    "market_state": "进攻",
+    "max_candidates": 5,
+    "candidate_limit": 5,
+    "selected_count_equals_candidate_limit": true,
+    "right_side_eligible_but_truncated_count": 131,
+    "truncated_reason": "未入选：满足右侧条件，但综合排名未进入前5。",
+    "code_evidence": [
+      "signal/pre_selection/engine.py:42 max_candidates = 5",
+      "signal/pre_selection/engine.py:423-428 selected_symbols are truncated by candidate_limit",
+      "signal/pre_selection/engine.py:440-445 attack market returns max_candidates"
+    ],
+    "conclusion": "selected=5 is caused by the pre_selection cap."
+  },
+  "historical_ml_integration": {
+    "code_level_connected": true,
+    "read_only_bypass": true,
+    "decision_binding": false,
+    "parameter_level_only_currently": true,
+    "entry_ml_action_distribution": {
+      "KEEP_ORIGINAL": 1160,
+      "NO_ML": 0
+    },
+    "historical_summary_action_distribution": {
+      "KEEP_ORIGINAL": 9
+    },
+    "code_evidence": [
+      "signal/entry/engine.py:87-103 reads historical_ml suggestions",
+      "signal/entry/engine.py:435-438 parameter-level suggestions are observe only and KEEP_ORIGINAL",
+      "signal/v21_orchestrator.py:137-140 keeps ML as observation summary",
+      "signal/v21_orchestrator.py:426-457 final buy action is controlled by selected_symbols, raw action, risk and exit blocks"
+    ],
+    "conclusion": "historical_ml is code-level connected but currently read-only and does not change final_buy_action."
+  },
+  "bottleneck": {
+    "module": "pre_selection",
+    "not_entry": "Entry converted all 5 pre-selected rows to PROBE and left non-selected rows as OBSERVE.",
+    "not_historical_ml": "historical_ml produced KEEP_ORIGINAL only and does not write back parameters.",
+    "not_frontend": "Frontend reads snapshots and does not generate the PROBE count."
+  },
+  "acceptance": {
+    "proves_selected_5_due_to_pre_selection_cap": true,
+    "states_historical_ml_is_read_only_bypass": true,
+    "does_not_change_any_final_buy_action": true
+  },
+  "next_codex_task_card": "离线分析 131 个满足右侧条件但未进入前5的 ETF，按 sector、score、后验收益和 historical_ml 失败类型聚合，评估 pre_selection cap 是否应作为下一阶段回放研究参数。"
+}

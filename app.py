@@ -56,6 +56,7 @@ from ui.signal_parser import (
     current_symbols,
     format_symbol_list,
     hold_symbols,
+    load_etf_names,
     load_dashboard_data,
     parse_buy_table,
     parse_intraday_execution_table,
@@ -91,6 +92,8 @@ V21_FRONTEND_JSON_FILES = (
     "order_intent.json",
     "learning_summary.json",
     "historical_ml_summary.json",
+    "ml_sim_daily_comparison.json",
+    "ml_sim_summary.json",
     "v21_backend_status.json",
 )
 
@@ -107,6 +110,10 @@ V21_FRONTEND_OUTPUT_FILES = (
     "learning_summary.json",
     "historical_ml_summary.csv",
     "historical_ml_summary.json",
+    "ml_sim_daily_comparison.csv",
+    "ml_sim_daily_comparison.json",
+    "ml_sim_summary.json",
+    "ml_sim_review_queue.csv",
     "v21_backend_status.json",
 )
 
@@ -689,6 +696,38 @@ DISPLAY_VALUE_MAP = {
     "RISK_EXIT": "风险退出",
     "TREND_DECAY_EXIT": "趋势衰减退出",
     "REPLACEMENT_EXIT": "调仓替换退出",
+    "PROBE": "试探买入",
+    "OBSERVE": "观察，不买入",
+    "AVOID": "回避，不买入",
+    "BLOCKED": "被风险阻断",
+    "NO_BUY": "不买入",
+    "NONE": "不买入",
+    "REJECT": "不买入",
+    "NO_ML": "无 ML 建议",
+    "KEEP_ORIGINAL": "维持原判断",
+    "UPGRADE_PROBE": "建议升级试探",
+    "DOWNGRADE_WATCH": "建议降级观察",
+    "WAIT_PULLBACK": "建议等待回踩",
+    "FORBID_CHASE": "建议禁止追高",
+    "ML_RECOVERED": "ML 恢复",
+    "ML_DOWNGRADED": "ML 降级",
+    "ML_SHADOW_ONLY": "ML 影子评分",
+    "LEGACY_RULE": "旧规则",
+    "LEGACY_COVERED": "旧规则已覆盖",
+    "ML_CANDIDATE_EXPANDED": "ML 扩展候选",
+    "LEGACY_TOP5": "旧规则前5",
+    "BROAD_RECALL": "宽召回",
+    "ML_RECOVERED_POOL": "ML 恢复池",
+    "SECTOR_RECALL": "板块召回",
+    "legacy_v21": "旧 V2.1 规则",
+    "ml_shadow": "ML 影子评分",
+    "ml_candidate_expansion": "ML 候选扩展",
+    "ml_active_sim": "ML 动作分层模拟",
+    "good_entry": "好买点",
+    "bad_entry": "坏买点",
+    "neutral_entry": "中性买点",
+    "unlabeled": "未标注",
+    "label_pending": "待标注",
     "entry_signal.csv": "买入信号输出",
     "exit_signal.csv": "退出信号输出",
     "v21_orchestrator": "V2.1 总控",
@@ -728,6 +767,16 @@ DISPLAY_EMBEDDED_REPLACEMENTS = {
 NAME_MISSING_TEXT = "名称未匹配"
 V2_CODE_COLUMNS = ("etf_code", "ETF代码", "symbol", "code")
 V2_NAME_COLUMNS = ("etf_name", "ETF名称", "name", "fund_name")
+ENTRY_ACTION_DISPLAY_MAP = {
+    "PROBE": "试探买入",
+    "OBSERVE": "观察",
+    "BUY": "买入",
+    "AVOID": "回避",
+    "BLOCKED": "被阻断",
+    "NO_BUY": "不买入",
+    "NONE": "不买入",
+    "REJECT": "不买入",
+}
 
 
 def _clean_display_value(value: Any, default: str = "无") -> str:
@@ -864,7 +913,7 @@ def _merge_v2_reference_frame(frame: pd.DataFrame, source: str, lookup: dict[str
             item["ETF名称"] = name
             item["名称来源"] = source
         sector = _value_from_columns(row, ("level1_sector", "sector", "入选板块", "theme"))
-        if sector and _is_missing_display_value(item.get("入选板块")):
+        if sector and (source == "pre_selection_result.csv" or _is_missing_display_value(item.get("入选板块"))):
             item["入选板块"] = sector
         action = _value_from_columns(row, ("entry_action", "buy_action", "交易动作", "action"))
         if action and _is_missing_display_value(item.get("买入动作")):
@@ -2062,14 +2111,13 @@ def render_current_position_module(etf_names: dict[str, str]) -> float:
         st.info(EMPTY_POSITION_REASON)
 
     cash_default = max(float(current_position.get("cash", 0) or 0), 0.0)
-    st.session_state.setdefault("position_cash_input", cash_default)
-    st.session_state.setdefault("position_empty_checkbox", bool(current_position.get("current_empty", False)))
+    position_empty_value = bool(st.session_state.get("position_empty_checkbox", current_position.get("current_empty", False)))
 
     add_row = st.button(
         "新增持仓",
         width="stretch",
         key="position_add_row",
-        disabled=bool(st.session_state.get("position_empty_checkbox", False)),
+        disabled=position_empty_value,
     )
     if add_row:
         row_id = _next_position_row_id()
@@ -2122,20 +2170,26 @@ def render_current_position_module(etf_names: dict[str, str]) -> float:
     with st.form("position_editor_form", clear_on_submit=False):
         cash_col, empty_col = st.columns([1.2, 0.8], vertical_alignment="bottom")
         with cash_col:
+            cash_input_kwargs = {
+                "min_value": 0.0,
+                "step": 100.0,
+                "key": "position_cash_input",
+            }
+            if "position_cash_input" not in st.session_state:
+                cash_input_kwargs["value"] = cash_default
             cash = float(
                 st.number_input(
                     "可用现金",
-                    min_value=0.0,
-                    value=float(st.session_state.get("position_cash_input", cash_default)),
-                    step=100.0,
-                    key="position_cash_input",
+                    **cash_input_kwargs,
                 )
             )
         with empty_col:
+            empty_checkbox_kwargs = {"key": "position_empty_checkbox"}
+            if "position_empty_checkbox" not in st.session_state:
+                empty_checkbox_kwargs["value"] = position_empty_value
             current_empty = st.checkbox(
                 "当前空仓",
-                value=bool(st.session_state.get("position_empty_checkbox", current_position.get("current_empty", False))),
-                key="position_empty_checkbox",
+                **empty_checkbox_kwargs,
             )
 
         edited_frame = pd.DataFrame(editor_rows)
@@ -2777,7 +2831,7 @@ def _v21_output_signature(project_root: Path) -> tuple[tuple[str, float, int], .
 def _read_v21_json_file(output_dir: Path, filename: str) -> Any:
     path = output_dir / filename
     if not path.exists():
-        return [] if filename in {"portfolio_snapshot.json", "order_intent.json", "learning_summary.json", "historical_ml_summary.json"} else {}
+        return [] if filename in {"portfolio_snapshot.json", "order_intent.json", "learning_summary.json", "historical_ml_summary.json", "ml_sim_daily_comparison.json"} else {}
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
@@ -2802,6 +2856,8 @@ def load_v21_frontend_snapshots(output_dir: Path = OUTPUT_DIR) -> dict[str, Any]
         "order_intent": _read_v21_json_file(output_dir, "order_intent.json"),
         "learning": _read_v21_json_file(output_dir, "learning_summary.json"),
         "historical_ml": _read_v21_json_file(output_dir, "historical_ml_summary.json"),
+        "ml_sim_daily_comparison": _read_v21_json_file(output_dir, "ml_sim_daily_comparison.json"),
+        "ml_sim_summary": _read_v21_json_file(output_dir, "ml_sim_summary.json"),
         "status": _read_v21_json_file(output_dir, "v21_backend_status.json"),
         "missing_files": [filename for filename in V21_FRONTEND_JSON_FILES if not (output_dir / filename).exists()],
     }
@@ -2813,6 +2869,26 @@ def _v21_records(value: Any) -> list[dict[str, Any]]:
     if isinstance(value, Mapping):
         return [dict(value)] if value else []
     return []
+
+
+def _v21_entry_action_display(value: Any, default: str = "暂无") -> str:
+    text = str(value or "").strip()
+    if not text:
+        return default
+    return ENTRY_ACTION_DISPLAY_MAP.get(text.upper(), _v21_display_value(value, default))
+
+
+def _v21_entry_action_display_records(records: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for record in records:
+        item = dict(record)
+        item["raw_entry_action_display"] = _v21_entry_action_display(record.get("raw_entry_action"))
+        item["final_buy_action_display"] = _v21_entry_action_display(record.get("final_buy_action"))
+        item["entry_action_display"] = _v21_entry_action_display(record.get("entry_action"))
+        item["rule_action_display"] = _v21_entry_action_display(record.get("rule_action"))
+        item["ml_adjusted_action_display"] = _v21_entry_action_display(record.get("ml_adjusted_action"))
+        rows.append(item)
+    return rows
 
 
 def _v21_display_value(value: Any, default: str = "暂无") -> str:
@@ -2873,7 +2949,134 @@ def _v21_count_actual_exit(decision: Mapping[str, Any]) -> int:
     return sum(1 for item in decision.get("exit_actions", []) or [] if isinstance(item, Mapping) and _v21_bool(item.get("actual_exit")))
 
 
+def _v21_ml_hit(record: Mapping[str, Any]) -> bool:
+    action = str(record.get("ml_action_suggestion") or "").strip().upper()
+    if action and action != "NO_ML":
+        return True
+    try:
+        return float(record.get("ml_confidence") or 0) > 0
+    except (TypeError, ValueError):
+        return False
+
+
+def _v21_action_code(record: Mapping[str, Any]) -> str:
+    for key in ("final_buy_action", "entry_action", "raw_entry_action", "buy_action"):
+        text = str(record.get(key) or "").strip().upper()
+        if text:
+            if text in {"BUY", "PROBE", "OBSERVE", "AVOID", "BLOCKED", "REJECT", "NO_BUY", "NONE"}:
+                return "OBSERVE" if text in {"REJECT", "NO_BUY", "NONE"} else text
+            lowered = text.lower()
+            if "avoid" in lowered or "forbid" in lowered or "禁止" in text:
+                return "AVOID"
+            if "blocked" in lowered or "阻断" in text or "冻结" in text:
+                return "BLOCKED"
+            if "probe" in lowered or "试探" in text:
+                return "PROBE"
+            if "buy" in lowered or "买入" in text:
+                return "BUY"
+            if "observe" in lowered or "watch" in lowered or "观察" in text or "等待" in text:
+                return "OBSERVE"
+    return "OBSERVE"
+
+
+def _v21_first_count(decision: Mapping[str, Any], keys: Sequence[str], default: int = 0) -> int:
+    for key in keys:
+        value = decision.get(key)
+        if value in ("", None):
+            continue
+        try:
+            return int(float(value))
+        except (TypeError, ValueError):
+            continue
+    return default
+
+
+def _v21_entry_action_funnel(decision: Mapping[str, Any], orders: Sequence[Mapping[str, Any]] | None = None) -> list[tuple[str, Any]]:
+    actions = _v21_records(decision.get("entry_actions"))
+    candidates = _v21_records(decision.get("candidate_etfs"))
+    orders = list(orders or decision.get("order_intent_summary") or [])
+    candidate_count = _v21_first_count(decision, ("entry_candidate_pool_count",), default=len(candidates))
+    selected_count = sum(1 for item in actions if _v21_bool(item.get("pre_selected")))
+    if not selected_count:
+        selected_count = candidate_count
+
+    legacy_count = sum(1 for item in candidates if _v21_bool(item.get("legacy_selected")))
+    if not legacy_count:
+        legacy_count = min(5, selected_count)
+    broad_recall_count = _v21_first_count(
+        decision,
+        ("broad_recall_pool_count",),
+        default=sum(1 for item in candidates if _v21_bool(item.get("broad_recall_selected"))),
+    )
+    recovered_count = _v21_first_count(
+        decision,
+        ("ml_recovered_pool_count",),
+        default=sum(1 for item in candidates if _v21_bool(item.get("ml_recovered")))
+        + sum(1 for item in actions if str(item.get("ml_adjustment") or "").strip().upper() == "ML_RECOVERED"),
+    )
+    action_counts = {label: sum(1 for item in actions if _v21_action_code(item) == label) for label in ["BUY", "PROBE", "OBSERVE", "AVOID", "BLOCKED"]}
+    all_valid = _v21_first_count(
+        decision,
+        ("all_market_valid_etf_count", "valid_universe_count", "universe_valid_count", "all_market_sample_count", "universe_sample_count"),
+        default=len(actions) or candidate_count,
+    )
+
+    return [
+        ("全市场有效 ETF", all_valid),
+        ("旧规则前5", legacy_count),
+        ("宽召回池", broad_recall_count),
+        ("ML 恢复池", recovered_count),
+        ("买入候选池", candidate_count),
+        ("买入", action_counts["BUY"]),
+        ("试探买入", action_counts["PROBE"]),
+        ("观察", action_counts["OBSERVE"]),
+        ("回避", action_counts["AVOID"]),
+        ("被阻断", action_counts["BLOCKED"]),
+        ("订单草稿", _v21_first_count(decision, ("order_intent_count",), default=len(orders))),
+        ("ML 评分命中数", _v21_first_count(decision, ("ml_score_direct_hit_count",), default=sum(1 for item in actions if _v21_ml_hit(item)))),
+    ]
+
+
+def _v21_ml_missing_reason_frame(decision: Mapping[str, Any]) -> pd.DataFrame:
+    raw = decision.get("ml_score_missing_reason_distribution") or {}
+    if not isinstance(raw, Mapping):
+        return pd.DataFrame(columns=["ML缺失原因", "数量", "占比"])
+    rows = []
+    for key, value in raw.items():
+        try:
+            count = int(float(value))
+        except (TypeError, ValueError):
+            count = 0
+        rows.append({"ML缺失原因": str(key), "数量": count})
+    frame = pd.DataFrame(rows, columns=["ML缺失原因", "数量"])
+    if frame.empty:
+        return pd.DataFrame(columns=["ML缺失原因", "数量", "占比"])
+    total = int(frame["数量"].sum())
+    frame["占比"] = "0.0%" if total <= 0 else frame["数量"].map(lambda value: f"{value / total:.1%}")
+    return frame.sort_values("数量", ascending=False).reset_index(drop=True)
+
+
+def _v21_non_selected_reason_distribution(decision: Mapping[str, Any]) -> pd.DataFrame:
+    actions = _v21_records(decision.get("entry_actions"))
+    rows: list[dict[str, Any]] = []
+    for item in actions:
+        if _v21_bool(item.get("pre_selected")):
+            continue
+        reason = _v21_display_value(item.get("raw_entry_block_reason") or item.get("block_reason") or item.get("explain"), "未进入 pre_selection")
+        rows.append({"reason": reason[:120]})
+    if not rows:
+        return pd.DataFrame(columns=["非入选原因", "数量"])
+    frame = pd.DataFrame(rows)
+    grouped = frame.value_counts("reason").reset_index(name="count")
+    grouped.columns = ["非入选原因", "数量"]
+    return grouped.head(20)
+
+
 def _v21_has_exit_priority(decision: Mapping[str, Any]) -> bool:
+    if _v21_bool(decision.get("exit_priority_blocked")):
+        return True
+    if any(_v21_bool(item.get("priority_blocking_exit")) for item in _v21_records(decision.get("exit_actions"))):
+        return True
     text = " ".join(
         str(part or "")
         for part in (
@@ -2899,9 +3102,17 @@ def build_v21_frontend_status(snapshots: Mapping[str, Any]) -> dict[str, Any]:
         "freeze_entry": _v21_display_value(_first_present(decision.get("freeze_entry"), risk.get("freeze_entry"))),
         "manual_takeover_required": _v21_display_value(_first_present(decision.get("manual_takeover_required"), risk.get("manual_takeover_required"))),
         "ml_observation_status": _v21_display_value(decision.get("ml_observation_status"), "ML 观察模式未启用"),
-        "candidate_count": len(decision.get("candidate_etfs", []) or []),
+        "candidate_count": _v21_first_count(decision, ("entry_candidate_pool_count",), default=len(decision.get("candidate_etfs", []) or [])),
         "actual_buy_count": len(decision.get("actual_buy_etfs", []) or []),
         "exit_count": _v21_count_actual_exit(decision),
+        "active_exit_count": _v21_display_value(decision.get("active_exit_count"), 0),
+        "actual_position_exit_count": _v21_display_value(decision.get("actual_position_exit_count"), 0),
+        "exit_priority_blocked": _v21_display_value(decision.get("exit_priority_blocked"), False),
+        "exit_block_reason": _v21_display_value(decision.get("exit_block_reason"), ""),
+        "exit_block_release_condition": _v21_display_value(decision.get("exit_block_release_condition"), ""),
+        "blocked_by_exit_symbols": _v21_join(decision.get("blocked_by_exit_symbols")),
+        "has_real_position_to_exit": _v21_display_value(decision.get("has_real_position_to_exit"), False),
+        "exit_action_type": _v21_display_value(decision.get("exit_action_type"), ""),
         "generated_at": format_datetime_shanghai(_first_present(status.get("generated_at"), decision.get("generated_at"))) or _v21_display_value(_first_present(status.get("generated_at"), decision.get("generated_at"))),
         "fallback_reason": _v21_display_value(_first_present(decision.get("fallback_reason"), status.get("fallback_reason")), "暂无降级说明。"),
     }
@@ -3340,6 +3551,10 @@ def render_v21_overview(snapshots: Mapping[str, Any]) -> None:
             ("候选 ETF 数", status["candidate_count"]),
             ("实际买入 ETF 数", status["actual_buy_count"]),
             ("退出/清仓建议数", status["exit_count"]),
+            ("active_exit_count", status["active_exit_count"]),
+            ("actual_position_exit_count", status["actual_position_exit_count"]),
+            ("exit_priority_blocked", status["exit_priority_blocked"]),
+            ("blocked_by_exit_symbols", status["blocked_by_exit_symbols"]),
             ("总控生成时间", status["generated_at"]),
             ("当前数据日期", format_trade_date(_first_present(decision.get("trade_date"), status.get("trade_date"))) or status["trade_date"]),
             ("行情最后更新时间", format_datetime_shanghai(_first_present(status.get("market_data_updated_at"), status.get("generated_at"), decision.get("generated_at"))) or status["generated_at"]),
@@ -3353,7 +3568,7 @@ def render_v21_overview(snapshots: Mapping[str, Any]) -> None:
     if int(status["actual_buy_count"] or 0) <= 0:
         st.info("当前无实际买入计划；候选 ETF 仅为观察对象，原因请继续查看买入动作裁决、风险阻断原因和降级说明。")
     if _v21_has_exit_priority(decision):
-        st.warning("当前有退出风险优先处理，新买入被降级或冻结。")
+        st.warning(f"{status['exit_block_reason']} 解除条件：{status['exit_block_release_condition']}")
     st.markdown("**总控解释**")
     st.write(_v21_display_value(decision.get("explain"), "总控解释缺失。"))
     for item in decision.get("warnings") or []:
@@ -3364,7 +3579,13 @@ def render_v21_overview(snapshots: Mapping[str, Any]) -> None:
 
 def render_v21_candidates(snapshots: Mapping[str, Any]) -> None:
     decision = snapshots.get("daily_decision") if isinstance(snapshots.get("daily_decision"), Mapping) else {}
+    risk = snapshots.get("risk_gate") if isinstance(snapshots.get("risk_gate"), Mapping) else {}
     orders = _v21_records(snapshots.get("order_intent"))
+    level = str(risk.get("risk_level") or decision.get("risk_level") or "R0").upper()
+    if level in {"R3", "R4", "P0"} or _v21_bool(risk.get("manual_takeover_required") or decision.get("manual_takeover_required")):
+        st.error("R3/R4/P0 风险或人工接管置顶：候选扩展和 ML 建议只能观察，不能绕过总控生成普通买入。")
+    elif _v21_bool(risk.get("freeze_entry") or decision.get("freeze_entry")):
+        st.warning("风险门控已冻结买入：候选池仍可展示，订单草稿必须显示风险阻断原因。")
     cols = st.columns(4)
     with cols[0]:
         _v21_action_button("重新运行 pre_selection", action_api.run_pre_selection, "v21_candidates_run_pre_selection")
@@ -3389,6 +3610,37 @@ def render_v21_candidates(snapshots: Mapping[str, Any]) -> None:
         ],
         class_name="compact-metric-grid strategy-metric-grid",
     )
+    render_compact_metric_grid(
+        [
+            ("全市场有效 ETF 数", _v21_first_count(decision, ("all_market_valid_etf_count",), 0)),
+            ("历史价格覆盖 ETF 数", _v21_first_count(decision, ("historical_price_covered_etf_count",), 0)),
+            ("ML 特征就绪 ETF 数", _v21_first_count(decision, ("ml_feature_ready_etf_count",), 0)),
+            ("ML 已评分 ETF 数", _v21_first_count(decision, ("ml_scored_etf_count",), 0)),
+            ("ML 直接命中数", _v21_first_count(decision, ("ml_score_direct_hit_count",), 0)),
+            ("ML 缺失数", _v21_first_count(decision, ("ml_score_missing_count",), 0)),
+        ],
+        class_name="compact-metric-grid strategy-metric-grid",
+    )
+    st.markdown("**动作分布漏斗**")
+    render_compact_metric_grid(
+        _v21_entry_action_funnel(decision, orders),
+        class_name="compact-metric-grid strategy-metric-grid",
+    )
+    st.caption("漏斗从全市场有效 ETF 到候选池、动作分层、订单草稿逐层收窄；候选池不是订单草稿，ML 建议不是最终交易动作。")
+    st.markdown("**非入选原因分布**")
+    show_dataframe_or_empty(
+        _v21_non_selected_reason_distribution(decision),
+        empty_text="暂无非入选样本。",
+        key="v21_non_selected_reason_distribution",
+        height=220,
+    )
+    st.markdown("**ML 缺失原因占比**")
+    show_dataframe_or_empty(
+        _v21_ml_missing_reason_frame(decision),
+        empty_text="暂无 ML 缺失原因分布。",
+        key="v21_ml_missing_reason_distribution",
+        height=220,
+    )
     st.markdown("**候选 ETF**")
     show_dataframe_or_empty(
         _v21_frame(
@@ -3399,9 +3651,22 @@ def render_v21_candidates(snapshots: Mapping[str, Any]) -> None:
                 "sector": "所属板块",
                 "rank": "排名",
                 "score": "得分",
+                "candidate_pool_flag": "候选池",
+                "candidate_source": "候选来源",
+                "legacy_selected": "旧规则前5",
+                "broad_recall_selected": "宽召回池",
+                "ml_recovered": "ML 恢复池",
+                "candidate_pool_rank": "候选池排名",
+                "ml_score": "ML评分",
+                "p_good_entry": "好买点概率",
+                "p_bad_entry": "坏买点概率",
                 "ml_entry_advice": "ML观察建议",
                 "ml_confidence": "ML置信度",
                 "ml_action_suggestion": "ML动作建议",
+                "ml_adjustment": "ML动作分层",
+                "ml_adjustment_reason_cn": "ML恢复/降级原因",
+                "rule_action": "规则动作",
+                "ml_adjusted_action": "ML分层动作",
                 "ml_reason": "ML原因",
                 "ml_observation_notice": "ML观察说明",
                 "explain": "中文解释",
@@ -3414,14 +3679,39 @@ def render_v21_candidates(snapshots: Mapping[str, Any]) -> None:
     st.markdown("**买入动作裁决**")
     show_dataframe_or_empty(
         _v21_frame(
-            _v21_records(decision.get("entry_actions")),
+            _v21_entry_action_display_records(_v21_records(decision.get("entry_actions"))),
             {
                 "etf_code": "ETF代码",
                 "etf_name": "ETF名称",
-                "entry_action": "买入动作",
+                "raw_entry_action_display": "entry 原始建议",
+                "raw_entry_target_weight": "entry 原始仓位",
+                "raw_entry_confidence": "entry 原始置信度",
+                "raw_entry_block_reason": "entry 原始阻断原因",
+                "rule_action_display": "规则动作",
+                "ml_adjusted_action_display": "ML分层动作",
+                "final_buy_action_display": "总控最终裁决",
+                "final_target_weight": "最终目标仓位",
+                "final_block_reason": "最终阻断原因",
+                "control_override_reason": "总控覆盖原因",
+                "active_exit_count": "active_exit_count",
+                "actual_position_exit_count": "actual_position_exit_count",
+                "exit_priority_blocked": "exit 优先阻断",
+                "exit_block_reason": "exit 阻断原因",
+                "exit_block_release_condition": "exit 解除条件",
+                "blocked_by_exit_symbols": "exit 阻断对象",
+                "has_real_position_to_exit": "存在实际持仓退出",
+                "exit_action_type": "exit 动作类型",
+                "risk_gate_blocked": "RiskGate 阻断",
+                "entry_action_display": "兼容买入动作",
                 "actual_buy": "是否实际买入",
                 "target_weight": "建议仓位",
                 "confidence": "置信度",
+                "ml_score": "ML评分",
+                "p_good_entry": "好买点概率",
+                "p_bad_entry": "坏买点概率",
+                "ml_decision_mode": "ML决策模式",
+                "ml_adjustment": "ML动作分层",
+                "ml_adjustment_reason_cn": "ML恢复/降级原因",
                 "ml_entry_advice": "ML观察建议",
                 "ml_confidence": "ML置信度",
                 "ml_action_suggestion": "ML动作建议",
@@ -3439,12 +3729,120 @@ def render_v21_candidates(snapshots: Mapping[str, Any]) -> None:
         for item in _v21_records(decision.get("entry_actions")):
             st.write(f"**{_v21_display_value(item.get('etf_code'))} {_v21_display_value(item.get('etf_name'), '')}**")
             st.write(_v21_display_value(item.get("explain"), "暂无说明。"))
+            st.json(
+                {
+                    "entry 原始建议": _v21_entry_action_display(item.get("raw_entry_action")),
+                    "entry 原始仓位": _v21_display_value(item.get("raw_entry_target_weight")),
+                    "entry 原始置信度": _v21_display_value(item.get("raw_entry_confidence")),
+                    "entry 原始阻断原因": _v21_display_value(item.get("raw_entry_block_reason"), ""),
+                    "规则动作": _v21_entry_action_display(item.get("rule_action")),
+                    "ML分层动作": _v21_entry_action_display(item.get("ml_adjusted_action")),
+                    "总控最终裁决": _v21_entry_action_display(item.get("final_buy_action")),
+                    "兼容买入动作": _v21_entry_action_display(item.get("entry_action")),
+                    "ML动作建议": _v21_display_value(item.get("ml_action_suggestion")),
+                    "ML恢复/降级原因": _v21_display_value(item.get("ml_adjustment_reason_cn"), ""),
+                },
+                expanded=False,
+            )
     st.markdown("**订单意图/草稿（买入）**")
     show_dataframe_or_empty(
         _v21_order_frame([item for item in orders if str(item.get("side") or "").upper() == "BUY"]),
         empty_text="当前无买入订单草稿。",
         key="v21_buy_orders",
         height=260,
+    )
+
+
+def render_v21_ml_sim(snapshots: Mapping[str, Any]) -> None:
+    summary = snapshots.get("ml_sim_summary") if isinstance(snapshots.get("ml_sim_summary"), Mapping) else {}
+    comparison = _v21_records(snapshots.get("ml_sim_daily_comparison"))
+    st.info("ML_SIM 仅观察，不作为正式交易指令。正式 final_buy_action 仍以 legacy_v21 / control_center 安全裁决为准，ML_SIM 不触发 QMT。")
+    counts = summary.get("adjustment_counts") if isinstance(summary.get("adjustment_counts"), Mapping) else {}
+    render_compact_metric_grid(
+        [
+            ("ML_SIM rows", summary.get("total_rows", len(comparison))),
+            ("Review queue", summary.get("review_queue_count", 0)),
+            ("ML_RECOVERED", summary.get("ml_recovered_count", counts.get("ML_RECOVERED", 0))),
+            ("ML_DOWNGRADED", summary.get("ml_downgraded_count", counts.get("ML_DOWNGRADED", 0))),
+            ("Risk conflict", counts.get("ML_CONFLICT_WITH_RISK", 0)),
+            ("Missing score", counts.get("ML_MISSING_SCORE", 0)),
+        ],
+        class_name="compact-metric-grid strategy-metric-grid",
+    )
+    st.markdown("**Top ML recovered ETF**")
+    show_dataframe_or_empty(
+        _v21_frame(
+            _v21_records(summary.get("top_ml_recovered")),
+            {
+                "code": "Code",
+                "name": "Name",
+                "sector_level2": "Sector L2",
+                "legacy_action": "legacy_v21",
+                "ml_sim_action": "ml_active_sim",
+                "final_action": "Official final",
+                "ml_score": "ML score",
+                "p_good_entry": "P good",
+                "p_bad_entry": "P bad",
+                "ml_adjustment_type": "ML_SIM type",
+                "risk_blocked": "Risk blocked",
+                "order_intent_in_ml_sim": "ML_SIM order",
+            },
+        ),
+        empty_text="暂无 ML recovered ETF。",
+        key="v21_ml_sim_top_recovered",
+        height=220,
+    )
+    st.markdown("**Top ML downgraded ETF**")
+    show_dataframe_or_empty(
+        _v21_frame(
+            _v21_records(summary.get("top_ml_downgraded")),
+            {
+                "code": "Code",
+                "name": "Name",
+                "sector_level2": "Sector L2",
+                "legacy_action": "legacy_v21",
+                "ml_sim_action": "ml_active_sim",
+                "final_action": "Official final",
+                "ml_score": "ML score",
+                "p_good_entry": "P good",
+                "p_bad_entry": "P bad",
+                "ml_adjustment_type": "ML_SIM type",
+                "risk_blocked": "Risk blocked",
+                "order_intent_in_legacy": "Legacy order",
+            },
+        ),
+        empty_text="暂无 ML downgraded ETF。",
+        key="v21_ml_sim_top_downgraded",
+        height=220,
+    )
+    st.markdown("**每日 legacy_v21 / ml_active_sim 对照**")
+    show_dataframe_or_empty(
+        _v21_frame(
+            comparison,
+            {
+                "trade_date": "Trade date",
+                "code": "Code",
+                "name": "Name",
+                "sector_level2": "Sector L2",
+                "legacy_action": "legacy_v21",
+                "ml_sim_action": "ml_active_sim",
+                "final_action": "Official final",
+                "ml_score": "ML score",
+                "p_good_entry": "P good",
+                "p_bad_entry": "P bad",
+                "ml_adjustment_type": "ML_SIM type",
+                "risk_level": "Risk level",
+                "risk_blocked": "Risk blocked",
+                "exit_blocked": "Exit blocked",
+                "order_intent_in_legacy": "Legacy order",
+                "order_intent_in_ml_sim": "ML_SIM order",
+                "review_priority": "Review priority",
+                "ml_adjustment_reason_cn": "Reason",
+            },
+        ),
+        empty_text="暂无 ML_SIM 对照输出，请先运行 V2.1 backend pipeline。",
+        key="v21_ml_sim_daily_comparison",
+        height=360,
     )
 
 
@@ -3463,8 +3861,35 @@ def render_v21_portfolio(snapshots: Mapping[str, Any]) -> None:
     _v21_unimplemented_action("查看持仓风险暴露")
     st.caption("QMT 未连接时仍可展开持仓输入维护，手动导入持仓、更新成本、刷新价格；持仓写入只发生在表单点击保存持仓之后。")
     if _v21_has_exit_priority(decision):
-        st.warning("当前有退出风险优先处理，新买入被降级或冻结。")
+        st.warning(
+            f"{_v21_display_value(decision.get('exit_block_reason'), '当前有退出风险优先处理。')} "
+            f"解除条件：{_v21_display_value(decision.get('exit_block_release_condition'), '实际持仓退出完成或下一次 exit 信号解除。')}"
+        )
     st.info("持仓页只展示 V2.1 PortfolioSnapshot；数据校验通过表示数据可信，不等于买入信号。")
+    st.markdown("**exit 动作诊断**")
+    show_dataframe_or_empty(
+        _v21_frame(
+            _v21_records(decision.get("exit_actions")),
+            {
+                "etf_code": "ETF代码",
+                "etf_name": "ETF名称",
+                "exit_action": "exit 动作",
+                "exit_action_type": "exit 动作类型",
+                "reduce_ratio": "退出比例",
+                "active_exit": "active_exit",
+                "has_real_position_to_exit": "存在实际持仓",
+                "actual_position_exit": "实际持仓退出",
+                "priority_blocking_exit": "高优先级阻断",
+                "exit_block_reason": "exit 阻断原因",
+                "exit_block_release_condition": "解除条件",
+                "actual_exit": "生成卖出意图",
+                "explain": "中文解释",
+            },
+        ),
+        empty_text="暂无 exit 动作。",
+        key="v21_exit_actions",
+        height=260,
+    )
     show_dataframe_or_empty(
         _v21_frame(
             _v21_records(snapshots.get("portfolio")),
@@ -3568,6 +3993,7 @@ def _hml_dirs() -> dict[str, Path]:
         "generated": root / "generated",
         "to_review": root / "to_review",
         "review_return": root / "review_return",
+        "reports": root / "reports",
         "state": root / "state",
         "logs": root / "logs",
     }
@@ -3598,6 +4024,183 @@ def _hml_csv(path: Path) -> pd.DataFrame:
         return pd.read_csv(path)
     except Exception:
         return pd.DataFrame()
+
+
+def _hml_json(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _hml_ratio_text(value: Any) -> str:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return _v21_display_value(value, "暂无")
+    if pd.isna(number):
+        return "暂无"
+    return f"{number:.1%}" if abs(number) <= 1 else f"{number:.4f}"
+
+
+def _hml_range_text(summary: Mapping[str, Any], *frames: pd.DataFrame) -> str:
+    stats = summary.get("daily_stats") if isinstance(summary.get("daily_stats"), list) else []
+    dates = [str(item.get("trade_date"))[:10] for item in stats if isinstance(item, Mapping) and item.get("trade_date")]
+    for frame in frames:
+        if frame.empty or "trade_date" not in frame.columns:
+            continue
+        dates.extend(pd.to_datetime(frame["trade_date"], errors="coerce").dropna().dt.strftime("%Y-%m-%d").tolist())
+    dates = sorted({item for item in dates if item})
+    if not dates:
+        return "暂无历史区间"
+    return f"{dates[0]} 至 {dates[-1]}"
+
+
+def _hml_label_distribution_text(frame: pd.DataFrame) -> str:
+    if frame.empty:
+        return "暂无标签"
+    for column in ("auto_label", "manual_label", "hindsight_label"):
+        if column in frame:
+            counts = frame[column].fillna("").astype(str).str.strip()
+            counts = counts[counts.astype(bool)].value_counts().head(5)
+            if not counts.empty:
+                return "；".join(f"{_v21_display_value(label)}: {count}" for label, count in counts.items())
+    return "暂无标签"
+
+
+def _hml_suggestion_summary_text(frame: pd.DataFrame) -> str:
+    if frame.empty:
+        return "暂无校准建议"
+    parts: list[str] = []
+    for _, row in frame.head(3).iterrows():
+        area = str(row.get("parameter_area") or row.get("suggestion_id") or "parameter").strip()
+        action = str(row.get("suggested_action") or row.get("ml_entry_advice") or row.get("notes") or "").strip()
+        parts.append(f"{_v21_display_value(area)}: {_v21_display_value(action)}" if action else _v21_display_value(area))
+    if len(frame) > len(parts):
+        parts.append(f"+{len(frame) - len(parts)} 条")
+    return "；".join(parts)
+
+
+def _hml_topn_precision_text(scores: pd.DataFrame, policy: pd.DataFrame) -> str:
+    if not scores.empty and {"ml_rank_global", "auto_label"}.issubset(scores.columns):
+        parts: list[str] = []
+        for top_n in (5, 20):
+            top = scores[pd.to_numeric(scores["ml_rank_global"], errors="coerce") <= top_n]
+            if not top.empty:
+                parts.append(f"top{top_n}: {_hml_ratio_text((top['auto_label'].astype(str) == 'good_entry').mean())}")
+        if parts:
+            return "；".join(parts)
+    if not policy.empty:
+        columns = [col for col in policy.columns if col.startswith("good_entry_precision_top")]
+        if columns:
+            row = policy.iloc[-1]
+            return "；".join(f"{col.replace('good_entry_precision_', '')}: {_hml_ratio_text(row.get(col))}" for col in columns[:3])
+    return "暂无 topN precision"
+
+
+def _hml_bad_entry_rate_text(scores: pd.DataFrame, policy: pd.DataFrame, labeled: pd.DataFrame) -> str:
+    if not scores.empty and "auto_label" in scores.columns:
+        return _hml_ratio_text((scores["auto_label"].astype(str) == "bad_entry").mean())
+    if not policy.empty and "bad_entry_rate" in policy.columns:
+        return _hml_ratio_text(policy.iloc[-1].get("bad_entry_rate"))
+    if not labeled.empty and "auto_label" in labeled.columns:
+        return _hml_ratio_text((labeled["auto_label"].astype(str) == "bad_entry").mean())
+    return "暂无 bad entry rate"
+
+
+def _hml_model_feature_versions(scores: pd.DataFrame) -> tuple[str, str]:
+    model = "暂无模型版本"
+    feature = "暂无特征版本"
+    if not scores.empty:
+        if "model_version" in scores.columns:
+            values = [str(item) for item in scores["model_version"].dropna().astype(str).unique() if str(item).strip()]
+            model = "、".join(values[:3]) if values else model
+        if "feature_version" in scores.columns:
+            values = [str(item) for item in scores["feature_version"].dropna().astype(str).unique() if str(item).strip()]
+            feature = "、".join(values[:3]) if values else feature
+    return model, feature
+
+
+def _hml_policy_comparison_frame(policy: pd.DataFrame) -> pd.DataFrame:
+    if policy.empty:
+        return pd.DataFrame()
+    columns = [
+        col
+        for col in [
+            "policy_label",
+            "policy",
+            "daily_probe_count",
+            "good_entry_precision_top5",
+            "good_entry_precision_top20",
+            "bad_entry_rate",
+            "missed_winner_count",
+            "false_positive_count",
+            "delta_daily_probe_vs_legacy",
+        ]
+        if col in policy.columns
+    ]
+    out = policy[columns].copy() if columns else policy.copy()
+    rename = {
+        "policy_label": "策略层",
+        "policy": "策略枚举",
+        "daily_probe_count": "日均试探数",
+        "good_entry_precision_top5": "top5 好买点命中率",
+        "good_entry_precision_top20": "top20 好买点命中率",
+        "bad_entry_rate": "坏买点率",
+        "missed_winner_count": "错过强势数",
+        "false_positive_count": "误报数",
+        "delta_daily_probe_vs_legacy": "相对旧规则试探变化",
+    }
+    return _clean_display_frame(out.rename(columns=rename))
+
+
+def _hml_ml_suggestion_frame(records: Sequence[Mapping[str, Any]], scores: pd.DataFrame, suggestions: pd.DataFrame) -> pd.DataFrame:
+    rows: list[dict[str, Any]] = []
+
+    def add_record(record: Mapping[str, Any], source: str) -> None:
+        action = str(record.get("ml_action_suggestion") or record.get("action_suggestion") or "NO_ML").strip().upper()
+        adjustment = str(record.get("ml_adjustment") or "").strip().upper()
+        if action == "NO_ML" and not adjustment:
+            return
+        layer = "ML 推荐 ETF"
+        if adjustment == "ML_RECOVERED" or action == "UPGRADE_PROBE":
+            layer = "ML 恢复 ETF" if adjustment == "ML_RECOVERED" else "ML 推荐 ETF"
+        if adjustment == "ML_DOWNGRADED" or action in {"DOWNGRADE_WATCH", "WAIT_PULLBACK", "FORBID_CHASE"}:
+            layer = "ML 降级 ETF"
+        rows.append(
+            {
+                "分层": layer,
+                "ETF代码": _v21_display_value(record.get("etf_code") or record.get("code") or record.get("symbol"), ""),
+                "ETF名称": _v21_display_value(record.get("etf_name") or record.get("name"), ""),
+                "ML评分": _v21_display_value(record.get("ml_score"), ""),
+                "ML置信度": _v21_display_value(record.get("ml_confidence") or record.get("p_good_entry"), ""),
+                "坏买点概率": _v21_display_value(record.get("p_bad_entry"), ""),
+                "ML动作建议": _v21_display_value(action),
+                "恢复/降级原因": _v21_display_value(
+                    record.get("ml_adjustment_reason_cn")
+                    or record.get("ml_reason_cn")
+                    or record.get("ml_reason")
+                    or record.get("reason")
+                    or record.get("notes"),
+                    "暂无原因",
+                ),
+                "来源": source,
+            }
+        )
+
+    for record in records:
+        add_record(record, "总控快照")
+    for _, row in scores.head(80).iterrows():
+        add_record(row.to_dict(), "ml_entry_scores")
+    for _, row in suggestions.head(80).iterrows():
+        add_record(row.to_dict(), "entry_calibration_suggestions")
+    if not rows:
+        return pd.DataFrame(columns=["分层", "ETF代码", "ETF名称", "ML评分", "ML置信度", "坏买点概率", "ML动作建议", "恢复/降级原因", "来源"])
+    frame = pd.DataFrame(rows).drop_duplicates(subset=["分层", "ETF代码", "ML动作建议", "恢复/降级原因"])
+    return _clean_display_frame(frame)
 
 
 def _hml_latest_return_file() -> Path | None:
@@ -3708,6 +4311,10 @@ def render_v21_learning(snapshots: Mapping[str, Any]) -> None:
     daily_sector = _hml_existing("generated", "daily_sector_samples.csv")
     entry_unlabeled = _hml_existing("generated", "entry_candidate_samples_unlabeled.csv")
     entry_labeled = _hml_existing("generated", "entry_candidate_samples_labeled.csv")
+    daily_universe = _hml_existing("generated", "daily_ml_universe_samples.csv")
+    daily_universe_summary = _hml_existing("generated", "daily_ml_universe_summary.json")
+    ml_scores = _hml_existing("generated", "ml_entry_scores.csv")
+    policy_comparison = _hml_existing("reports", "ml_policy_comparison.csv") if "reports" in dirs else dirs["root"] / "reports" / "ml_policy_comparison.csv"
     failure_samples = _hml_existing("generated", "failure_samples.csv")
     missed_samples = _hml_existing("generated", "missed_opportunity_samples.csv")
     review_queue = _hml_existing("to_review", "manual_review_queue.csv")
@@ -3727,6 +4334,12 @@ def render_v21_learning(snapshots: Mapping[str, Any]) -> None:
     accepted_df = _hml_csv(review_accepted)
     failure_df = _hml_csv(failure_samples)
     missed_df = _hml_csv(missed_samples)
+    suggestions_df = _hml_csv(suggestions)
+    universe_df = _hml_csv(daily_universe)
+    universe_summary = _hml_json(daily_universe_summary)
+    scores_df = _hml_csv(ml_scores)
+    policy_df = _hml_csv(policy_comparison)
+    model_version, feature_version = _hml_model_feature_versions(scores_df)
 
     _hml_render_step(
         1,
@@ -3899,12 +4512,44 @@ def render_v21_learning(snapshots: Mapping[str, Any]) -> None:
     st.info("学习/历史机器学习只提供校准建议，不自动修改当日交易参数。")
     render_compact_metric_grid(
         [
+            ("历史区间", _hml_range_text(universe_summary, universe_df, labeled_df, scores_df)),
+            ("全市场样本数", universe_summary.get("total_rows", _hml_count_rows(daily_universe))),
+            ("全市场有效样本数", universe_summary.get("total_valid_samples", int(universe_df.get("is_valid_sample", pd.Series(dtype=bool)).fillna(False).astype(bool).sum()) if not universe_df.empty and "is_valid_sample" in universe_df else 0)),
             ("learning 样本数", len(learning)),
-            ("historical_ml 样本数", len(historical)),
+            ("historical_ml 样本数", _hml_count_rows(entry_labeled)),
+            ("标签分布", _hml_label_distribution_text(labeled_df)),
+            ("模型版本", model_version),
+            ("特征版本", feature_version),
+            ("topN precision", _hml_topn_precision_text(scores_df, policy_df)),
+            ("bad entry rate", _hml_bad_entry_rate_text(scores_df, policy_df, labeled_df)),
+            ("policy comparison", f"{_hml_count_rows(policy_comparison)} 条策略对照"),
+            ("ML 评分命中数", int(scores_df.get("ml_score", pd.Series(dtype=str)).fillna("").astype(str).str.strip().ne("").sum()) if not scores_df.empty else sum(1 for item in historical if _v21_ml_hit(item))),
+            ("校准建议数量", _hml_count_rows(suggestions)),
+            ("校准建议摘要", _hml_suggestion_summary_text(suggestions_df)),
+            ("historical_ml 总控摘要数", len(historical)),
             ("2024-09-24 后样本", sum(1 for item in learning + historical if _v21_bool(item.get("post_924_regime")))),
             ("校准建议状态", "仅建议，不改参数"),
         ],
         class_name="compact-metric-grid strategy-metric-grid",
+    )
+    ml_records = [
+        *_v21_records((snapshots.get("daily_decision") or {}).get("candidate_etfs") if isinstance(snapshots.get("daily_decision"), Mapping) else []),
+        *_v21_records((snapshots.get("daily_decision") or {}).get("entry_actions") if isinstance(snapshots.get("daily_decision"), Mapping) else []),
+        *historical,
+    ]
+    st.markdown("**ML 推荐 / 降级 / 恢复 ETF**")
+    show_dataframe_or_empty(
+        _hml_ml_suggestion_frame(ml_records, scores_df, suggestions_df),
+        empty_text="暂无 ML 推荐、降级或恢复 ETF。",
+        key="v21_hml_ml_suggestion_groups",
+        height=320,
+    )
+    st.markdown("**policy comparison**")
+    show_dataframe_or_empty(
+        _hml_policy_comparison_frame(policy_df),
+        empty_text="暂无 policy comparison 结果。",
+        key="v21_hml_policy_comparison",
+        height=260,
     )
     columns = {
         "trade_date": "交易日期",
@@ -3914,6 +4559,11 @@ def render_v21_learning(snapshots: Mapping[str, Any]) -> None:
         "market_state": "市场状态",
         "entry_action": "entry 动作",
         "exit_action": "exit 动作",
+        "ml_score": "ML评分",
+        "p_good_entry": "好买点概率",
+        "p_bad_entry": "坏买点概率",
+        "ml_action_suggestion": "ML动作建议",
+        "ml_reason": "ML原因",
         "post_924_regime": "2024-09-24 后样本",
         "hindsight_label": "后验样本状态",
         "failure_type": "失败归因",
@@ -4094,22 +4744,24 @@ def render_page() -> None:
         _load_v21_snapshots_cached.clear()
         st.rerun()
 
-    tabs = st.tabs(["今日总览", "候选与买入", "持仓与卖出", "风险预警", "历史学习", "QMT 执行", "数据质量与运行日志", "V1 对照"])
+    tabs = st.tabs(["今日总览", "候选与买入", "ML_SIM 对照", "持仓与卖出", "风险预警", "历史学习", "QMT 执行", "数据质量与运行日志", "V1 对照"])
     with tabs[0]:
         render_v21_overview(snapshots)
     with tabs[1]:
         render_v21_candidates(snapshots)
     with tabs[2]:
-        render_v21_portfolio(snapshots)
+        render_v21_ml_sim(snapshots)
     with tabs[3]:
-        render_v21_risk(snapshots)
+        render_v21_portfolio(snapshots)
     with tabs[4]:
-        render_v21_learning(snapshots)
+        render_v21_risk(snapshots)
     with tabs[5]:
-        render_v21_qmt(snapshots)
+        render_v21_learning(snapshots)
     with tabs[6]:
-        render_v21_data_quality(snapshots)
+        render_v21_qmt(snapshots)
     with tabs[7]:
+        render_v21_data_quality(snapshots)
+    with tabs[8]:
         with st.expander("V1 传统信号，仅用于对照", expanded=False):
             render_v21_v1_reference()
 

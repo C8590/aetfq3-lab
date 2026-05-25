@@ -67,16 +67,41 @@ class FieldName(TextEnum):
     SCORE = "score"
     RANK = "rank"
     SELECTED = "selected"
+    CANDIDATE_POOL_FLAG = "candidate_pool_flag"
+    CANDIDATE_SOURCE = "candidate_source"
+    LEGACY_SELECTED = "legacy_selected"
+    BROAD_RECALL_SELECTED = "broad_recall_selected"
+    ML_RECOVERED = "ml_recovered"
+    CANDIDATE_POOL_RANK = "candidate_pool_rank"
     REASON = "reason"
     BUY_ACTION = "buy_action"
     BUY_PRICE = "buy_price"
     POSITION_SIZE = "position_size"
     CONFIDENCE = "confidence"
     ENTRY_REASON = "entry_reason"
+    RAW_ENTRY_ACTION = "raw_entry_action"
+    RAW_ENTRY_TARGET_WEIGHT = "raw_entry_target_weight"
+    RAW_ENTRY_CONFIDENCE = "raw_entry_confidence"
+    RAW_ENTRY_REASON = "raw_entry_reason"
+    RAW_ENTRY_BLOCK_REASON = "raw_entry_block_reason"
+    FINAL_BUY_ACTION = "final_buy_action"
+    FINAL_TARGET_WEIGHT = "final_target_weight"
+    FINAL_BLOCK_REASON = "final_block_reason"
+    CONTROL_OVERRIDE_REASON = "control_override_reason"
+    EXIT_PRIORITY_BLOCKED = "exit_priority_blocked"
+    RISK_GATE_BLOCKED = "risk_gate_blocked"
+    ML_SCORE = "ml_score"
+    P_GOOD_ENTRY = "p_good_entry"
+    P_BAD_ENTRY = "p_bad_entry"
     ML_ENTRY_ADVICE = "ml_entry_advice"
     ML_CONFIDENCE = "ml_confidence"
     ML_REASON = "ml_reason"
     ML_ACTION_SUGGESTION = "ml_action_suggestion"
+    ML_DECISION_MODE = "ml_decision_mode"
+    ML_ADJUSTMENT = "ml_adjustment"
+    ML_ADJUSTMENT_REASON_CN = "ml_adjustment_reason_cn"
+    RULE_ACTION = "rule_action"
+    ML_ADJUSTED_ACTION = "ml_adjusted_action"
     SELL_ACTION = "sell_action"
     SELL_PRICE = "sell_price"
     REDUCE_RATIO = "reduce_ratio"
@@ -101,6 +126,12 @@ PRE_SELECTION_RESULT_FIELDS = (
     FieldName.SCORE.value,
     FieldName.RANK.value,
     FieldName.SELECTED.value,
+    FieldName.CANDIDATE_POOL_FLAG.value,
+    FieldName.CANDIDATE_SOURCE.value,
+    FieldName.LEGACY_SELECTED.value,
+    FieldName.BROAD_RECALL_SELECTED.value,
+    FieldName.ML_RECOVERED.value,
+    FieldName.CANDIDATE_POOL_RANK.value,
     FieldName.REASON.value,
     FieldName.GENERATED_AT.value,
 )
@@ -115,10 +146,29 @@ ENTRY_SIGNAL_FIELDS = (
     FieldName.POSITION_SIZE.value,
     FieldName.CONFIDENCE.value,
     FieldName.ENTRY_REASON.value,
+    FieldName.RAW_ENTRY_ACTION.value,
+    FieldName.RAW_ENTRY_TARGET_WEIGHT.value,
+    FieldName.RAW_ENTRY_CONFIDENCE.value,
+    FieldName.RAW_ENTRY_REASON.value,
+    FieldName.RAW_ENTRY_BLOCK_REASON.value,
+    FieldName.FINAL_BUY_ACTION.value,
+    FieldName.FINAL_TARGET_WEIGHT.value,
+    FieldName.FINAL_BLOCK_REASON.value,
+    FieldName.CONTROL_OVERRIDE_REASON.value,
+    FieldName.EXIT_PRIORITY_BLOCKED.value,
+    FieldName.RISK_GATE_BLOCKED.value,
+    FieldName.ML_SCORE.value,
+    FieldName.P_GOOD_ENTRY.value,
+    FieldName.P_BAD_ENTRY.value,
     FieldName.ML_ENTRY_ADVICE.value,
     FieldName.ML_CONFIDENCE.value,
     FieldName.ML_REASON.value,
     FieldName.ML_ACTION_SUGGESTION.value,
+    FieldName.ML_DECISION_MODE.value,
+    FieldName.ML_ADJUSTMENT.value,
+    FieldName.ML_ADJUSTMENT_REASON_CN.value,
+    FieldName.RULE_ACTION.value,
+    FieldName.ML_ADJUSTED_ACTION.value,
     FieldName.SOURCE_FILE.value,
     FieldName.GENERATED_AT.value,
 )

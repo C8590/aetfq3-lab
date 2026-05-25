@@ -242,6 +242,10 @@ class ModularDailySignalPipelineTest(unittest.TestCase):
 
         self.assertNotEqual(gated["buy_action"], row["buy_action"])
         self.assertEqual(gated["position_size"], 0.0)
+        self.assertEqual(gated["raw_entry_action"], "BUY")
+        self.assertEqual(gated["raw_entry_target_weight"], 0.5)
+        self.assertEqual(gated["final_buy_action"], "BLOCKED")
+        self.assertTrue(gated["risk_gate_blocked"])
         self.assertEqual(gated["ml_entry_advice"], row["ml_entry_advice"])
         self.assertEqual(gated["ml_action_suggestion"], row["ml_action_suggestion"])
 

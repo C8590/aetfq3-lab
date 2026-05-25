@@ -20,6 +20,8 @@ PRICE_OPTIONAL_COLUMNS = [
     "volume",
     "amount",
     "sector_l1",
+    "sector_level1",
+    "sector_level2",
 ]
 
 DAILY_ETF_SAMPLE_COLUMNS = [
@@ -28,6 +30,8 @@ DAILY_ETF_SAMPLE_COLUMNS = [
     "name",
     "sector",
     "sector_l1",
+    "sector_level1",
+    "sector_level2",
     "market_state",
     "sector_state",
     "r20",
@@ -45,6 +49,32 @@ DAILY_ETF_SAMPLE_COLUMNS = [
     "etf_rank",
     "global_rank",
     "data_quality_flag",
+    "source",
+]
+
+DAILY_ML_UNIVERSE_SAMPLE_COLUMNS = [
+    "trade_date",
+    "code",
+    "name",
+    "sector_level1",
+    "sector_level2",
+    "is_valid_sample",
+    "exclude_reason",
+    "momentum_20",
+    "momentum_60",
+    "momentum_120",
+    "momentum_score",
+    "acceleration_score",
+    "volatility_20",
+    "drawdown_20",
+    "drawdown_60",
+    "market_state",
+    "sector_state",
+    "sector_rank",
+    "etf_rank",
+    "pre_selected",
+    "entry_raw_action",
+    "final_action",
     "source",
 ]
 
@@ -101,6 +131,8 @@ ENTRY_CANDIDATE_COLUMNS = [
     "was_selected",
     "was_bought",
     "exclude_reason",
+    "entry_raw_action",
+    "final_action",
     "source",
 ]
 
@@ -122,7 +154,28 @@ FUTURE_LABEL_COLUMNS = [
     "label_status",
 ]
 
+ML_ENTRY_LABEL_COLUMNS = [
+    "feature_at_t",
+    "label_after_t",
+    "future_return_1d",
+    "future_return_3d",
+    "future_return_5d",
+    "future_return_10d",
+    "future_return_20d",
+    "future_max_gain_10d",
+    "future_max_drawdown_10d",
+    "outperform_market_10d",
+    "outperform_sector_10d",
+    "hit_stop_loss_10d",
+    "auto_label",
+    "label_reason_cn",
+    "label_status",
+]
+
 REPLAY_FORBIDDEN_LABEL_COLUMNS = FUTURE_LABEL_COLUMNS.copy()
+REPLAY_FORBIDDEN_LABEL_COLUMNS.extend(
+    [c for c in ML_ENTRY_LABEL_COLUMNS if c not in REPLAY_FORBIDDEN_LABEL_COLUMNS]
+)
 
 REVIEW_QUEUE_COLUMNS = [
     "review_reason",
@@ -153,10 +206,13 @@ REVIEW_QUEUE_COLUMNS = [
 
 OUTPUT_TABLES = [
     "daily_etf_samples",
+    "daily_ml_universe_samples",
     "daily_sector_samples",
     "daily_decision_snapshot",
     "entry_candidate_samples",
     "entry_candidate_samples_labeled",
+    "ml_entry_labeled_samples",
+    "ml_entry_scores",
     "manual_review_queue",
     "entry_calibration_suggestions",
 ]

@@ -1620,6 +1620,7 @@ def _latest_strategy_signal(
         signal_date=signal_date,
         risk_date=execution_date,
         current_position_path="config/current_position.yaml",
+        ml_decision_mode=str(raw.get("ml_decision_mode", "shadow")),
     )
     _apply_v2_signal_summary(summary, modular_pipeline)
     comparison_row = write_v1_v2_comparison(v1_summary, summary, modular_pipeline, output_dir="output")
