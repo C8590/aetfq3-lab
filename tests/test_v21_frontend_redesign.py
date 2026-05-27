@@ -621,6 +621,30 @@ def test_v21_frontend_loads_and_renders_ml_sim_observation_view(tmp_path: Path) 
     assert "ML_SIM 对照" in page_source
 
 
+def test_v21_frontend_loads_execution_plan(tmp_path: Path) -> None:
+    _write_json(
+        tmp_path / "execution_plan.json",
+        [
+            {"plan_side": "BUY", "execution_action": "PROBE_READY", "cancel_buy_condition": "高开取消"},
+            {"plan_side": "SELL", "execution_action": "NO_SELL_PLAN", "sell_condition": "NO_SELL_PLAN"},
+        ],
+    )
+    _write_json(
+        tmp_path / "tomorrow_trade_plan.json",
+        {"execution_plan_summary": {"sell_actions": [{"plan_side": "SELL", "execution_action": "NO_SELL_PLAN"}]}},
+    )
+
+    snapshots = app.load_v21_frontend_snapshots(tmp_path)
+    records = app._v21_execution_plan_records(snapshots)
+    frame = app._v21_execution_plan_frame(records)
+    page_source = inspect.getsource(app.render_page)
+
+    assert records[0]["execution_action"] == "PROBE_READY"
+    assert any(item["execution_action"] == "NO_SELL_PLAN" for item in records)
+    assert "取消买入条件" in frame.columns
+    assert "买卖执行计划" in page_source
+
+
 def test_v21_position_editor_remains_form_submit_once_model() -> None:
     source = inspect.getsource(app.render_current_position_module)
     portfolio_source = inspect.getsource(app.render_v21_portfolio)
