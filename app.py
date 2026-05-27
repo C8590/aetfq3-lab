@@ -3093,8 +3093,10 @@ def build_v21_frontend_status(snapshots: Mapping[str, Any]) -> dict[str, Any]:
     risk = snapshots.get("risk_gate") if isinstance(snapshots.get("risk_gate"), Mapping) else {}
     status = snapshots.get("status") if isinstance(snapshots.get("status"), Mapping) else {}
     return {
+        "profile": _v21_display_value(status.get("profile"), "V2.1 Stable"),
         "signal_version": _v21_display_value(_first_present(decision.get("signal_version"), status.get("signal_version"))),
         "trade_date": format_trade_date(_first_present(decision.get("trade_date"), risk.get("trade_date"), status.get("trade_date"))) or _v21_display_value(_first_present(decision.get("trade_date"), risk.get("trade_date"), status.get("trade_date"))),
+        "expected_execution_date": format_trade_date(status.get("expected_execution_date")) or _v21_display_value(status.get("expected_execution_date")),
         "market_state": _v21_display_value(decision.get("market_state")),
         "risk_level": _v21_display_value(_first_present(decision.get("risk_level"), risk.get("risk_level"))),
         "risk_score": _v21_display_value(_first_present(decision.get("risk_score"), risk.get("risk_score"))),
@@ -3539,9 +3541,12 @@ def render_v21_overview(snapshots: Mapping[str, Any]) -> None:
         st.success("风险门控未冻结买入；是否实际买入仍以总控日内裁决和订单意图为准。")
     render_compact_metric_grid(
         [
+            ("Stable 版本", status["profile"]),
             ("信号版本", status["signal_version"]),
             ("交易日期", status["trade_date"]),
+            ("预计执行日", status["expected_execution_date"]),
             ("市场状态", status["market_state"]),
+            ("RiskGate", f"{status['risk_level']} / {status['risk_score']}"),
             ("风险等级", status["risk_level"]),
             ("风险分数", status["risk_score"]),
             ("允许买入", status["allow_entry"]),
