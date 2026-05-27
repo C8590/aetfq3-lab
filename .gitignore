@@ -57,3 +57,7 @@ output/playwright/
 # Local browser screenshots / traces
 *.webm
 *.trace.zip
+
+# Local ML Lab research outputs
+.local_research_outputs/
+.local_artifact_backup/
