@@ -72,6 +72,8 @@
 - `POST /api/control/rebuild-snapshot` -> `rebuild_v21_snapshot()`，长任务
 - `GET /api/control/download-daily-report` -> `download_daily_report()`
 
+`get_control_snapshot()` 可读取 `execution_plan.json` 作为 `execution_plan` 字段返回。该字段只用于前端展示人工执行计划，必须保持 `DRAFT_ONLY` / `manual_confirm_required=True` 边界；它不构成正式交易指令，不触发 QMT 自动下单，也不得绕过 `risk_warning` 的 R3/R4/P0 刹车。
+
 ## Historical ML Actions
 
 - `POST /api/historical-ml/run-replay` -> `run_historical_replay(start_date, end_date)`，长任务

@@ -45,6 +45,10 @@ V2.1 后端集成层只做总控编排、优先级裁决和稳定输出，不重
 - `output/portfolio_snapshot.json`
 - `output/order_intent.csv`
 - `output/order_intent.json`
+- `output/execution_plan.csv`
+- `output/execution_plan.json`
+- `output/tomorrow_trade_plan.md`
+- `output/tomorrow_trade_plan.json`
 - `output/learning_summary.csv`
 - `output/learning_summary.json`
 - `output/historical_ml_summary.csv`
@@ -124,6 +128,25 @@ RiskGate 优先级高于 entry、pre_selection、historical_ml 和 qmt_execution
 - `explain`
 
 第一阶段 `execution_mode` 只能是 `SIMULATION`、`DRAFT`、`MANUAL_CONFIRM` 之一。默认 `requires_manual_confirm=True`，不允许默认全自动实盘下单。风险检查不通过时，只生成阻断说明，不生成可执行订单。
+
+## ExecutionPlan / TomorrowTradePlan
+
+`ExecutionPlan` 是总控在 `DailyDecision` 和 `OrderIntent` 之后生成的人工作业计划层，只把 entry/exit 裁决结果翻译为人工可读的买卖条件，不构成正式交易指令，不修改 `risk_warning`、`trade_policy` 或 QMT 实盘配置语义。
+
+输出文件：
+
+- `output/execution_plan.csv`
+- `output/execution_plan.json`
+- `output/tomorrow_trade_plan.md`
+- `output/tomorrow_trade_plan.json`
+
+安全边界：
+
+- `qmt_intent_status` 必须保持 `DRAFT_ONLY`。
+- `manual_confirm_required` 必须保持 `True`。
+- `tomorrow_trade_plan.*` 只是明日人工复核草稿，不自动生成正式买卖指令。
+- ExecutionPlan 不触发 QMT 自动下单，不连接实盘 broker，不绕过 `risk_warning` 的 R3/R4/P0 刹车。
+- R3/R4/P0 或人工接管状态下，买入侧只能保留阻断说明或人工确认草稿，不能输出普通可执行买入。
 
 ## PortfolioSnapshot
 
