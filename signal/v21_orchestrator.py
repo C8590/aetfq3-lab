@@ -19,7 +19,9 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 import yaml
 
+from data.trading_calendar import get_next_trading_day
 from signal.entry.diagnostics import write_entry_diagnostics, write_entry_signal_coverage_report
+from signal.execution_plan import EXECUTION_PLAN_FIELDS, build_execution_plan
 from contracts.v21_schema import (
     DAILY_DECISION_FIELDS,
     ML_SIM_COMPARISON_FIELDS,
@@ -57,6 +59,10 @@ OUTPUT_FILES = (
     "entry_diagnostics.json",
     "entry_signal_coverage_report.csv",
     "entry_signal_coverage_report.md",
+    "execution_plan.csv",
+    "execution_plan.json",
+    "tomorrow_trade_plan.md",
+    "tomorrow_trade_plan.json",
     "v21_backend_status.json",
 )
 
@@ -109,6 +115,7 @@ def run_v21_backend_pipeline(
         fallback_reasons.append(qmt_note)
 
     effective_date = _resolve_trade_date(trade_date, pre_rows, entry, exits, learning, risk_gate)
+    expected_execution_date = _resolve_expected_execution_date(effective_date)
     v21_risk = _build_risk_gate(risk_gate, out_dir, effective_date, warnings, fallback_reasons)
 
     risk_level = str(v21_risk.risk_level or "R0").upper()
@@ -160,6 +167,14 @@ def run_v21_backend_pipeline(
         risk=v21_risk,
         qmt_available=qmt_available,
         qmt_note=qmt_note,
+    )
+    execution_plan = build_execution_plan(
+        trade_date=effective_date,
+        expected_execution_date=expected_execution_date,
+        entry_actions=entry_actions,
+        exit_actions=exit_actions,
+        portfolio=[item.to_dict() for item in portfolio],
+        risk_gate=v21_risk.to_dict(),
     )
     funnel_counts = _build_ml_funnel_counts(
         out_dir=out_dir,
@@ -229,6 +244,8 @@ def run_v21_backend_pipeline(
     _write_json(out_dir / "portfolio_snapshot.json", [item.to_dict() for item in portfolio])
     _write_table(out_dir / "order_intent.csv", ORDER_INTENT_FIELDS, order_intents)
     _write_json(out_dir / "order_intent.json", order_intents)
+    _write_table(out_dir / "execution_plan.csv", EXECUTION_PLAN_FIELDS, execution_plan)
+    _write_json(out_dir / "execution_plan.json", execution_plan)
     _write_table(out_dir / "learning_summary.csv", TRAINING_SAMPLE_FIELDS, learning_summary)
     _write_json(out_dir / "learning_summary.json", learning_summary)
     _write_table(out_dir / "historical_ml_summary.csv", TRAINING_SAMPLE_FIELDS, historical_summary)
@@ -250,6 +267,7 @@ def run_v21_backend_pipeline(
 
     status = {
         "trade_date": effective_date,
+        "expected_execution_date": expected_execution_date,
         "signal_version": SIGNAL_VERSION,
         "status": "completed_with_fallback" if fallback_reasons else "completed",
         "generated_at": generated_at,
@@ -279,6 +297,15 @@ def run_v21_backend_pipeline(
         "funnel_counts": funnel_counts,
         "ml_sim_summary": ml_sim_summary,
     }
+    tomorrow_plan = _build_tomorrow_trade_plan(
+        decision=decision,
+        risk_gate=v21_risk.to_dict(),
+        order_intents=order_intents,
+        execution_plan=execution_plan,
+        expected_execution_date=expected_execution_date,
+    )
+    _write_json(out_dir / "tomorrow_trade_plan.json", tomorrow_plan)
+    (out_dir / "tomorrow_trade_plan.md").write_text(_tomorrow_trade_plan_markdown(tomorrow_plan), encoding="utf-8")
     _write_json(out_dir / "v21_backend_status.json", status)
 
     return {
@@ -286,6 +313,7 @@ def run_v21_backend_pipeline(
         "risk_gate": v21_risk.to_dict(),
         "portfolio_snapshot": [item.to_dict() for item in portfolio],
         "order_intent": order_intents,
+        "execution_plan": execution_plan,
         "learning_summary": learning_summary,
         "historical_ml_summary": historical_summary,
         "ml_sim_daily_comparison": ml_sim_comparison,
@@ -293,8 +321,140 @@ def run_v21_backend_pipeline(
         "ml_sim_review_queue": ml_sim_review_queue,
         "entry_diagnostics": entry_diagnostics,
         "entry_coverage": entry_coverage,
+        "tomorrow_trade_plan": tomorrow_plan,
         "status": status,
     }
+
+
+def _resolve_expected_execution_date(trade_date: str) -> str:
+    try:
+        return get_next_trading_day(pd.Timestamp(trade_date)).isoformat()
+    except Exception:  # noqa: BLE001
+        return (pd.Timestamp(trade_date) + pd.offsets.BDay(1)).date().isoformat()
+
+
+def _entry_action_code(item: Mapping[str, Any]) -> str:
+    for key in ("final_buy_action", "entry_action", "raw_entry_action", "action"):
+        value = str(item.get(key) or "").strip().upper()
+        if value:
+            return value
+    return ""
+
+
+def _compact_action(item: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "etf_code": _symbol(item.get("etf_code") or item.get("symbol") or item.get("code")),
+        "etf_name": item.get("etf_name") or item.get("name") or "",
+        "action": _entry_action_code(item) or item.get("exit_action") or item.get("action") or "",
+        "target_weight": item.get("final_target_weight", item.get("target_weight", "")),
+        "reason": item.get("final_block_reason") or item.get("explain") or item.get("exit_reason") or "",
+        "ml_readonly": ML_OBSERVATION_NOTICE,
+    }
+
+
+def _build_tomorrow_trade_plan(
+    *,
+    decision: Mapping[str, Any],
+    risk_gate: Mapping[str, Any],
+    order_intents: Sequence[Mapping[str, Any]],
+    execution_plan: Sequence[Mapping[str, Any]],
+    expected_execution_date: str,
+) -> dict[str, Any]:
+    entry_actions = _mapping_records(decision.get("entry_actions"))
+    exit_actions = _mapping_records(decision.get("exit_actions"))
+    buy_or_probe = [
+        _compact_action(item)
+        for item in entry_actions
+        if _entry_action_code(item) in {"BUY", "PROBE"} and _bool(item.get("actual_buy"))
+    ]
+    observe = [
+        _compact_action(item)
+        for item in entry_actions
+        if _entry_action_code(item) in {"OBSERVE", "NO_BUY", "NONE", "AVOID", "BLOCKED"} or not _bool(item.get("actual_buy"))
+    ]
+    exit_plan = [_compact_action(item) for item in exit_actions if str(item.get("exit_action") or item.get("action") or "").strip()]
+    buy_execution_plan = [dict(item) for item in execution_plan if str(item.get("plan_side") or "").upper() == "BUY"]
+    sell_execution_plan = [dict(item) for item in execution_plan if str(item.get("plan_side") or "").upper() == "SELL"]
+    return {
+        "mode": "V2.1 Stable",
+        "data_date": decision.get("trade_date", ""),
+        "signal_generated_at": decision.get("generated_at", ""),
+        "expected_execution_date": expected_execution_date,
+        "allow_buy": bool(decision.get("allow_entry")),
+        "risk_gate": {
+            "risk_level": risk_gate.get("risk_level", decision.get("risk_level", "")),
+            "risk_score": risk_gate.get("risk_score", decision.get("risk_score", "")),
+            "freeze_entry": bool(risk_gate.get("freeze_entry", decision.get("freeze_entry", False))),
+            "manual_takeover_required": bool(risk_gate.get("manual_takeover_required", decision.get("manual_takeover_required", False))),
+        },
+        "exit_priority_blocked": bool(decision.get("exit_priority_blocked")),
+        "exit_block_reason": decision.get("exit_block_reason", ""),
+        "tomorrow_buy_or_probe_candidates": buy_or_probe,
+        "tomorrow_sell_reduce_clear_advice": exit_plan,
+        "execution_plan_summary": {
+            "buy_plan_count": len(buy_execution_plan),
+            "sell_plan_count": len(sell_execution_plan),
+            "buy_actions": buy_execution_plan,
+            "sell_actions": sell_execution_plan,
+        },
+        "hold_observation": observe,
+        "qmt_order_drafts": [dict(item) for item in order_intents],
+        "qmt_safety": "仅生成 DRAFT/MANUAL_CONFIRM/SIMULATION 草稿，不连接真实 QMT，不自动提交订单。",
+        "ml_readonly_notice": ML_OBSERVATION_NOTICE,
+    }
+
+
+def _tomorrow_trade_plan_markdown(plan: Mapping[str, Any]) -> str:
+    execution_summary = plan.get("execution_plan_summary") if isinstance(plan.get("execution_plan_summary"), Mapping) else {}
+    buy_plans = _mapping_records(execution_summary.get("buy_actions"))
+    sell_plans = _mapping_records(execution_summary.get("sell_actions"))
+    lines = [
+        "# V2.1 Stable 明日交易计划",
+        "",
+        f"- 数据日期：{plan.get('data_date', '')}",
+        f"- 信号生成时间：{plan.get('signal_generated_at', '')}",
+        f"- 预计执行日：{plan.get('expected_execution_date', '')}",
+        f"- 是否允许买入：{'是' if plan.get('allow_buy') else '否'}",
+        "",
+        "## 买卖执行计划",
+        "",
+    ]
+    if buy_plans:
+        for item in buy_plans:
+            lines.append(
+                "- "
+                f"{item.get('etf_code', '')} {item.get('etf_name', '')}："
+                f"{item.get('execution_action', '')}；买入方式：{item.get('buy_method', '')}；"
+                f"目标仓位：{item.get('target_weight', '')}；高开处理：{item.get('high_open_handling', '')}；"
+                f"等待回踩：{item.get('wait_pullback_condition', '')}；"
+                f"取消条件：{item.get('cancel_buy_condition', '')}；风险提示：{item.get('risk_note', '')}"
+            )
+    else:
+        lines.append("- 当前无买入执行计划。")
+    if sell_plans:
+        for item in sell_plans:
+            lines.append(
+                "- "
+                f"{item.get('etf_code', '')} {item.get('etf_name', '')}："
+                f"{item.get('execution_action', '')}；卖出条件：{item.get('sell_condition', '')}；"
+                f"利润保护：{item.get('profit_protection_placeholder', '')}；风险提示：{item.get('risk_note', '')}"
+            )
+    else:
+        lines.append("- NO_SELL_PLAN")
+    lines.extend(["", "## QMT 安全边界", "", str(plan.get("qmt_safety", "")), ""])
+    return "\n".join(lines)
+
+
+def _mapping_records(value: Any) -> list[dict[str, Any]]:
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+        except json.JSONDecodeError:
+            return []
+        return _mapping_records(parsed)
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
+        return []
+    return [dict(item) for item in value if isinstance(item, Mapping)]
 
 
 def _rows_or_csv(
@@ -605,6 +765,10 @@ def _build_entry_actions(
                 "final_buy_action": final_action,
                 "final_target_weight": final_target_weight,
                 "final_block_reason": final_block_reason,
+                "expected_open_gap_pct": row.get("expected_open_gap_pct", ""),
+                "expected_open_gap": row.get("expected_open_gap", ""),
+                "open_gap_pct": row.get("open_gap_pct", ""),
+                "next_open_gap_pct": row.get("next_open_gap_pct", ""),
                 "control_override_reason": control_override_reason,
                 "active_exit_count": int(_number(exit_block.get("active_exit_count"), 0)),
                 "actual_position_exit_count": int(_number(exit_block.get("actual_position_exit_count"), 0)),

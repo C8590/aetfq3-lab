@@ -78,6 +78,7 @@ def get_control_snapshot(output_dir: str | Path = OUTPUT_DIR) -> dict[str, Any]:
         "risk_gate": _read_json(out_dir / "risk_gate_snapshot.json", {}),
         "portfolio_snapshot": _read_json(out_dir / "portfolio_snapshot.json", []),
         "order_intent": _read_json(out_dir / "order_intent.json", []),
+        "execution_plan": _read_json(out_dir / "execution_plan.json", []),
         "learning_summary": _read_json(out_dir / "learning_summary.json", []),
         "historical_ml_summary": _read_json(out_dir / "historical_ml_summary.json", []),
         "backend_status": _read_json(out_dir / "v21_backend_status.json", {}),

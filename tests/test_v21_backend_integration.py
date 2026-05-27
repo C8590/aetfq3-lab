@@ -587,6 +587,57 @@ def test_order_intent_defaults_to_manual_confirm(tmp_path: Path) -> None:
     assert all(item["requires_manual_confirm"] is True for item in result["order_intent"])
 
 
+def test_execution_plan_converts_probe_to_buy_plan_and_no_sell_plan(tmp_path: Path) -> None:
+    pre_rows = []
+    entry_rows = []
+    for index in range(5):
+        symbol = f"{560780 + index:06d}"
+        pre_rows.append({**_pre_rows()[0], "symbol": symbol, "name": f"测试ETF{index}", "rank": index + 1, "selected": True})
+        entry_rows.append(
+            {
+                **_entry_rows("试探买入", 0.3)[0],
+                "symbol": symbol,
+                "name": f"测试ETF{index}",
+                "raw_entry_action": "PROBE",
+                "raw_entry_target_weight": 0.3,
+                "final_buy_action": "PROBE",
+                "final_target_weight": 0.3,
+            }
+        )
+    entry_rows[0]["expected_open_gap_pct"] = 0.03
+
+    result = run_v21_backend_pipeline(
+        output_dir=tmp_path,
+        pre_selection_rows=pre_rows,
+        risk_gate=_risk(),
+        entry_rows=entry_rows,
+        exit_rows=[],
+        learning_rows=[],
+        historical_ml_rows=[],
+        holdings=[],
+        qmt_execution_available=True,
+    )
+
+    plan = result["execution_plan"]
+    buy_plan = [item for item in plan if item["plan_side"] == "BUY"]
+    sell_plan = [item for item in plan if item["plan_side"] == "SELL"]
+    assert len(buy_plan) == 5
+    assert {item["execution_action"] for item in buy_plan} == {"WAIT_PULLBACK", "PROBE_READY"}
+    assert all(item["buy_method"] for item in buy_plan)
+    assert all(item["target_weight"] == 0.3 for item in buy_plan)
+    assert all(item["high_open_handling"] for item in buy_plan)
+    assert all(item["wait_pullback_condition"] for item in buy_plan)
+    assert all(item["cancel_buy_condition"] for item in buy_plan)
+    assert all(item["risk_note"] for item in buy_plan)
+    assert sell_plan[0]["execution_action"] == "NO_SELL_PLAN"
+    assert all(item["execution_mode"] in {"DRAFT", "MANUAL_CONFIRM", "SIMULATION"} for item in result["order_intent"])
+    assert (tmp_path / "execution_plan.csv").exists()
+    assert (tmp_path / "execution_plan.json").exists()
+    tomorrow = json.loads((tmp_path / "tomorrow_trade_plan.json").read_text(encoding="utf-8"))
+    assert tomorrow["execution_plan_summary"]["buy_plan_count"] == 5
+    assert tomorrow["execution_plan_summary"]["sell_actions"][0]["execution_action"] == "NO_SELL_PLAN"
+
+
 def test_candidate_pool_can_exceed_legacy_top5_while_order_intents_remain_limited(tmp_path: Path) -> None:
     pre_rows = []
     entry_rows = []

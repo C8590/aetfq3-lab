@@ -94,6 +94,8 @@ V21_FRONTEND_JSON_FILES = (
     "historical_ml_summary.json",
     "ml_sim_daily_comparison.json",
     "ml_sim_summary.json",
+    "execution_plan.json",
+    "tomorrow_trade_plan.json",
     "v21_backend_status.json",
 )
 
@@ -114,6 +116,10 @@ V21_FRONTEND_OUTPUT_FILES = (
     "ml_sim_daily_comparison.json",
     "ml_sim_summary.json",
     "ml_sim_review_queue.csv",
+    "execution_plan.csv",
+    "execution_plan.json",
+    "tomorrow_trade_plan.md",
+    "tomorrow_trade_plan.json",
     "v21_backend_status.json",
 )
 
@@ -2831,7 +2837,7 @@ def _v21_output_signature(project_root: Path) -> tuple[tuple[str, float, int], .
 def _read_v21_json_file(output_dir: Path, filename: str) -> Any:
     path = output_dir / filename
     if not path.exists():
-        return [] if filename in {"portfolio_snapshot.json", "order_intent.json", "learning_summary.json", "historical_ml_summary.json", "ml_sim_daily_comparison.json"} else {}
+        return [] if filename in {"portfolio_snapshot.json", "order_intent.json", "learning_summary.json", "historical_ml_summary.json", "ml_sim_daily_comparison.json", "execution_plan.json"} else {}
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
@@ -2858,6 +2864,8 @@ def load_v21_frontend_snapshots(output_dir: Path = OUTPUT_DIR) -> dict[str, Any]
         "historical_ml": _read_v21_json_file(output_dir, "historical_ml_summary.json"),
         "ml_sim_daily_comparison": _read_v21_json_file(output_dir, "ml_sim_daily_comparison.json"),
         "ml_sim_summary": _read_v21_json_file(output_dir, "ml_sim_summary.json"),
+        "execution_plan": _read_v21_json_file(output_dir, "execution_plan.json"),
+        "tomorrow_trade_plan": _read_v21_json_file(output_dir, "tomorrow_trade_plan.json"),
         "status": _read_v21_json_file(output_dir, "v21_backend_status.json"),
         "missing_files": [filename for filename in V21_FRONTEND_JSON_FILES if not (output_dir / filename).exists()],
     }
@@ -3035,6 +3043,44 @@ def _v21_entry_action_funnel(decision: Mapping[str, Any], orders: Sequence[Mappi
         ("订单草稿", _v21_first_count(decision, ("order_intent_count",), default=len(orders))),
         ("ML 评分命中数", _v21_first_count(decision, ("ml_score_direct_hit_count",), default=sum(1 for item in actions if _v21_ml_hit(item)))),
     ]
+
+
+def _v21_execution_plan_records(snapshots: Mapping[str, Any]) -> list[dict[str, Any]]:
+    records = _v21_records(snapshots.get("execution_plan"))
+    if records:
+        return records
+    plan = snapshots.get("tomorrow_trade_plan") if isinstance(snapshots.get("tomorrow_trade_plan"), Mapping) else {}
+    summary = plan.get("execution_plan_summary") if isinstance(plan.get("execution_plan_summary"), Mapping) else {}
+    return _v21_records(summary.get("buy_actions")) + _v21_records(summary.get("sell_actions"))
+
+
+def _v21_execution_plan_frame(records: Sequence[Mapping[str, Any]]) -> pd.DataFrame:
+    return _v21_frame(
+        records,
+        {
+            "etf_code": "ETF代码",
+            "etf_name": "ETF名称",
+            "plan_side": "方向",
+            "source_action": "来源信号",
+            "execution_action": "执行动作",
+            "execution_priority": "优先级",
+            "buy_method": "买入方式",
+            "sell_method": "卖出方式",
+            "target_weight": "目标仓位",
+            "high_open_handling": "高开处理",
+            "wait_pullback_condition": "等待回踩说明",
+            "first_30min_confirmation": "前30分钟确认",
+            "cancel_buy_condition": "取消买入条件",
+            "sell_condition": "卖出条件",
+            "profit_protection_placeholder": "利润保护占位",
+            "intraday_confirm_placeholder": "分时确认占位",
+            "intraday_exit_trigger_placeholder": "分时卖出占位",
+            "five_min_k_placeholder": "5分钟K占位",
+            "risk_note": "风险提示",
+            "qmt_intent_status": "QMT状态",
+            "manual_confirm_required": "人工确认",
+        },
+    )
 
 
 def _v21_ml_missing_reason_frame(decision: Mapping[str, Any]) -> pd.DataFrame:
@@ -3849,6 +3895,39 @@ def render_v21_ml_sim(snapshots: Mapping[str, Any]) -> None:
         key="v21_ml_sim_daily_comparison",
         height=360,
     )
+
+
+def render_v21_execution_plan(snapshots: Mapping[str, Any]) -> None:
+    records = _v21_execution_plan_records(snapshots)
+    buy_records = [item for item in records if str(item.get("plan_side") or "").upper() == "BUY"]
+    sell_records = [item for item in records if str(item.get("plan_side") or "").upper() == "SELL"]
+    st.info("买卖执行计划只把 entry/exit 总控结果翻译成人工可执行条件；不修改 BUY/PROBE 阈值，不修改 final_buy_action，不触发 QMT。")
+    render_compact_metric_grid(
+        [
+            ("买入执行计划", len(buy_records)),
+            ("卖出执行计划", len(sell_records)),
+            ("NO_SELL_PLAN", sum(1 for item in sell_records if str(item.get("execution_action") or "").upper() == "NO_SELL_PLAN")),
+            ("QMT 状态", "DRAFT_ONLY"),
+        ],
+        class_name="compact-metric-grid strategy-metric-grid",
+    )
+    st.markdown("**买入执行计划**")
+    show_dataframe_or_empty(
+        _v21_execution_plan_frame(buy_records),
+        empty_text="当前无买入执行计划。",
+        key="v21_buy_execution_plan",
+        height=320,
+    )
+    st.markdown("**卖出执行计划**")
+    show_dataframe_or_empty(
+        _v21_execution_plan_frame(sell_records),
+        empty_text="当前无卖出执行计划。",
+        key="v21_sell_execution_plan",
+        height=260,
+    )
+    with st.expander("明日计划 JSON 摘要", expanded=False):
+        tomorrow_plan = snapshots.get("tomorrow_trade_plan") if isinstance(snapshots.get("tomorrow_trade_plan"), Mapping) else {}
+        st.json(tomorrow_plan.get("execution_plan_summary", {}), expanded=False)
 
 
 def render_v21_portfolio(snapshots: Mapping[str, Any]) -> None:
@@ -4749,24 +4828,26 @@ def render_page() -> None:
         _load_v21_snapshots_cached.clear()
         st.rerun()
 
-    tabs = st.tabs(["今日总览", "候选与买入", "ML_SIM 对照", "持仓与卖出", "风险预警", "历史学习", "QMT 执行", "数据质量与运行日志", "V1 对照"])
+    tabs = st.tabs(["今日总览", "候选与买入", "买卖执行计划", "ML_SIM 对照", "持仓与卖出", "风险预警", "历史学习", "QMT 执行", "数据质量与运行日志", "V1 对照"])
     with tabs[0]:
         render_v21_overview(snapshots)
     with tabs[1]:
         render_v21_candidates(snapshots)
     with tabs[2]:
-        render_v21_ml_sim(snapshots)
+        render_v21_execution_plan(snapshots)
     with tabs[3]:
-        render_v21_portfolio(snapshots)
+        render_v21_ml_sim(snapshots)
     with tabs[4]:
-        render_v21_risk(snapshots)
+        render_v21_portfolio(snapshots)
     with tabs[5]:
-        render_v21_learning(snapshots)
+        render_v21_risk(snapshots)
     with tabs[6]:
-        render_v21_qmt(snapshots)
+        render_v21_learning(snapshots)
     with tabs[7]:
-        render_v21_data_quality(snapshots)
+        render_v21_qmt(snapshots)
     with tabs[8]:
+        render_v21_data_quality(snapshots)
+    with tabs[9]:
         with st.expander("V1 传统信号，仅用于对照", expanded=False):
             render_v21_v1_reference()
 
