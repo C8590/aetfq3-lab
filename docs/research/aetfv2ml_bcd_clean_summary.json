@@ -1,0 +1,214 @@
+{
+  "generated_at": "2026-05-28T12:04:07",
+  "phase": "aetfv2ml / V2.1 ML Lab",
+  "controller": "aetfv2_08_control_center",
+  "report_type": "clean B/C/D compact summary",
+  "data_lineage": {
+    "uses_data_etf_daily": true,
+    "uses_bcd_daily_rebuild_outputs": true,
+    "uses_robustness_review_outputs": true,
+    "uses_data_quality_review_outputs": true,
+    "not_stable_or_historical_ml_original_artifacts": true,
+    "uses_ml_sim": false,
+    "uses_ml_entry_scores": false,
+    "uses_v2_core_multi_day_entry_signal": false,
+    "modified_raw_market_data": false
+  },
+  "required_boundary_phrases": [
+    "日线重建版",
+    "ML Lab",
+    "shadow/advisory",
+    "不得进入 Stable",
+    "不得影响 final_buy_action",
+    "不得修改 BUY/PROBE 阈值",
+    "不得接入 QMT",
+    "A/E/F 仍阻塞"
+  ],
+  "retained_conclusions": [
+    "B/C/D remains usable as ML Lab shadow/advisory research, not as Stable input.",
+    "breadth_adjusted_top1 is the main clean-sample research candidate after sector sparsity control.",
+    "acceleration_top1 remains a downgraded observation under raw and most non-sparse cleaning policies.",
+    "crowded_late_stage remains a drawdown-risk manual review prompt.",
+    "lock3/lock5 remain risk research observations only."
+  ],
+  "downgraded_conclusions": [
+    "acceleration_top1 is not unconditional; sparse/conservative filters change the best definition.",
+    "sector sparsity and uncategorized sector exposure require explicit data-quality notes.",
+    "lock tail metrics require anomaly-risk caveats."
+  ],
+  "blocked_conclusions": {
+    "A_false_downgrade": "blocked: missing ML_SIM / V2 core / ml_entry_scores",
+    "E_ml_ranking": "blocked: missing ML score and V2 original multi-day outputs",
+    "F_5min_execution": "blocked: missing 5min K / VWAP / order book history"
+  },
+  "best_by_policy": {
+    "raw": "acceleration_top1",
+    "exclude_abs_ret_gt_20": "acceleration_top1",
+    "winsor_abs_ret_20": "acceleration_top1",
+    "exclude_first_20_trading_days": "acceleration_top1",
+    "exclude_sector_single_member_days": "breadth_adjusted_top1",
+    "combined_conservative_filter": "mom_3d_top1"
+  },
+  "policy_flags": {
+    "raw": "no_core_conclusion_change",
+    "exclude_abs_ret_gt_20": "no_core_conclusion_change",
+    "winsor_abs_ret_20": "no_core_conclusion_change",
+    "exclude_first_20_trading_days": "no_core_conclusion_change",
+    "exclude_sector_single_member_days": "top1_best_changed:acceleration_top1->breadth_adjusted_top1;acceleration_not_leading",
+    "combined_conservative_filter": "top1_best_changed:acceleration_top1->mom_3d_top1;acceleration_not_leading"
+  },
+  "data_quality_counts": {
+    "large_abs_return_gt_20": 156,
+    "suspected_price_break_events": 1506,
+    "sector_sparse_rows": 7009
+  },
+  "top1_priority": [
+    {
+      "rank": 1,
+      "definition": "breadth_adjusted_top1",
+      "classification": "main clean-sample research candidate after sector_etf_count>=3"
+    },
+    {
+      "rank": 2,
+      "definition": "mom_3d_top1",
+      "classification": "robustness challenger under combined conservative filter"
+    },
+    {
+      "rank": 3,
+      "definition": "mom_5d_top1",
+      "classification": "low-drift fallback / tie-breaker research reference"
+    },
+    {
+      "rank": 4,
+      "definition": "acceleration_top1",
+      "classification": "downgraded observation after sparse/conservative filters"
+    },
+    {
+      "rank": 5,
+      "definition": "overheat_penalized_top1",
+      "classification": "risk overlay reference"
+    }
+  ],
+  "control_center_ruling": {
+    "allow_continue_ml_lab_daily_research": true,
+    "allow_enter_v21_stable": false,
+    "allow_modify_stable_entry": false,
+    "allow_affect_final_buy_action": false,
+    "allow_modify_buy_probe_thresholds": false,
+    "allow_connect_qmt": false,
+    "allow_generate_order_intent": false,
+    "allow_real_trading": false,
+    "recommend_human_review_small_md_json": true,
+    "recommend_migrate_summary_to_docs_research": false,
+    "recommend_continue_aef_data_search": true
+  },
+  "subagent_synthesis": {
+    "pre_selection": "sector_etf_count>=3 moves main shadow/advisory priority to breadth_adjusted_top1, with mom_3d_top1 and mom_5d_top1 as robustness/low-drift references; acceleration_top1 is downgraded to observation."
+  },
+  "generated_files": [
+    {
+      "path": ".local_research_outputs/aetfv2ml/clean_bcd_summary/clean_bcd_summary_report.md",
+      "line_count": 184,
+      "size_bytes": 10729,
+      "key_fields": [
+        "control_center_ruling",
+        "retained/downgraded/blocked conclusions",
+        "B/C/D summaries"
+      ],
+      "recommend_commit": false,
+      "ignored_local_research_output": true
+    },
+    {
+      "path": ".local_research_outputs/aetfv2ml/clean_bcd_summary/clean_bcd_summary_report.json",
+      "line_count": 214,
+      "size_bytes": 7483,
+      "key_fields": [
+        "data_lineage",
+        "top1_priority",
+        "control_center_ruling",
+        "data_quality_counts"
+      ],
+      "recommend_commit": false,
+      "ignored_local_research_output": true
+    },
+    {
+      "path": ".local_research_outputs/aetfv2ml/clean_bcd_summary/clean_bcd_top1_metrics.csv",
+      "line_count": 31,
+      "size_bytes": 9671,
+      "key_fields": [
+        "filter_policy",
+        "top1_definition",
+        "avg_next_ret_3d",
+        "switch_rate",
+        "classification"
+      ],
+      "recommend_commit": false,
+      "ignored_local_research_output": true
+    },
+    {
+      "path": ".local_research_outputs/aetfv2ml/clean_bcd_summary/clean_bcd_lock_metrics.csv",
+      "line_count": 19,
+      "size_bytes": 4373,
+      "key_fields": [
+        "filter_policy",
+        "lock_period",
+        "avg_return",
+        "avg_drawdown",
+        "classification"
+      ],
+      "recommend_commit": false,
+      "ignored_local_research_output": true
+    },
+    {
+      "path": ".local_research_outputs/aetfv2ml/clean_bcd_summary/clean_bcd_crowded_stage_metrics.csv",
+      "line_count": 7,
+      "size_bytes": 1656,
+      "key_fields": [
+        "filter_policy",
+        "stage_label",
+        "avg_ret_3d",
+        "avg_drawdown_3d",
+        "recommended_phrase"
+      ],
+      "recommend_commit": false,
+      "ignored_local_research_output": true
+    },
+    {
+      "path": ".local_research_outputs/aetfv2ml/clean_bcd_summary/clean_bcd_shadow_advisory_rules.md",
+      "line_count": 23,
+      "size_bytes": 1232,
+      "key_fields": [
+        "allowed expressions",
+        "forbidden upgrades",
+        "boundary rules"
+      ],
+      "recommend_commit": false,
+      "ignored_local_research_output": true
+    },
+    {
+      "path": ".local_research_outputs/aetfv2ml/clean_bcd_summary/clean_bcd_data_quality_notes.md",
+      "line_count": 23,
+      "size_bytes": 1030,
+      "key_fields": [
+        "anomaly counts",
+        "sparse sector notes",
+        "review focus"
+      ],
+      "recommend_commit": false,
+      "ignored_local_research_output": true
+    }
+  ],
+  "git_status": {
+    "git status --short --branch": "## main...origin/main",
+    "git diff --name-only": "",
+    "git status --ignored --short | grep \".local_research_outputs\" || true": "!! .local_research_outputs/",
+    "git status --ignored --short | grep \"data/etf_daily.csv\" || true": "!! data/etf_daily.csv"
+  },
+  "downgrade_reasons": [
+    "high_switch_frequency",
+    "year_instability",
+    "sparse_sector_sensitivity",
+    "price_break_risk",
+    "missing_ml_v2_outputs"
+  ]
+}
