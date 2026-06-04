@@ -76,6 +76,8 @@ Lab 给 Stable 的输出只能是只读建议包。允许的建议包文件名�
 - `docs/lab/aetfq3_lab_output_contract.md`
 - `docs/lab/aetfq3_lab_advisory_package_spec.md`
 - `docs/lab/aetfq3_lab_file_naming.md`
+- `docs/lab/aetfq3_lab_advisory_examples.md`
+- `docs/lab/aetfq3_lab_advisory_examples.json`
 
 ## 与旧 AETFv2 规则的关系
 
