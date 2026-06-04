@@ -6,6 +6,8 @@
 
 本 checklist 不授权直接修改 Stable，不授权生成 `OrderIntent`，不授权接正式 QMT，不授权写 `output/`，不授权创建 `lab_advisory/` 运行目录。
 
+第三仓库 protocol reference 预留为通信合同 / 协议 / bundle 校验 / 升级门禁仓库。当前 protocol repo / tag / freeze commit 尚未被人工确认，必须记录为 pending。在 protocol repo / tag / freeze commit 经人工确认前，本仓库不得把任何 hardcoded protocol rc1 锚点作为 Stable adoption 依据。
+
 结构化版本见 `docs/lab/aetfq3_lab_research_review_checklist.json`。
 
 ## 快速检查表
@@ -16,6 +18,7 @@
 - 是否明确所属研究方向。
 - 是否明确不是 Stable 正式策略任务。
 - 是否明确不直接改 Stable。
+- 是否明确 protocol reference 是第三仓库边界预留，具体 repo / tag / commit pending human confirmation。
 
 ### 二、数据来源检查
 
@@ -73,12 +76,20 @@
 
 ### 七、advisory-only 检查
 
+- protocol repo / tag / commit 是否已人工确认；若未确认，是否标记为 pending。
+- 如任务引用 protocol rc1，是否先验证 protocol repo / tag / commit。
+- `access_mode` 是否为 `READ_ONLY`。
 - `affects_stable_trading` 是否为 `false`。
 - `advisory_only` 是否为 `true`。
+- `final_action_change_allowed` 是否为 `false`。
+- `contains_live_order` 是否为 `false`。
+- `contains_secret` 是否为 `false`。
 - `requires_human_review` 是否为 `true`。
 - `recommended_for_stable` 是否为 `false`。
 - 如 `recommended_for_stable` 为 `true`，是否给 `stable_merge_minimal_plan`。
 - 是否包含 `forbidden_actions`。
+- `forbidden_actions` 是否包含 `do_not_write_stable_runtime` 和 `do_not_write_stable_output`。
+- 是否走人工 promotion gate。
 
 ### 八、结论等级检查
 
@@ -109,7 +120,9 @@
 
 - 任务未声明属于 `aetfq3-lab / Lab`，或被误派为 Stable 正式策略任务。
 - 研究直接修改 Stable、`final_buy_action`、`target_weight`、BUY / PROBE 阈值。
+- Lab advisory 允许改变 Stable final action。
 - 生成正式 `OrderIntent`，绕过 `RiskGate`，或自动下单。
+- bundle 包含 secret、live order 或 `final_action_change_allowed=true`。
 - 连接真实 QMT，生成委托，撤单，或读取真实账户/资金/成交回报且未获明确授权。
 - 写入 Stable `output/`、Stable `runtime/`、Stable order intent 目录。
 - 创建真实 `lab_advisory/` 运行目录或生成真实 advisory 包，但任务只授权 schema/example。

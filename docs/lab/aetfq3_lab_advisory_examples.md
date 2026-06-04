@@ -10,13 +10,26 @@
 
 所有示例必须保持：
 
+- `protocol_reference: pending human confirmation`
+- `protocol_repo: pending`
+- `protocol_version: pending`
+- `protocol_freeze_commit: pending`
+- `protocol_tag: pending`
+- `access_mode: READ_ONLY`
 - `affects_stable_trading: false`
 - `advisory_only: true`
+- `final_action_change_allowed: false`
+- `contains_live_order: false`
+- `contains_secret: false`
 - `requires_human_review: true`
 - `recommended_for_stable: false` 默认值
 - `forbidden_actions` 必须包含全部禁止动作
 
 如果某个示例展示 `recommended_for_stable: true`，必须填写 `stable_merge_minimal_plan`，并明确仍需 Stable 侧人工审批、`RiskGate` 检查和回滚方案。即使建议进入 Stable，也不允许 Lab 直接提交到 Stable。
+
+包含 secret、live order 或 `final_action_change_allowed=true` 的 bundle 一律禁止，不得作为 Lab -> Stable advisory bundle。
+
+在 protocol repo / tag / freeze commit 经人工确认前，示例不得写死未经确认的 commit 或 tag，也不得把任何 hardcoded protocol rc1 锚点作为 Stable adoption 依据。
 
 ## 通用字段说明
 
@@ -25,16 +38,25 @@
 - `artifact_name`: 预期 advisory 文件名。
 - `generated_at`: 示例时间戳，不代表真实生成时间。
 - `lab_name`: 固定为 `aetfq3-lab`。
+- `protocol_reference`: 固定为 `pending human confirmation`，直到 protocol repo / tag / commit 经人工确认。
+- `protocol_repo`: 固定为 `pending`，直到人工确认。
+- `protocol_version`: 固定为 `pending`，直到人工确认。
+- `protocol_freeze_commit`: 固定为 `pending`，直到人工确认。
+- `protocol_tag`: 固定为 `pending`，直到人工确认。
 - `source_task`: 示例任务名或任务类型。
 - `data_sources`: mock 数据来源说明，不得引用真实账户或真实订单。
 - `uses_stable_bundle`: 是否使用 Stable bundle，示例必须显式填写。
 - `has_future_leakage_check`: 是否完成未来函数检查，示例必须显式填写。
+- `access_mode`: 必须为 `READ_ONLY`。
 - `affects_stable_trading`: 必须为 `false`。
 - `advisory_only`: 必须为 `true`。
+- `final_action_change_allowed`: 必须为 `false`。
+- `contains_live_order`: 必须为 `false`。
+- `contains_secret`: 必须为 `false`。
 - `recommended_for_stable`: 默认 `false`。
 - `requires_human_review`: 必须为 `true`。
 - `stable_merge_minimal_plan`: 仅在建议进入 Stable 时非空；否则写明 no merge proposed。
-- `forbidden_actions`: 必须包含禁止修改交易动作、仓位、风控、下单的动作。
+- `forbidden_actions`: 必须包含禁止修改交易动作、仓位、风控、下单、Stable runtime、Stable output 的动作。
 - `summary`: mock 摘要，不得包含正式交易指令。
 - `evidence_files`: 示例 evidence 路径，可指向文档摘要或本地 ignored 路径。
 - `risk_notes`: 数据、模型、执行、Stable 接入风险说明。
@@ -138,5 +160,9 @@ Stable 侧必须独立审阅数据来源、未来函数检查、风险边界和�
 - 未包含真实交易建议、真实 `OrderIntent` 或真实账户信息。
 - `affects_stable_trading` 均为 `false`。
 - `advisory_only` 均为 `true`。
+- `access_mode` 均为 `READ_ONLY`。
+- `final_action_change_allowed` 均为 `false`。
+- `contains_live_order` 均为 `false`。
+- `contains_secret` 均为 `false`。
 - `requires_human_review` 均为 `true`。
 - `forbidden_actions` 包含全部必需禁止动作。

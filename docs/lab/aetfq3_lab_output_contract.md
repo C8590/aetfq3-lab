@@ -6,6 +6,18 @@ This contract defines where Lab research outputs may live, which files may enter
 
 Lab can suggest Stable changes, but it cannot directly modify Stable, `final_buy_action`, `target_weight`, BUY / PROBE thresholds, Stable runtime files, QMT production settings, or formal `OrderIntent` outputs.
 
+The third-repository protocol reference is reserved for the communication contract, protocol, bundle validation, and upgrade gate repository. The concrete protocol repo, tag, and freeze commit are not yet human-confirmed and must be recorded as pending:
+
+```text
+protocol_reference: pending human confirmation
+protocol_repo: pending
+protocol_version: pending
+protocol_freeze_commit: pending
+protocol_tag: pending
+```
+
+Before the protocol repo, tag, and freeze commit are human-confirmed, this repository must not rely on any hardcoded protocol rc1 anchor as a Stable adoption basis. Any task that cites protocol rc1 must verify the protocol repo, tag, and commit first.
+
 ## Layer 1: Local Ignored Research Outputs
 
 Default directory:
@@ -82,6 +94,10 @@ Allowed advisory package names:
 Rules:
 
 - Advisory packages are read-only advice.
+- Advisory package access mode must be `READ_ONLY`.
+- `final_action_change_allowed` must be `false`.
+- `contains_live_order` must be `false`.
+- `contains_secret` must be `false`.
 - They cannot directly change Stable `final_buy_action`, `target_weight`, BUY / PROBE thresholds, or risk gates.
 - They cannot generate formal `OrderIntent`.
 - They cannot trigger QMT or auto trading.
@@ -119,6 +135,7 @@ If Lab recommends entering Stable, the recommendation must include:
 4. `RiskGate` checkpoints.
 5. Rollback plan.
 6. A clear statement that Lab is not allowed to commit directly to Stable.
+7. A clear statement that adoption must pass a human promotion gate.
 
 The default Stable effect of any Lab output is:
 
@@ -126,4 +143,10 @@ The default Stable effect of any Lab output is:
 affects_stable_trading: false
 advisory_only: true
 requires_human_review: true
+access_mode: READ_ONLY
+final_action_change_allowed: false
+contains_live_order: false
+contains_secret: false
 ```
+
+Bundles that contain secrets, contain live orders, or set `final_action_change_allowed=true` are forbidden and must not be promoted.

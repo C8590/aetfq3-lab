@@ -4,6 +4,8 @@
 
 Lab 规则入口：`docs/lab/aetfq3_lab_charter.md`、`docs/lab/aetfq3_lab_output_contract.md`、`docs/lab/aetfq3_lab_advisory_package_spec.md`、`docs/lab/aetfq3_lab_file_naming.md`、`docs/lab/aetfq3_lab_advisory_examples.md`、`docs/lab/aetfq3_lab_research_review_checklist.md`。
 
+第三仓库 protocol reference 预留为通信合同 / 协议 / bundle 校验 / 升级门禁仓库；当前 repo / version / freeze commit / tag 均为 pending human confirmation。在 protocol repo / tag / freeze commit 经人工确认前，本仓库不得把任何 hardcoded protocol rc1 锚点作为 Stable adoption 依据。
+
 本项目当前只保留一个主策略：日频右侧确认型 ETF 动量轮动策略。
 
 系统定位是人工观察和复盘工具，不是自动交易系统。它不预测涨跌，不推荐新闻，不保证收益，不自动下单，也不直接连接券商。策略只在 ETF 已经表现出相对强势、趋势形态和成交活跃度后，生成买入、持有、减仓、卖出或观察建议。
@@ -31,6 +33,11 @@ risk_warning > market_state > sector_rank > etf_rank > entry_signal
 - R3/R4 只冻结新开仓和加仓，不阻断卖出、减仓、止损和退出。
 - `trade_policy` 只生成交易安全建议，不操作 QMT，不调用真实券商接口。
 - 前端当前主入口只有日频动量策略；旧版结果仅作为历史对照 / 旧版参考。
+- Lab 只负责研究、模型诊断、实验报告和只读 advisory。
+- Lab advisory 必须是 `READ_ONLY`，且 `final_action_change_allowed: false`、`contains_live_order: false`、`contains_secret: false`。
+- Lab 不直接生成 Stable 正式 `OrderIntent`，不绕过 Stable `RiskGate`，不直接修改 Stable。
+- Lab 成果进入 Stable 必须走人工 promotion gate。
+- 包含 secret、live order 或 `final_action_change_allowed=true` 的 bundle 一律禁止。
 
 ## 常用命令
 

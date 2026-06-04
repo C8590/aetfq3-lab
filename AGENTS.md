@@ -10,6 +10,27 @@
 
 `aetfq3-lab` 是 AETF Lab / 实验室 / 试车场。它不是 V2.1 Stable 的附属模块，而是研究实验主线。Lab 可以研究、验证、模拟、诊断和形成 advisory 建议包，但不得直接修改 Stable，不得绕过 Stable 的风控、总控和人工确认边界。
 
+## Lab Advisory Protocol Pending 边界
+
+每个 Codex 任务仍必须以以下声明开头：
+
+```text
+本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。
+```
+
+Lab advisory 只能是 `READ_ONLY`，不得包含 live order，不得包含 secret，不得允许 final action change。默认边界必须保持：
+
+```text
+access_mode: READ_ONLY
+final_action_change_allowed: false
+contains_live_order: false
+contains_secret: false
+requires_human_review: true
+promotion_gate_required: true
+```
+
+protocol repo / tag / commit 在人工确认前必须标记为 pending。若任务引用 protocol rc1，必须先验证 protocol repo / tag / commit；未验证前不得把 hardcoded protocol commit 或 tag 作为 Stable adoption 依据。
+
 ## Lab 负责范围
 
 Lab 负责以下研究与实验方向：
@@ -41,6 +62,8 @@ Lab 负责以下研究与实验方向：
 - 不把研究输出当正式交易计划。
 - 不把模型直接接入 Stable。
 - 不提交 Stable 运行产物。
+- 不写 Stable `runtime/`。
+- 不写 Stable `output/`。
 - 不把 QMT 实验回写 Stable。
 - 不接正式 QMT；QMT 相关实验只允许 mock、readonly 或模拟盘边界。
 

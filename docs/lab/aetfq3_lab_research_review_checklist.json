@@ -2,6 +2,11 @@
   "document_type": "aetfq3_lab_research_review_checklist",
   "schema_version": "1.0",
   "lab_name": "aetfq3-lab",
+  "protocol_reference": "pending human confirmation",
+  "protocol_repo": "pending",
+  "protocol_version": "pending",
+  "protocol_freeze_commit": "pending",
+  "protocol_tag": "pending",
   "stable_boundary": "Lab checklist only; not a Stable runtime file",
   "task_positioning": [
     {
@@ -35,6 +40,14 @@
       "pass_condition": "明确写明不直接改 Stable",
       "fail_action": "停止并补充 Stable 禁改边界",
       "severity": "P0"
+    },
+    {
+      "check_id": "task_positioning.005",
+      "question": "是否明确第三仓库 protocol reference 是通信合同 / 协议 / bundle 校验 / 升级门禁边界预留",
+      "required_answer_type": "boolean",
+      "pass_condition": "明确写明具体 protocol repo / tag / commit 在人工确认前必须标记 pending",
+      "fail_action": "补充 protocol pending human confirmation 边界",
+      "severity": "P1"
     }
   ],
   "data_sources": [
@@ -361,6 +374,30 @@
   ],
   "advisory_only": [
     {
+      "check_id": "advisory_only.000",
+      "question": "protocol repo / tag / commit 未人工确认时是否标记为 pending",
+      "required_answer_type": "boolean",
+      "pass_condition": "内部 Lab 研究允许 pending，但不得依赖 hardcoded protocol rc1 锚点",
+      "fail_action": "P1 披露并改为 pending；如任务要送 Stable，则升级为 P0 停止",
+      "severity": "P1"
+    },
+    {
+      "check_id": "advisory_only.000stable",
+      "question": "如 advisory 要送 Stable，protocol repo / tag / commit 是否已人工确认",
+      "required_answer_type": "boolean_or_not_applicable",
+      "pass_condition": "送 Stable 前必须为 true；Lab 内部研究可为 not_applicable",
+      "fail_action": "P0 停止；protocol 未确认不得作为 Stable adoption 依据",
+      "severity": "P0"
+    },
+    {
+      "check_id": "advisory_only.000a",
+      "question": "access_mode 是否为 READ_ONLY",
+      "required_answer_type": "boolean",
+      "pass_condition": "必须为 true",
+      "fail_action": "P0 停止并改为只读 advisory",
+      "severity": "P0"
+    },
+    {
       "check_id": "advisory_only.001",
       "question": "affects_stable_trading 是否为 false",
       "required_answer_type": "boolean",
@@ -374,6 +411,30 @@
       "required_answer_type": "boolean",
       "pass_condition": "必须为 true",
       "fail_action": "P0 停止并修正 advisory 边界",
+      "severity": "P0"
+    },
+    {
+      "check_id": "advisory_only.002a",
+      "question": "final_action_change_allowed 是否为 false",
+      "required_answer_type": "boolean",
+      "pass_condition": "必须为 true，即字段值为 false",
+      "fail_action": "P0 停止；禁止改变 Stable final action",
+      "severity": "P0"
+    },
+    {
+      "check_id": "advisory_only.002b",
+      "question": "contains_live_order 是否为 false",
+      "required_answer_type": "boolean",
+      "pass_condition": "必须为 true，即字段值为 false",
+      "fail_action": "P0 停止；禁止包含 live order",
+      "severity": "P0"
+    },
+    {
+      "check_id": "advisory_only.002c",
+      "question": "contains_secret 是否为 false",
+      "required_answer_type": "boolean",
+      "pass_condition": "必须为 true，即字段值为 false",
+      "fail_action": "P0 停止；禁止包含 secret",
       "severity": "P0"
     },
     {
@@ -404,9 +465,17 @@
       "check_id": "advisory_only.006",
       "question": "是否包含 forbidden_actions",
       "required_answer_type": "list",
-      "pass_condition": "包含 do_not_modify_final_buy_action、do_not_modify_target_weight、do_not_generate_order_intent、do_not_bypass_riskgate、do_not_auto_trade",
+      "pass_condition": "包含 do_not_modify_final_buy_action、do_not_modify_target_weight、do_not_generate_order_intent、do_not_bypass_riskgate、do_not_auto_trade、do_not_modify_stable_directly、do_not_write_stable_runtime、do_not_write_stable_output、do_not_skip_human_promotion_gate",
       "fail_action": "补齐 forbidden_actions 后再发布",
       "severity": "P1"
+    },
+    {
+      "check_id": "advisory_only.007",
+      "question": "是否经过人工 promotion gate 才进入 Stable",
+      "required_answer_type": "boolean",
+      "pass_condition": "任何进入 Stable 的成果都必须先经过人工 promotion gate",
+      "fail_action": "P0 停止；Lab 成果不得直接进入 Stable",
+      "severity": "P0"
     }
   ],
   "conclusion_grading": [

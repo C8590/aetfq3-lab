@@ -10,6 +10,18 @@
 
 `aetfq3-lab` 是 AETF Lab / 实验室 / 试车场。它不是 Stable 的附属模块，而是研究实验主线。Lab 的职责是验证想法、做只读研究、形成可审计 advisory 建议包，并把是否值得进入 Stable 的判断说清楚。
 
+第三仓库 protocol reference 预留为通信合同 / 协议 / bundle 校验 / 升级门禁仓库，不是 Lab，也不是 Stable。当前 protocol repo / tag / freeze commit 尚未被人工确认，必须记录为 pending：
+
+```text
+protocol_reference: pending human confirmation
+protocol_repo: pending
+protocol_version: pending
+protocol_freeze_commit: pending
+protocol_tag: pending
+```
+
+在 protocol repo / tag / freeze commit 经人工确认前，本仓库不得把任何 hardcoded protocol rc1 锚点作为 Stable adoption 依据。若任务引用 protocol rc1，必须先验证 protocol repo / tag / commit。
+
 ## Lab 定位
 
 Lab 可以做研究、回测、模拟、诊断、实验模型和报告。Lab 不能把研究结果直接变成正式交易参数、正式订单或 Stable 运行产物。
@@ -19,6 +31,7 @@ Lab 与 Stable 的关系是：
 - Lab 产生证据和建议。
 - Stable 保持正式交易链路、风控链路和人工确认边界。
 - Lab 不能绕过 Stable 的 RiskGate、entry、control center 或执行确认。
+- protocol reference 只预留通信合同、协议、bundle 校验和升级门禁职责；具体 repo / tag / commit 必须等待人工确认。
 
 ## Lab 负责范围
 
@@ -37,6 +50,7 @@ Lab 负责：
 - PyTorch / GRU / TCN 执行模型
 - Q3 / Q4 / Q5 前沿策略原型
 - Lab advisory 报告
+- 只读 advisory bundle 的研究侧说明
 
 ## Lab 禁止事项
 
@@ -45,6 +59,7 @@ Lab 禁止：
 - 不直接改 Stable。
 - 不改 Stable entry。
 - 不改 `final_buy_action`。
+- 不允许 Lab advisory 改变 Stable final action。
 - 不改 `target_weight`。
 - 不改 BUY / PROBE 阈值。
 - 不生成 Stable 正式 `OrderIntent`。
@@ -55,6 +70,30 @@ Lab 禁止：
 - 不提交 Stable 运行产物。
 - 不把 QMT 实验回写 Stable。
 - 不接正式 QMT。
+- 不写 Stable `runtime/` 或 runtime exchange。
+- 不包含 secret。
+- 不包含 live order。
+- 不发布 `final_action_change_allowed=true` 的 bundle。
+
+## Protocol Advisory 边界
+
+Lab advisory 必须保持：
+
+```text
+access_mode: READ_ONLY
+protocol_reference: pending human confirmation
+protocol_repo: pending
+protocol_version: pending
+protocol_freeze_commit: pending
+protocol_tag: pending
+final_action_change_allowed: false
+contains_live_order: false
+contains_secret: false
+requires_human_review: true
+promotion_gate_required: true
+```
+
+包含 secret、live order、`final_action_change_allowed=true` 的 bundle 一律禁止。Lab 成果进入 Stable 必须走人工 promotion gate；Lab 不能直接修改 Stable，也不能绕过 Stable `RiskGate`。
 
 ## QMT 边界
 

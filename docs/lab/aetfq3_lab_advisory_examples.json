@@ -13,6 +13,11 @@
       "artifact_name": "ml_advisory_summary.json",
       "generated_at": "2026-06-04T00:00:00+08:00",
       "lab_name": "aetfq3-lab",
+      "protocol_reference": "pending human confirmation",
+      "protocol_repo": "pending",
+      "protocol_version": "pending",
+      "protocol_freeze_commit": "pending",
+      "protocol_tag": "pending",
       "source_task": "example_ml_false_downgrade_review",
       "data_sources": [
         {
@@ -24,8 +29,12 @@
       ],
       "uses_stable_bundle": false,
       "has_future_leakage_check": true,
+      "access_mode": "READ_ONLY",
       "affects_stable_trading": false,
       "advisory_only": true,
+      "final_action_change_allowed": false,
+      "contains_live_order": false,
+      "contains_secret": false,
       "recommended_for_stable": false,
       "requires_human_review": true,
       "stable_merge_minimal_plan": "No Stable merge proposed in this example.",
@@ -34,7 +43,11 @@
         "do_not_modify_target_weight",
         "do_not_generate_order_intent",
         "do_not_bypass_riskgate",
-        "do_not_auto_trade"
+        "do_not_auto_trade",
+        "do_not_modify_stable_directly",
+        "do_not_write_stable_runtime",
+        "do_not_write_stable_output",
+        "do_not_skip_human_promotion_gate"
       ],
       "summary": {
         "plain_text": "Example-only ML advisory summary for documenting false downgrade review format. No trading action is recommended.",
@@ -56,6 +69,11 @@
       "artifact_name": "sector_research_report.json",
       "generated_at": "2026-06-04T00:00:00+08:00",
       "lab_name": "aetfq3-lab",
+      "protocol_reference": "pending human confirmation",
+      "protocol_repo": "pending",
+      "protocol_version": "pending",
+      "protocol_freeze_commit": "pending",
+      "protocol_tag": "pending",
       "source_task": "example_sector_rank_definition_comparison",
       "data_sources": [
         {
@@ -67,8 +85,12 @@
       ],
       "uses_stable_bundle": false,
       "has_future_leakage_check": true,
+      "access_mode": "READ_ONLY",
       "affects_stable_trading": false,
       "advisory_only": true,
+      "final_action_change_allowed": false,
+      "contains_live_order": false,
+      "contains_secret": false,
       "recommended_for_stable": true,
       "requires_human_review": true,
       "stable_merge_minimal_plan": {
@@ -83,7 +105,11 @@
         "do_not_modify_target_weight",
         "do_not_generate_order_intent",
         "do_not_bypass_riskgate",
-        "do_not_auto_trade"
+        "do_not_auto_trade",
+        "do_not_modify_stable_directly",
+        "do_not_write_stable_runtime",
+        "do_not_write_stable_output",
+        "do_not_skip_human_promotion_gate"
       ],
       "summary": {
         "plain_text": "Example-only sector research report showing how a recommended_for_stable advisory must include a minimal merge plan and human approval boundary.",
@@ -104,6 +130,11 @@
       "artifact_name": "intraday_watch_research.json",
       "generated_at": "2026-06-04T00:00:00+08:00",
       "lab_name": "aetfq3-lab",
+      "protocol_reference": "pending human confirmation",
+      "protocol_repo": "pending",
+      "protocol_version": "pending",
+      "protocol_freeze_commit": "pending",
+      "protocol_tag": "pending",
       "source_task": "example_intraday_watch_engine_review",
       "data_sources": [
         {
@@ -115,8 +146,12 @@
       ],
       "uses_stable_bundle": false,
       "has_future_leakage_check": false,
+      "access_mode": "READ_ONLY",
       "affects_stable_trading": false,
       "advisory_only": true,
+      "final_action_change_allowed": false,
+      "contains_live_order": false,
+      "contains_secret": false,
       "recommended_for_stable": false,
       "requires_human_review": true,
       "stable_merge_minimal_plan": "No Stable merge proposed in this example.",
@@ -125,7 +160,11 @@
         "do_not_modify_target_weight",
         "do_not_generate_order_intent",
         "do_not_bypass_riskgate",
-        "do_not_auto_trade"
+        "do_not_auto_trade",
+        "do_not_modify_stable_directly",
+        "do_not_write_stable_runtime",
+        "do_not_write_stable_output",
+        "do_not_skip_human_promotion_gate"
       ],
       "summary": {
         "plain_text": "Example-only Intraday Watch research format. It documents observation fields without generating buy, sell, probe, or order actions.",
@@ -147,6 +186,11 @@
       "artifact_name": "qmt_readonly_report.json",
       "generated_at": "2026-06-04T00:00:00+08:00",
       "lab_name": "aetfq3-lab",
+      "protocol_reference": "pending human confirmation",
+      "protocol_repo": "pending",
+      "protocol_version": "pending",
+      "protocol_freeze_commit": "pending",
+      "protocol_tag": "pending",
       "source_task": "example_qmt_readonly_boundary_check",
       "data_sources": [
         {
@@ -159,8 +203,12 @@
       ],
       "uses_stable_bundle": false,
       "has_future_leakage_check": false,
+      "access_mode": "READ_ONLY",
       "affects_stable_trading": false,
       "advisory_only": true,
+      "final_action_change_allowed": false,
+      "contains_live_order": false,
+      "contains_secret": false,
       "recommended_for_stable": false,
       "requires_human_review": true,
       "stable_merge_minimal_plan": "No Stable merge proposed in this example.",
@@ -169,7 +217,11 @@
         "do_not_modify_target_weight",
         "do_not_generate_order_intent",
         "do_not_bypass_riskgate",
-        "do_not_auto_trade"
+        "do_not_auto_trade",
+        "do_not_modify_stable_directly",
+        "do_not_write_stable_runtime",
+        "do_not_write_stable_output",
+        "do_not_skip_human_promotion_gate"
       ],
       "summary": {
         "plain_text": "Example-only QMT readonly report format. It contains no real account, position, order, broker, or execution information.",
@@ -191,6 +243,11 @@
       "artifact_name": "model_diagnostics.json",
       "generated_at": "2026-06-04T00:00:00+08:00",
       "lab_name": "aetfq3-lab",
+      "protocol_reference": "pending human confirmation",
+      "protocol_repo": "pending",
+      "protocol_version": "pending",
+      "protocol_freeze_commit": "pending",
+      "protocol_tag": "pending",
       "source_task": "example_pytorch_execution_model_diagnostics",
       "data_sources": [
         {
@@ -203,8 +260,12 @@
       ],
       "uses_stable_bundle": false,
       "has_future_leakage_check": true,
+      "access_mode": "READ_ONLY",
       "affects_stable_trading": false,
       "advisory_only": true,
+      "final_action_change_allowed": false,
+      "contains_live_order": false,
+      "contains_secret": false,
       "recommended_for_stable": false,
       "requires_human_review": true,
       "stable_merge_minimal_plan": "No Stable merge proposed in this example.",
@@ -213,7 +274,11 @@
         "do_not_modify_target_weight",
         "do_not_generate_order_intent",
         "do_not_bypass_riskgate",
-        "do_not_auto_trade"
+        "do_not_auto_trade",
+        "do_not_modify_stable_directly",
+        "do_not_write_stable_runtime",
+        "do_not_write_stable_output",
+        "do_not_skip_human_promotion_gate"
       ],
       "summary": {
         "plain_text": "Example-only model diagnostics for PyTorch / GRU / TCN execution model reporting. No model output is connected to Stable.",
