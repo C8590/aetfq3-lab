@@ -2,7 +2,7 @@
 
 本仓库是 `aetfq3-lab / Lab`，属于 AETF Lab / 实验室 / 试车场，不属于 V2.1 Stable；Lab 输出只能作为只读研究建议，不直接触发正式交易。
 
-Lab 规则入口：`docs/lab/aetfq3_lab_charter.md`、`docs/lab/aetfq3_lab_output_contract.md`、`docs/lab/aetfq3_lab_advisory_package_spec.md`、`docs/lab/aetfq3_lab_file_naming.md`、`docs/lab/aetfq3_lab_advisory_examples.md`。
+Lab 规则入口：`docs/lab/aetfq3_lab_charter.md`、`docs/lab/aetfq3_lab_output_contract.md`、`docs/lab/aetfq3_lab_advisory_package_spec.md`、`docs/lab/aetfq3_lab_file_naming.md`、`docs/lab/aetfq3_lab_advisory_examples.md`、`docs/lab/aetfq3_lab_research_review_checklist.md`。
 
 本项目当前只保留一个主策略：日频右侧确认型 ETF 动量轮动策略。
 

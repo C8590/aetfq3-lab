@@ -1,0 +1,528 @@
+{
+  "document_type": "aetfq3_lab_research_review_checklist",
+  "schema_version": "1.0",
+  "lab_name": "aetfq3-lab",
+  "stable_boundary": "Lab checklist only; not a Stable runtime file",
+  "task_positioning": [
+    {
+      "check_id": "task_positioning.001",
+      "question": "是否以“本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。”开头",
+      "required_answer_type": "boolean",
+      "pass_condition": "任务文本包含完整 Lab 身份声明",
+      "fail_action": "停止并要求补充任务身份声明",
+      "severity": "P0"
+    },
+    {
+      "check_id": "task_positioning.002",
+      "question": "是否明确所属研究方向",
+      "required_answer_type": "text",
+      "pass_condition": "写明 historical_ml、sector research、Intraday Watch、QMT mock/readonly、模型诊断等具体方向",
+      "fail_action": "补充研究方向后再继续",
+      "severity": "P1"
+    },
+    {
+      "check_id": "task_positioning.003",
+      "question": "是否明确不是 Stable 正式策略任务",
+      "required_answer_type": "boolean",
+      "pass_condition": "明确写明不是 Stable 正式策略任务",
+      "fail_action": "停止并澄清任务边界",
+      "severity": "P0"
+    },
+    {
+      "check_id": "task_positioning.004",
+      "question": "是否明确不直接改 Stable",
+      "required_answer_type": "boolean",
+      "pass_condition": "明确写明不直接改 Stable",
+      "fail_action": "停止并补充 Stable 禁改边界",
+      "severity": "P0"
+    }
+  ],
+  "data_sources": [
+    {
+      "check_id": "data_sources.001",
+      "question": "数据来自哪里",
+      "required_answer_type": "list",
+      "pass_condition": "列出每个数据源名称、路径或系统来源",
+      "fail_action": "补充数据来源清单",
+      "severity": "P1"
+    },
+    {
+      "check_id": "data_sources.002",
+      "question": "是否来自 Stable bundle",
+      "required_answer_type": "boolean",
+      "pass_condition": "显式回答 true 或 false",
+      "fail_action": "停止并澄清是否使用 Stable bundle",
+      "severity": "P1"
+    },
+    {
+      "check_id": "data_sources.003",
+      "question": "是否来自本地 ignored 数据",
+      "required_answer_type": "boolean",
+      "pass_condition": "说明是否来自 .local_research_outputs/、data/etf_daily.csv 或其他 ignored 本地路径",
+      "fail_action": "补充本地 ignored 数据来源和提交边界",
+      "severity": "P1"
+    },
+    {
+      "check_id": "data_sources.004",
+      "question": "是否来自历史 artifacts",
+      "required_answer_type": "boolean",
+      "pass_condition": "说明是否使用历史 artifacts 以及 artifacts 是否入库",
+      "fail_action": "补充 artifacts 来源和是否 ignored",
+      "severity": "P1"
+    },
+    {
+      "check_id": "data_sources.005",
+      "question": "是否来自 QMT mock / readonly / 模拟盘",
+      "required_answer_type": "enum",
+      "pass_condition": "取值为 none、mock、readonly、simulated_paper 之一",
+      "fail_action": "澄清 QMT 数据模式",
+      "severity": "P1"
+    },
+    {
+      "check_id": "data_sources.006",
+      "question": "是否使用真实账户或实盘数据",
+      "required_answer_type": "boolean",
+      "pass_condition": "默认为 false；如 true 必须有明确授权和脱敏说明",
+      "fail_action": "P0 停止并报告真实账户或实盘数据风险",
+      "severity": "P0"
+    },
+    {
+      "check_id": "data_sources.007",
+      "question": "是否有数据时间范围",
+      "required_answer_type": "text",
+      "pass_condition": "写明开始日期、结束日期和时间粒度",
+      "fail_action": "补充数据时间范围",
+      "severity": "P1"
+    },
+    {
+      "check_id": "data_sources.008",
+      "question": "是否有样本数量",
+      "required_answer_type": "number_or_text",
+      "pass_condition": "写明样本行数、标的数量或事件数量",
+      "fail_action": "补充样本数量",
+      "severity": "P1"
+    },
+    {
+      "check_id": "data_sources.009",
+      "question": "是否有缺失值说明",
+      "required_answer_type": "text",
+      "pass_condition": "说明缺失值数量、比例或未检查原因",
+      "fail_action": "补充缺失值说明",
+      "severity": "P2"
+    },
+    {
+      "check_id": "data_sources.010",
+      "question": "是否有异常值说明",
+      "required_answer_type": "text",
+      "pass_condition": "说明异常值规则、数量或未检查原因",
+      "fail_action": "补充异常值说明",
+      "severity": "P2"
+    }
+  ],
+  "future_leakage": [
+    {
+      "check_id": "future_leakage.001",
+      "question": "是否使用未来收益作为标签",
+      "required_answer_type": "boolean_with_context",
+      "pass_condition": "如使用，仅限训练或评估标签，并明确不作为当日特征",
+      "fail_action": "停止并隔离标签与特征",
+      "severity": "P0"
+    },
+    {
+      "check_id": "future_leakage.002",
+      "question": "是否将未来收益泄漏进特征",
+      "required_answer_type": "boolean",
+      "pass_condition": "必须为 false",
+      "fail_action": "P0 停止，修正特征生成逻辑或降级结论",
+      "severity": "P0"
+    },
+    {
+      "check_id": "future_leakage.003",
+      "question": "是否使用了 T+1/T+3 信息做当日决策",
+      "required_answer_type": "boolean",
+      "pass_condition": "必须为 false；T+1/T+3 只能用于标签或后验评估",
+      "fail_action": "P0 停止并标记未来函数风险",
+      "severity": "P0"
+    },
+    {
+      "check_id": "future_leakage.004",
+      "question": "是否存在日期错位",
+      "required_answer_type": "boolean_with_evidence",
+      "pass_condition": "必须说明日期对齐检查结果",
+      "fail_action": "停止并要求日期对齐证据",
+      "severity": "P0"
+    },
+    {
+      "check_id": "future_leakage.005",
+      "question": "是否有 walk-forward / chronological split 说明",
+      "required_answer_type": "text",
+      "pass_condition": "说明时间顺序拆分、滚动窗口或未使用原因",
+      "fail_action": "补充时间拆分说明",
+      "severity": "P2"
+    },
+    {
+      "check_id": "future_leakage.006",
+      "question": "是否有人工确认无未来函数",
+      "required_answer_type": "boolean",
+      "pass_condition": "研究结论发布前必须有人工作答",
+      "fail_action": "标记待人工复核，不得升级结论",
+      "severity": "P1"
+    }
+  ],
+  "stable_boundary": [
+    {
+      "check_id": "stable_boundary.001",
+      "question": "是否影响 Stable 正式交易",
+      "required_answer_type": "boolean",
+      "pass_condition": "Lab 输出默认 false",
+      "fail_action": "P0 停止并拆分为 Stable 侧人工评审任务",
+      "severity": "P0"
+    },
+    {
+      "check_id": "stable_boundary.002",
+      "question": "是否修改 final_buy_action",
+      "required_answer_type": "boolean",
+      "pass_condition": "必须为 false",
+      "fail_action": "P0 停止并回滚该修改",
+      "severity": "P0"
+    },
+    {
+      "check_id": "stable_boundary.003",
+      "question": "是否修改 target_weight",
+      "required_answer_type": "boolean",
+      "pass_condition": "必须为 false",
+      "fail_action": "P0 停止并回滚该修改",
+      "severity": "P0"
+    },
+    {
+      "check_id": "stable_boundary.004",
+      "question": "是否修改 BUY / PROBE 阈值",
+      "required_answer_type": "boolean",
+      "pass_condition": "必须为 false",
+      "fail_action": "P0 停止并回滚该修改",
+      "severity": "P0"
+    },
+    {
+      "check_id": "stable_boundary.005",
+      "question": "是否生成 OrderIntent",
+      "required_answer_type": "boolean",
+      "pass_condition": "必须为 false",
+      "fail_action": "P0 停止并删除未授权生成物",
+      "severity": "P0"
+    },
+    {
+      "check_id": "stable_boundary.006",
+      "question": "是否绕过 RiskGate",
+      "required_answer_type": "boolean",
+      "pass_condition": "必须为 false",
+      "fail_action": "P0 停止并报告风控越界",
+      "severity": "P0"
+    },
+    {
+      "check_id": "stable_boundary.007",
+      "question": "是否写 Stable output",
+      "required_answer_type": "boolean",
+      "pass_condition": "必须为 false",
+      "fail_action": "P0 停止并报告输出污染",
+      "severity": "P0"
+    },
+    {
+      "check_id": "stable_boundary.008",
+      "question": "是否写 Stable runtime",
+      "required_answer_type": "boolean",
+      "pass_condition": "必须为 false",
+      "fail_action": "P0 停止并报告 runtime 污染",
+      "severity": "P0"
+    },
+    {
+      "check_id": "stable_boundary.009",
+      "question": "是否直接提交到 Stable",
+      "required_answer_type": "boolean",
+      "pass_condition": "必须为 false",
+      "fail_action": "P0 停止；Lab 不允许直接提交到 Stable",
+      "severity": "P0"
+    }
+  ],
+  "qmt_boundary": [
+    {
+      "check_id": "qmt_boundary.001",
+      "question": "是否连接真实 QMT",
+      "required_answer_type": "boolean",
+      "pass_condition": "默认 false；如 true 必须有单独明确授权",
+      "fail_action": "P0 停止并断开真实 QMT 边界",
+      "severity": "P0"
+    },
+    {
+      "check_id": "qmt_boundary.002",
+      "question": "是否只做 mock / readonly / 模拟盘",
+      "required_answer_type": "boolean",
+      "pass_condition": "QMT Lab 任务必须为 true",
+      "fail_action": "停止并澄清 QMT 模式",
+      "severity": "P0"
+    },
+    {
+      "check_id": "qmt_boundary.003",
+      "question": "是否读取真实持仓 / 资金",
+      "required_answer_type": "boolean",
+      "pass_condition": "默认 false；如 true 必须有授权、脱敏和只读说明",
+      "fail_action": "P0 停止并报告真实账户数据风险",
+      "severity": "P0"
+    },
+    {
+      "check_id": "qmt_boundary.004",
+      "question": "是否生成委托",
+      "required_answer_type": "boolean",
+      "pass_condition": "必须为 false",
+      "fail_action": "P0 停止并报告执行越界",
+      "severity": "P0"
+    },
+    {
+      "check_id": "qmt_boundary.005",
+      "question": "是否撤单",
+      "required_answer_type": "boolean",
+      "pass_condition": "必须为 false",
+      "fail_action": "P0 停止并报告执行越界",
+      "severity": "P0"
+    },
+    {
+      "check_id": "qmt_boundary.006",
+      "question": "是否有成交回报",
+      "required_answer_type": "boolean",
+      "pass_condition": "默认 false；模拟盘成交必须标注 simulated",
+      "fail_action": "澄清成交来源，必要时 P0 停止",
+      "severity": "P1"
+    },
+    {
+      "check_id": "qmt_boundary.007",
+      "question": "是否可能被误解为正式执行",
+      "required_answer_type": "boolean",
+      "pass_condition": "必须为 false，或已明确标注 mock/readonly/simulated",
+      "fail_action": "补充醒目免责声明或停止输出",
+      "severity": "P1"
+    }
+  ],
+  "output_files": [
+    {
+      "check_id": "output_files.001",
+      "question": "输出是否在 allowed 目录",
+      "required_answer_type": "boolean_with_paths",
+      "pass_condition": "仅使用 docs/research/、docs/lab/ 或 .local_research_outputs/aetfq3_lab/ 等允许目录",
+      "fail_action": "移动到允许目录或停止",
+      "severity": "P1"
+    },
+    {
+      "check_id": "output_files.002",
+      "question": "大 CSV 是否只在 .local_research_outputs/",
+      "required_answer_type": "boolean",
+      "pass_condition": "必须为 true",
+      "fail_action": "P0 停止，避免大文件进入 Git",
+      "severity": "P0"
+    },
+    {
+      "check_id": "output_files.003",
+      "question": "小型 Markdown / JSON 是否可进入 docs/research/",
+      "required_answer_type": "boolean_with_context",
+      "pass_condition": "仅小型摘要、方法说明、人工结论可入库",
+      "fail_action": "改为本地 ignored 输出或补充摘要化说明",
+      "severity": "P2"
+    },
+    {
+      "check_id": "output_files.004",
+      "question": "是否创建了 lab_advisory/ 运行目录",
+      "required_answer_type": "boolean",
+      "pass_condition": "schema/example 任务必须为 false",
+      "fail_action": "P0 停止并报告未授权运行目录",
+      "severity": "P0"
+    },
+    {
+      "check_id": "output_files.005",
+      "question": "是否生成真实 advisory 包",
+      "required_answer_type": "boolean",
+      "pass_condition": "schema/example 任务必须为 false；研究任务需明确授权",
+      "fail_action": "P0 停止并报告未授权 advisory 生成",
+      "severity": "P0"
+    },
+    {
+      "check_id": "output_files.006",
+      "question": "是否写 output/",
+      "required_answer_type": "boolean",
+      "pass_condition": "必须为 false，除非任务明确授权且不提交",
+      "fail_action": "P0 停止并报告 output 污染",
+      "severity": "P0"
+    },
+    {
+      "check_id": "output_files.007",
+      "question": "是否提交 data/artifacts/model weights",
+      "required_answer_type": "boolean",
+      "pass_condition": "必须为 false",
+      "fail_action": "P0 停止并从提交范围移除",
+      "severity": "P0"
+    }
+  ],
+  "advisory_only": [
+    {
+      "check_id": "advisory_only.001",
+      "question": "affects_stable_trading 是否为 false",
+      "required_answer_type": "boolean",
+      "pass_condition": "必须为 true，即字段值为 false",
+      "fail_action": "P0 停止并改为只读 advisory 或拆分 Stable 评审",
+      "severity": "P0"
+    },
+    {
+      "check_id": "advisory_only.002",
+      "question": "advisory_only 是否为 true",
+      "required_answer_type": "boolean",
+      "pass_condition": "必须为 true",
+      "fail_action": "P0 停止并修正 advisory 边界",
+      "severity": "P0"
+    },
+    {
+      "check_id": "advisory_only.003",
+      "question": "requires_human_review 是否为 true",
+      "required_answer_type": "boolean",
+      "pass_condition": "必须为 true",
+      "fail_action": "P0 停止并补充人工复核要求",
+      "severity": "P0"
+    },
+    {
+      "check_id": "advisory_only.004",
+      "question": "recommended_for_stable 是否为 false",
+      "required_answer_type": "boolean_with_exception",
+      "pass_condition": "默认 false；如 true 必须满足下一项",
+      "fail_action": "补充推荐进入 Stable 的完整理由或改为 false",
+      "severity": "P1"
+    },
+    {
+      "check_id": "advisory_only.005",
+      "question": "如 recommended_for_stable 为 true，是否给 stable_merge_minimal_plan",
+      "required_answer_type": "boolean_or_not_applicable",
+      "pass_condition": "recommended_for_stable 为 true 时必须提供非空最小合并方案",
+      "fail_action": "P0 停止；不得建议进入 Stable",
+      "severity": "P0"
+    },
+    {
+      "check_id": "advisory_only.006",
+      "question": "是否包含 forbidden_actions",
+      "required_answer_type": "list",
+      "pass_condition": "包含 do_not_modify_final_buy_action、do_not_modify_target_weight、do_not_generate_order_intent、do_not_bypass_riskgate、do_not_auto_trade",
+      "fail_action": "补齐 forbidden_actions 后再发布",
+      "severity": "P1"
+    }
+  ],
+  "conclusion_grading": [
+    {
+      "check_id": "conclusion_grading.001",
+      "question": "每个研究结论是否标注等级",
+      "required_answer_type": "enum",
+      "pass_condition": "等级为保留结论、降级结论、阻塞结论、待人工复核、可考虑进入 Stable 评估但不得直接进入 Stable之一",
+      "fail_action": "补充结论等级",
+      "severity": "P1"
+    },
+    {
+      "check_id": "conclusion_grading.002",
+      "question": "是否存在阻塞结论",
+      "required_answer_type": "boolean_with_context",
+      "pass_condition": "如 true，必须列为 P0 Blocker 并停止升级",
+      "fail_action": "将阻塞结论写入 P0 Blocker",
+      "severity": "P0"
+    },
+    {
+      "check_id": "conclusion_grading.003",
+      "question": "是否存在待人工复核结论",
+      "required_answer_type": "boolean_with_context",
+      "pass_condition": "如 true，必须列出人工复核问题",
+      "fail_action": "补充人工复核清单",
+      "severity": "P1"
+    },
+    {
+      "check_id": "conclusion_grading.004",
+      "question": "是否存在可考虑进入 Stable 评估的结论",
+      "required_answer_type": "boolean_with_context",
+      "pass_condition": "如 true，必须声明不得直接进入 Stable",
+      "fail_action": "补充 Stable 评估边界和最小合并方案",
+      "severity": "P1"
+    }
+  ],
+  "required_final_answers": [
+    {
+      "check_id": "required_final_answers.001",
+      "question": "研究了什么",
+      "required_answer_type": "text",
+      "pass_condition": "说明研究对象、范围和方法",
+      "fail_action": "补充研究范围",
+      "severity": "P1"
+    },
+    {
+      "check_id": "required_final_answers.002",
+      "question": "数据来自哪里",
+      "required_answer_type": "text_or_list",
+      "pass_condition": "列出数据源和路径",
+      "fail_action": "补充数据来源",
+      "severity": "P1"
+    },
+    {
+      "check_id": "required_final_answers.003",
+      "question": "是否来自 Stable bundle",
+      "required_answer_type": "boolean",
+      "pass_condition": "显式回答是或否",
+      "fail_action": "补充 Stable bundle 边界",
+      "severity": "P1"
+    },
+    {
+      "check_id": "required_final_answers.004",
+      "question": "是否有未来函数",
+      "required_answer_type": "boolean_with_context",
+      "pass_condition": "显式回答并说明检查方式",
+      "fail_action": "补充未来函数检查",
+      "severity": "P0"
+    },
+    {
+      "check_id": "required_final_answers.005",
+      "question": "是否影响 Stable 正式交易",
+      "required_answer_type": "boolean",
+      "pass_condition": "Lab 任务默认回答否",
+      "fail_action": "P0 停止并拆分 Stable 评审",
+      "severity": "P0"
+    },
+    {
+      "check_id": "required_final_answers.006",
+      "question": "是否只读 advisory",
+      "required_answer_type": "boolean",
+      "pass_condition": "必须为 true",
+      "fail_action": "P0 停止并修正输出边界",
+      "severity": "P0"
+    },
+    {
+      "check_id": "required_final_answers.007",
+      "question": "是否建议进入 Stable",
+      "required_answer_type": "boolean",
+      "pass_condition": "默认 false；如 true 必须回答下一项",
+      "fail_action": "补充推荐依据或改为 false",
+      "severity": "P1"
+    },
+    {
+      "check_id": "required_final_answers.008",
+      "question": "如果建议进入 Stable，最小合并方案是什么",
+      "required_answer_type": "text_or_not_applicable",
+      "pass_condition": "建议进入 Stable 时必须包含最小合并方案、风险点、人工审批、RiskGate 检查点和回滚方案",
+      "fail_action": "P0 停止；不得建议进入 Stable",
+      "severity": "P0"
+    },
+    {
+      "check_id": "required_final_answers.009",
+      "question": "不允许直接提交到 Stable",
+      "required_answer_type": "explicit_statement",
+      "pass_condition": "最终回答包含该声明",
+      "fail_action": "补充声明后再结束任务",
+      "severity": "P0"
+    },
+    {
+      "check_id": "required_final_answers.010",
+      "question": "下一步建议是什么",
+      "required_answer_type": "text",
+      "pass_condition": "给出下一步建议或写无",
+      "fail_action": "补充下一步建议",
+      "severity": "P2"
+    }
+  ]
+}
