@@ -1,8 +1,83 @@
-# AETFv2 Codex 项目宪法
+# AETF Q3 Lab Codex 项目宪法
+
+## Lab 身份声明
+
+每次给 Codex 派发本仓库任务前，必须先写：
+
+```text
+本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。
+```
+
+`aetfq3-lab` 是 AETF Lab / 实验室 / 试车场。它不是 V2.1 Stable 的附属模块，而是研究实验主线。Lab 可以研究、验证、模拟、诊断和形成 advisory 建议包，但不得直接修改 Stable，不得绕过 Stable 的风控、总控和人工确认边界。
+
+## Lab 负责范围
+
+Lab 负责以下研究与实验方向：
+
+- `historical_ml`
+- sector map
+- ML false downgrade
+- 强主线保护
+- 同板块 ETF 排序
+- 第一板块切入位置
+- 5分钟K 回测
+- Intraday Watch Engine
+- 盘口特征
+- QMT mock / readonly / 模拟盘
+- PyTorch / GRU / TCN 执行模型
+- Q3 / Q4 / Q5 前沿策略原型
+- Lab advisory 报告
+
+## Lab 禁止事项
+
+- 不直接改 Stable。
+- 不修改 Stable entry。
+- 不修改 `final_buy_action`。
+- 不修改 `target_weight`。
+- 不修改 BUY / PROBE 阈值。
+- 不生成 Stable 正式 `OrderIntent`。
+- 不绕过 `RiskGate`。
+- 不自动下单。
+- 不把研究输出当正式交易计划。
+- 不把模型直接接入 Stable。
+- 不提交 Stable 运行产物。
+- 不把 QMT 实验回写 Stable。
+- 不接正式 QMT；QMT 相关实验只允许 mock、readonly 或模拟盘边界。
+
+## Stable 输出边界
+
+Lab 给 Stable 的输出只能是只读建议包。允许的建议包文件名包括：
+
+- `ml_advisory_summary.json`
+- `sector_research_report.json`
+- `intraday_watch_research.json`
+- `qmt_readonly_report.json`
+- `model_diagnostics.json`
+- `research_notes.md`
+
+这些建议包不得被视为正式交易计划，不得自动改变 Stable 参数，不得直接触发 `OrderIntent`、QMT 或真实下单。
+
+## Lab 任务结束必答
+
+每个 Lab 任务结束必须回答：
+
+- 研究了什么。
+- 数据来自哪里。
+- 是否来自 Stable bundle。
+- 是否有未来函数。
+- 是否影响 Stable 正式交易。
+- 是否只读 advisory。
+- 是否建议进入 Stable。
+- 如果建议进入 Stable，最小合并方案是什么。
+- 不允许直接提交到 Stable。
+
+详细任务模板见 `docs/lab/aetfq3_lab_codex_task_template.md`，Lab charter 见 `docs/lab/aetfq3_lab_charter.md`。
+
+## 与旧 AETFv2 规则的关系
 
 ## 项目定位
 
-AETFv2 是 ETF 动量轮动、风险门控、历史学习和 QMT 执行一体化系统。Codex 在本项目中的所有工作必须服务于稳定、可审计、可回滚的策略研发与执行流程。
+本仓库继承 AETFv2 的可审计、可回滚工程纪律，但当前仓库定位为 `aetfq3-lab / Lab`，不是 V2.1 Stable。以下 AETFv2 项目部规则仅作为研究边界和接口理解参考，不授权 Lab 直接修改 Stable 或生成正式交易动作。
 
 本项目采用“8 项目部 + 总控规则”的 custom agents 架构。任何正式交易判断、执行动作、前端动作快照或 Action API 输出，都必须经过 `aetfv2_08_control_center` 统一汇总与裁决。
 
