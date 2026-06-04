@@ -10,11 +10,11 @@
 
 所有示例必须保持：
 
-- `protocol_reference: pending human confirmation`
-- `protocol_repo: pending`
-- `protocol_version: pending`
-- `protocol_freeze_commit: pending`
-- `protocol_tag: pending`
+- `protocol_reference: aetfq3-protocol v0.1.0-rc1`
+- `protocol_repo: https://github.com/C8590/aetfq3-protocol`
+- `protocol_version: v0.1.0-rc1`
+- `protocol_freeze_commit: 9e15a78c43ec874441429ef14edad34b36ab83bf`
+- `protocol_tag: v0.1.0-rc1`
 - `access_mode: READ_ONLY`
 - `affects_stable_trading: false`
 - `advisory_only: true`
@@ -29,7 +29,7 @@
 
 包含 secret、live order 或 `final_action_change_allowed=true` 的 bundle 一律禁止，不得作为 Lab -> Stable advisory bundle。
 
-在 protocol repo / tag / freeze commit 经人工确认前，示例不得写死未经确认的 commit 或 tag，也不得把任何 hardcoded protocol rc1 锚点作为 Stable adoption 依据。
+`aetfq3-protocol` 已发布为 `v0.1.0-rc1`，remote 为 `https://github.com/C8590/aetfq3-protocol`，commit 为 `9e15a78c43ec874441429ef14edad34b36ab83bf`。Protocol 只定义合同 / schema / 校验 / promotion gate，不授权 Lab 扩权，不授权生成正式 `OrderIntent`、绕过 `RiskGate` 或直接修改 Stable。
 
 ## 通用字段说明
 
@@ -38,11 +38,11 @@
 - `artifact_name`: 预期 advisory 文件名。
 - `generated_at`: 示例时间戳，不代表真实生成时间。
 - `lab_name`: 固定为 `aetfq3-lab`。
-- `protocol_reference`: 固定为 `pending human confirmation`，直到 protocol repo / tag / commit 经人工确认。
-- `protocol_repo`: 固定为 `pending`，直到人工确认。
-- `protocol_version`: 固定为 `pending`，直到人工确认。
-- `protocol_freeze_commit`: 固定为 `pending`，直到人工确认。
-- `protocol_tag`: 固定为 `pending`，直到人工确认。
+- `protocol_reference`: 固定为 `aetfq3-protocol v0.1.0-rc1`。
+- `protocol_repo`: 固定为 `https://github.com/C8590/aetfq3-protocol`。
+- `protocol_version`: 固定为 `v0.1.0-rc1`。
+- `protocol_freeze_commit`: 固定为 `9e15a78c43ec874441429ef14edad34b36ab83bf`。
+- `protocol_tag`: 固定为 `v0.1.0-rc1`。
 - `source_task`: 示例任务名或任务类型。
 - `data_sources`: mock 数据来源说明，不得引用真实账户或真实订单。
 - `uses_stable_bundle`: 是否使用 Stable bundle，示例必须显式填写。

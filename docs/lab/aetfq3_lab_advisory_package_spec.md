@@ -6,17 +6,20 @@ Lab advisory packages are read-only handoff artifacts from `aetfq3-lab / Lab` to
 
 This document defines schema only. It does not require generating or committing `lab_advisory/` files.
 
-The third-repository protocol reference is reserved for the communication contract, protocol, bundle validation, and upgrade gate repository. The concrete protocol repo, tag, and freeze commit are not yet human-confirmed and must be recorded as pending:
+`aetfq3-protocol` is published and available as `v0.1.0-rc1`. It defines the communication contract, schema, bundle validation, and promotion gate only; it does not grant Lab any additional authority.
 
 ```text
-protocol_reference: pending human confirmation
-protocol_repo: pending
-protocol_version: pending
-protocol_freeze_commit: pending
-protocol_tag: pending
+Remote:
+https://github.com/C8590/aetfq3-protocol
+
+Tag:
+v0.1.0-rc1
+
+Protocol commit:
+9e15a78c43ec874441429ef14edad34b36ab83bf
 ```
 
-Before the protocol repo, tag, and freeze commit are human-confirmed, this repository must not rely on any hardcoded protocol rc1 anchor as a Stable adoption basis. Any task that cites protocol rc1 must verify the protocol repo, tag, and commit first.
+Protocol publication does not authorize Lab to generate formal trading plans, formal `OrderIntent`, bypass `RiskGate`, directly modify Stable, or skip the human promotion gate.
 
 ## Allowed Files
 
@@ -38,11 +41,11 @@ Every advisory JSON must contain:
   "schema_version": "1.0",
   "generated_at": "ISO-8601 timestamp",
   "lab_name": "aetfq3-lab",
-  "protocol_reference": "pending human confirmation",
-  "protocol_repo": "pending",
-  "protocol_version": "pending",
-  "protocol_freeze_commit": "pending",
-  "protocol_tag": "pending",
+  "protocol_reference": "aetfq3-protocol v0.1.0-rc1",
+  "protocol_repo": "https://github.com/C8590/aetfq3-protocol",
+  "protocol_version": "v0.1.0-rc1",
+  "protocol_freeze_commit": "9e15a78c43ec874441429ef14edad34b36ab83bf",
+  "protocol_tag": "v0.1.0-rc1",
   "source_task": "task title or task id",
   "data_sources": [],
   "uses_stable_bundle": false,
@@ -78,11 +81,11 @@ Every advisory JSON must contain:
 - `schema_version`: Advisory schema version.
 - `generated_at`: Creation timestamp.
 - `lab_name`: Must identify `aetfq3-lab`.
-- `protocol_reference`: Must be `pending human confirmation` until the protocol repo, tag, and freeze commit are human-confirmed.
-- `protocol_repo`: Must be `pending` until human confirmation.
-- `protocol_version`: Must be `pending` until human confirmation.
-- `protocol_freeze_commit`: Must be `pending` until human confirmation.
-- `protocol_tag`: Must be `pending` until human confirmation.
+- `protocol_reference`: Must be `aetfq3-protocol v0.1.0-rc1`.
+- `protocol_repo`: Must be `https://github.com/C8590/aetfq3-protocol`.
+- `protocol_version`: Must be `v0.1.0-rc1`.
+- `protocol_freeze_commit`: Must be `9e15a78c43ec874441429ef14edad34b36ab83bf`.
+- `protocol_tag`: Must be `v0.1.0-rc1`.
 - `source_task`: Must identify the Lab task that produced the advisory.
 - `data_sources`: Must list data origin, sample window, and whether data is local, external, or from a Stable bundle.
 - `uses_stable_bundle`: Must be explicit.

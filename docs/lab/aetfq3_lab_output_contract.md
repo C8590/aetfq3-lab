@@ -6,17 +6,20 @@ This contract defines where Lab research outputs may live, which files may enter
 
 Lab can suggest Stable changes, but it cannot directly modify Stable, `final_buy_action`, `target_weight`, BUY / PROBE thresholds, Stable runtime files, QMT production settings, or formal `OrderIntent` outputs.
 
-The third-repository protocol reference is reserved for the communication contract, protocol, bundle validation, and upgrade gate repository. The concrete protocol repo, tag, and freeze commit are not yet human-confirmed and must be recorded as pending:
+`aetfq3-protocol` is published and available as `v0.1.0-rc1`. It defines the communication contract, schema, bundle validation, and promotion gate only; it does not grant Lab any additional authority.
 
 ```text
-protocol_reference: pending human confirmation
-protocol_repo: pending
-protocol_version: pending
-protocol_freeze_commit: pending
-protocol_tag: pending
+Remote:
+https://github.com/C8590/aetfq3-protocol
+
+Tag:
+v0.1.0-rc1
+
+Protocol commit:
+9e15a78c43ec874441429ef14edad34b36ab83bf
 ```
 
-Before the protocol repo, tag, and freeze commit are human-confirmed, this repository must not rely on any hardcoded protocol rc1 anchor as a Stable adoption basis. Any task that cites protocol rc1 must verify the protocol repo, tag, and commit first.
+Protocol publication does not authorize Lab to generate formal trading plans, formal `OrderIntent`, bypass `RiskGate`, directly modify Stable, or skip the human promotion gate.
 
 ## Layer 1: Local Ignored Research Outputs
 

@@ -6,7 +6,7 @@
 
 本 checklist 不授权直接修改 Stable，不授权生成 `OrderIntent`，不授权接正式 QMT，不授权写 `output/`，不授权创建 `lab_advisory/` 运行目录。
 
-第三仓库 protocol reference 预留为通信合同 / 协议 / bundle 校验 / 升级门禁仓库。当前 protocol repo / tag / freeze commit 尚未被人工确认，必须记录为 pending。在 protocol repo / tag / freeze commit 经人工确认前，本仓库不得把任何 hardcoded protocol rc1 锚点作为 Stable adoption 依据。
+第三仓库 protocol reference 已正式发布为 `aetfq3-protocol v0.1.0-rc1`，remote 为 `https://github.com/C8590/aetfq3-protocol`，commit 为 `9e15a78c43ec874441429ef14edad34b36ab83bf`。Protocol 只定义通信合同 / schema / bundle 校验 / promotion gate，不授权 Lab 扩权，不授权生成正式 `OrderIntent`、绕过 `RiskGate` 或直接修改 Stable。
 
 结构化版本见 `docs/lab/aetfq3_lab_research_review_checklist.json`。
 
@@ -18,7 +18,7 @@
 - 是否明确所属研究方向。
 - 是否明确不是 Stable 正式策略任务。
 - 是否明确不直接改 Stable。
-- 是否明确 protocol reference 是第三仓库边界预留，具体 repo / tag / commit pending human confirmation。
+- 是否明确 protocol reference 是第三仓库边界，已发布为 `aetfq3-protocol v0.1.0-rc1`。
 
 ### 二、数据来源检查
 
@@ -76,8 +76,8 @@
 
 ### 七、advisory-only 检查
 
-- protocol repo / tag / commit 是否已人工确认；若未确认，是否标记为 pending。
-- 如任务引用 protocol rc1，是否先验证 protocol repo / tag / commit。
+- protocol repo / tag / commit 是否记录为已发布的 `aetfq3-protocol v0.1.0-rc1`。
+- 是否明确 protocol 只定义合同 / schema / 校验 / promotion gate，不授权 Lab 扩权。
 - `access_mode` 是否为 `READ_ONLY`。
 - `affects_stable_trading` 是否为 `false`。
 - `advisory_only` 是否为 `true`。

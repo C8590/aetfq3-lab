@@ -10,7 +10,7 @@
 
 `aetfq3-lab` 是 AETF Lab / 实验室 / 试车场。它不是 V2.1 Stable 的附属模块，而是研究实验主线。Lab 可以研究、验证、模拟、诊断和形成 advisory 建议包，但不得直接修改 Stable，不得绕过 Stable 的风控、总控和人工确认边界。
 
-## Lab Advisory Protocol Pending 边界
+## Lab Advisory Protocol RC1 边界
 
 每个 Codex 任务仍必须以以下声明开头：
 
@@ -29,7 +29,20 @@ requires_human_review: true
 promotion_gate_required: true
 ```
 
-protocol repo / tag / commit 在人工确认前必须标记为 pending。若任务引用 protocol rc1，必须先验证 protocol repo / tag / commit；未验证前不得把 hardcoded protocol commit 或 tag 作为 Stable adoption 依据。
+`aetfq3-protocol` is published and available as `v0.1.0-rc1`.
+
+```text
+Remote:
+https://github.com/C8590/aetfq3-protocol
+
+Tag:
+v0.1.0-rc1
+
+Protocol commit:
+9e15a78c43ec874441429ef14edad34b36ab83bf
+```
+
+Protocol 只定义通信合同 / schema / 校验 / promotion gate，不授权 Lab 扩权，不授权生成正式交易计划、正式 `OrderIntent`、绕过 `RiskGate` 或直接修改 Stable。
 
 ## Lab 负责范围
 

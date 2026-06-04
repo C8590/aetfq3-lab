@@ -10,17 +10,17 @@
 
 `aetfq3-lab` 是 AETF Lab / 实验室 / 试车场。它不是 Stable 的附属模块，而是研究实验主线。Lab 的职责是验证想法、做只读研究、形成可审计 advisory 建议包，并把是否值得进入 Stable 的判断说清楚。
 
-第三仓库 protocol reference 预留为通信合同 / 协议 / bundle 校验 / 升级门禁仓库，不是 Lab，也不是 Stable。当前 protocol repo / tag / freeze commit 尚未被人工确认，必须记录为 pending：
+第三仓库 protocol reference 已正式发布为 `aetfq3-protocol v0.1.0-rc1`。它用于通信合同 / schema / bundle 校验 / 升级门禁，不是 Lab，也不是 Stable，不授权 Lab 扩权。
 
 ```text
-protocol_reference: pending human confirmation
-protocol_repo: pending
-protocol_version: pending
-protocol_freeze_commit: pending
-protocol_tag: pending
+protocol_reference: aetfq3-protocol v0.1.0-rc1
+protocol_repo: https://github.com/C8590/aetfq3-protocol
+protocol_version: v0.1.0-rc1
+protocol_freeze_commit: 9e15a78c43ec874441429ef14edad34b36ab83bf
+protocol_tag: v0.1.0-rc1
 ```
 
-在 protocol repo / tag / freeze commit 经人工确认前，本仓库不得把任何 hardcoded protocol rc1 锚点作为 Stable adoption 依据。若任务引用 protocol rc1，必须先验证 protocol repo / tag / commit。
+Protocol 只定义合同 / schema / 校验 / promotion gate，不授权 Lab 生成正式交易计划、正式 `OrderIntent`、绕过 `RiskGate` 或直接修改 Stable。
 
 ## Lab 定位
 
@@ -31,7 +31,7 @@ Lab 与 Stable 的关系是：
 - Lab 产生证据和建议。
 - Stable 保持正式交易链路、风控链路和人工确认边界。
 - Lab 不能绕过 Stable 的 RiskGate、entry、control center 或执行确认。
-- protocol reference 只预留通信合同、协议、bundle 校验和升级门禁职责；具体 repo / tag / commit 必须等待人工确认。
+- protocol reference 只定义通信合同、schema、bundle 校验和升级门禁职责；不授权 Lab 扩权。
 
 ## Lab 负责范围
 
@@ -81,11 +81,11 @@ Lab advisory 必须保持：
 
 ```text
 access_mode: READ_ONLY
-protocol_reference: pending human confirmation
-protocol_repo: pending
-protocol_version: pending
-protocol_freeze_commit: pending
-protocol_tag: pending
+protocol_reference: aetfq3-protocol v0.1.0-rc1
+protocol_repo: https://github.com/C8590/aetfq3-protocol
+protocol_version: v0.1.0-rc1
+protocol_freeze_commit: 9e15a78c43ec874441429ef14edad34b36ab83bf
+protocol_tag: v0.1.0-rc1
 final_action_change_allowed: false
 contains_live_order: false
 contains_secret: false
