@@ -71,7 +71,11 @@ Lab 给 Stable 的输出只能是只读建议包。允许的建议包文件名�
 - 如果建议进入 Stable，最小合并方案是什么。
 - 不允许直接提交到 Stable。
 
-详细任务模板见 `docs/lab/aetfq3_lab_codex_task_template.md`，Lab charter 见 `docs/lab/aetfq3_lab_charter.md`。
+详细任务模板见 `docs/lab/aetfq3_lab_codex_task_template.md`，Lab charter 见 `docs/lab/aetfq3_lab_charter.md`。Lab 输出规范入口见：
+
+- `docs/lab/aetfq3_lab_output_contract.md`
+- `docs/lab/aetfq3_lab_advisory_package_spec.md`
+- `docs/lab/aetfq3_lab_file_naming.md`
 
 ## 与旧 AETFv2 规则的关系
 
