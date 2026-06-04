@@ -1,0 +1,9 @@
+trade_date,sector,etf_code,etf_name,ranking_group_id,model_version,feature_version,future_return_1d,future_return_3d,max_drawdown_3d,best_in_sector_1d,best_in_sector_3d,top_quantile_in_sector_3d,avoid_in_sector,pairwise_outperform_label,rank_scope,sector_member_count,ml_score,etf_momentum,sector_relative_strength
+2026-01-02,tech,MOCK001,Mock Tech ETF A,2026-01-02_tech,mock_model_v1,mock_features_v1,0.004,0.018,-0.006,1,1,1,0,1,sector_internal,2,0.71,0.12,0.04
+2026-01-02,tech,MOCK002,Mock Tech ETF B,2026-01-02_tech,mock_model_v1,mock_features_v1,-0.002,0.006,-0.014,0,0,0,1,0,sector_internal,2,0.58,0.08,0.01
+2026-01-02,health,MOCK003,Mock Health ETF A,2026-01-02_health,mock_model_v1,mock_features_v1,0.003,0.011,-0.009,1,1,1,0,1,sector_internal,2,0.65,0.05,0.03
+2026-01-02,health,MOCK004,Mock Health ETF B,2026-01-02_health,mock_model_v1,mock_features_v1,0.001,0.004,-0.018,0,0,0,1,0,sector_internal,2,0.51,0.02,0.00
+2026-01-03,tech,MOCK001,Mock Tech ETF A,2026-01-03_tech,mock_model_v1,mock_features_v1,0.002,0.010,-0.011,0,0,0,0,0,sector_internal,2,0.60,0.10,0.02
+2026-01-03,tech,MOCK002,Mock Tech ETF B,2026-01-03_tech,mock_model_v1,mock_features_v1,0.006,0.017,-0.007,1,1,1,0,1,sector_internal,2,0.74,0.13,0.05
+2026-01-03,health,MOCK003,Mock Health ETF A,2026-01-03_health,mock_model_v1,mock_features_v1,-0.001,0.003,-0.020,0,0,0,1,0,sector_internal,2,0.49,0.01,-0.01
+2026-01-03,health,MOCK004,Mock Health ETF B,2026-01-03_health,mock_model_v1,mock_features_v1,0.004,0.014,-0.008,1,1,1,0,1,sector_internal,2,0.68,0.07,0.04
