@@ -29,17 +29,26 @@ requires_human_review: true
 promotion_gate_required: true
 ```
 
-`aetfq3-protocol` is published and available as `v0.1.0-rc1`.
+`aetfq3-protocol` is verified and available as `v0.1.0-rc1`.
 
 ```text
 Remote:
 https://github.com/C8590/aetfq3-protocol
+
+protocol_reference:
+verified
+
+protocol_repo:
+C8590/aetfq3-protocol
 
 Tag:
 v0.1.0-rc1
 
 Protocol commit:
 9e15a78c43ec874441429ef14edad34b36ab83bf
+
+Closeout ledger commit:
+6c72df96a79aa66c2780692c64af7661da07213e
 ```
 
 Protocol 只定义通信合同 / schema / 校验 / promotion gate，不授权 Lab 扩权，不授权生成正式交易计划、正式 `OrderIntent`、绕过 `RiskGate` 或直接修改 Stable。

@@ -6,17 +6,26 @@ This contract defines where Lab research outputs may live, which files may enter
 
 Lab can suggest Stable changes, but it cannot directly modify Stable, `final_buy_action`, `target_weight`, BUY / PROBE thresholds, Stable runtime files, QMT production settings, or formal `OrderIntent` outputs.
 
-`aetfq3-protocol` is published and available as `v0.1.0-rc1`. It defines the communication contract, schema, bundle validation, and promotion gate only; it does not grant Lab any additional authority.
+`aetfq3-protocol` is verified and available as `v0.1.0-rc1`. It defines the communication contract, schema, bundle validation, and promotion gate only; it does not grant Lab any additional authority.
 
 ```text
 Remote:
 https://github.com/C8590/aetfq3-protocol
+
+protocol_reference:
+verified
+
+protocol_repo:
+C8590/aetfq3-protocol
 
 Tag:
 v0.1.0-rc1
 
 Protocol commit:
 9e15a78c43ec874441429ef14edad34b36ab83bf
+
+Closeout ledger commit:
+6c72df96a79aa66c2780692c64af7661da07213e
 ```
 
 Protocol publication does not authorize Lab to generate formal trading plans, formal `OrderIntent`, bypass `RiskGate`, directly modify Stable, or skip the human promotion gate.
@@ -150,6 +159,7 @@ access_mode: READ_ONLY
 final_action_change_allowed: false
 contains_live_order: false
 contains_secret: false
+promotion_gate_required: true
 ```
 
 Bundles that contain secrets, contain live orders, or set `final_action_change_allowed=true` are forbidden and must not be promoted.

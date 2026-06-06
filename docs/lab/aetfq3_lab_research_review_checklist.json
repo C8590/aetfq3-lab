@@ -1,13 +1,24 @@
 {
   "document_type": "aetfq3_lab_research_review_checklist",
   "schema_version": "1.0",
+  "example_only": true,
   "lab_name": "aetfq3-lab",
-  "protocol_reference": "aetfq3-protocol v0.1.0-rc1",
-  "protocol_repo": "https://github.com/C8590/aetfq3-protocol",
+  "protocol_reference": "verified",
+  "protocol_repo": "C8590/aetfq3-protocol",
   "protocol_version": "v0.1.0-rc1",
+  "protocol_commit": "9e15a78c43ec874441429ef14edad34b36ab83bf",
   "protocol_freeze_commit": "9e15a78c43ec874441429ef14edad34b36ab83bf",
   "protocol_tag": "v0.1.0-rc1",
-  "stable_boundary": "Lab checklist only; not a Stable runtime file",
+  "protocol_closeout_ledger_commit": "6c72df96a79aa66c2780692c64af7661da07213e",
+  "access_mode": "READ_ONLY",
+  "affects_stable_trading": false,
+  "advisory_only": true,
+  "final_action_change_allowed": false,
+  "contains_live_order": false,
+  "contains_secret": false,
+  "requires_human_review": true,
+  "promotion_gate_required": true,
+  "stable_boundary_note": "Lab checklist only; not a Stable runtime file",
   "task_positioning": [
     {
       "check_id": "task_positioning.001",
@@ -45,7 +56,7 @@
       "check_id": "task_positioning.005",
       "question": "是否明确第三仓库 protocol reference 是通信合同 / 协议 / bundle 校验 / 升级门禁边界预留",
       "required_answer_type": "boolean",
-      "pass_condition": "明确写明 protocol repo / tag / commit 为已发布的 aetfq3-protocol v0.1.0-rc1",
+      "pass_condition": "明确写明 protocol repo / tag / commit / closeout ledger commit 为已验证的 aetfq3-protocol v0.1.0-rc1",
       "fail_action": "补充 protocol rc1 发布锚点和 Lab 不扩权边界",
       "severity": "P1"
     }
@@ -372,12 +383,12 @@
       "severity": "P0"
     }
   ],
-  "advisory_only": [
+  "advisory_only_checks": [
     {
       "check_id": "advisory_only.000",
-      "question": "protocol repo / tag / commit 是否记录为 aetfq3-protocol v0.1.0-rc1",
+      "question": "protocol repo / tag / commit / closeout ledger commit 是否记录为 verified aetfq3-protocol v0.1.0-rc1",
       "required_answer_type": "boolean",
-      "pass_condition": "必须记录已发布的 protocol repo / tag / commit，且不得把 protocol 作为 Lab 扩权依据",
+      "pass_condition": "必须记录已验证的 protocol repo / tag / commit / closeout ledger commit，且不得把 protocol 作为 Lab 扩权依据",
       "fail_action": "P1 披露并补充 protocol rc1 发布锚点；如任务要送 Stable，则仍需 promotion gate",
       "severity": "P1"
     },

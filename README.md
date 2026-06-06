@@ -4,17 +4,26 @@
 
 Lab 规则入口：`docs/lab/aetfq3_lab_charter.md`、`docs/lab/aetfq3_lab_output_contract.md`、`docs/lab/aetfq3_lab_advisory_package_spec.md`、`docs/lab/aetfq3_lab_file_naming.md`、`docs/lab/aetfq3_lab_advisory_examples.md`、`docs/lab/aetfq3_lab_research_review_checklist.md`。
 
-第三仓库 protocol reference 已正式发布为 `aetfq3-protocol v0.1.0-rc1`，用于通信合同 / schema / bundle 校验 / 升级门禁，不授权 Lab 扩权，也不授权 Lab 直接修改 Stable。
+第三仓库 protocol reference 已验证为 `aetfq3-protocol v0.1.0-rc1`，用于通信合同 / schema / bundle 校验 / 升级门禁，不授权 Lab 扩权，也不授权 Lab 直接修改 Stable。
 
 ```text
 Remote:
 https://github.com/C8590/aetfq3-protocol
+
+protocol_reference:
+verified
+
+protocol_repo:
+C8590/aetfq3-protocol
 
 Tag:
 v0.1.0-rc1
 
 Protocol commit:
 9e15a78c43ec874441429ef14edad34b36ab83bf
+
+Closeout ledger commit:
+6c72df96a79aa66c2780692c64af7661da07213e
 ```
 
 本项目当前只保留一个主策略：日频右侧确认型 ETF 动量轮动策略。

@@ -10,11 +10,13 @@
 
 所有示例必须保持：
 
-- `protocol_reference: aetfq3-protocol v0.1.0-rc1`
-- `protocol_repo: https://github.com/C8590/aetfq3-protocol`
+- `protocol_reference: verified`
+- `protocol_repo: C8590/aetfq3-protocol`
 - `protocol_version: v0.1.0-rc1`
+- `protocol_commit: 9e15a78c43ec874441429ef14edad34b36ab83bf`
 - `protocol_freeze_commit: 9e15a78c43ec874441429ef14edad34b36ab83bf`
 - `protocol_tag: v0.1.0-rc1`
+- `protocol_closeout_ledger_commit: 6c72df96a79aa66c2780692c64af7661da07213e`
 - `access_mode: READ_ONLY`
 - `affects_stable_trading: false`
 - `advisory_only: true`
@@ -22,6 +24,7 @@
 - `contains_live_order: false`
 - `contains_secret: false`
 - `requires_human_review: true`
+- `promotion_gate_required: true`
 - `recommended_for_stable: false` 默认值
 - `forbidden_actions` 必须包含全部禁止动作
 
@@ -29,7 +32,7 @@
 
 包含 secret、live order 或 `final_action_change_allowed=true` 的 bundle 一律禁止，不得作为 Lab -> Stable advisory bundle。
 
-`aetfq3-protocol` 已发布为 `v0.1.0-rc1`，remote 为 `https://github.com/C8590/aetfq3-protocol`，commit 为 `9e15a78c43ec874441429ef14edad34b36ab83bf`。Protocol 只定义合同 / schema / 校验 / promotion gate，不授权 Lab 扩权，不授权生成正式 `OrderIntent`、绕过 `RiskGate` 或直接修改 Stable。
+`aetfq3-protocol` 已验证为 `v0.1.0-rc1`，repo 为 `C8590/aetfq3-protocol`，commit 为 `9e15a78c43ec874441429ef14edad34b36ab83bf`，closeout ledger commit 为 `6c72df96a79aa66c2780692c64af7661da07213e`。Protocol 只定义合同 / schema / 校验 / promotion gate，不授权 Lab 扩权，不授权生成正式 `OrderIntent`、绕过 `RiskGate` 或直接修改 Stable。
 
 ## 通用字段说明
 
@@ -38,11 +41,13 @@
 - `artifact_name`: 预期 advisory 文件名。
 - `generated_at`: 示例时间戳，不代表真实生成时间。
 - `lab_name`: 固定为 `aetfq3-lab`。
-- `protocol_reference`: 固定为 `aetfq3-protocol v0.1.0-rc1`。
-- `protocol_repo`: 固定为 `https://github.com/C8590/aetfq3-protocol`。
+- `protocol_reference`: 固定为 `verified`。
+- `protocol_repo`: 固定为 `C8590/aetfq3-protocol`。
 - `protocol_version`: 固定为 `v0.1.0-rc1`。
+- `protocol_commit`: 固定为 `9e15a78c43ec874441429ef14edad34b36ab83bf`。
 - `protocol_freeze_commit`: 固定为 `9e15a78c43ec874441429ef14edad34b36ab83bf`。
 - `protocol_tag`: 固定为 `v0.1.0-rc1`。
+- `protocol_closeout_ledger_commit`: 固定为 `6c72df96a79aa66c2780692c64af7661da07213e`。
 - `source_task`: 示例任务名或任务类型。
 - `data_sources`: mock 数据来源说明，不得引用真实账户或真实订单。
 - `uses_stable_bundle`: 是否使用 Stable bundle，示例必须显式填写。
@@ -55,6 +60,7 @@
 - `contains_secret`: 必须为 `false`。
 - `recommended_for_stable`: 默认 `false`。
 - `requires_human_review`: 必须为 `true`。
+- `promotion_gate_required`: 必须为 `true`。
 - `stable_merge_minimal_plan`: 仅在建议进入 Stable 时非空；否则写明 no merge proposed。
 - `forbidden_actions`: 必须包含禁止修改交易动作、仓位、风控、下单、Stable runtime、Stable output 的动作。
 - `summary`: mock 摘要，不得包含正式交易指令。

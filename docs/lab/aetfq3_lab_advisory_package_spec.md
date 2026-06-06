@@ -6,17 +6,26 @@ Lab advisory packages are read-only handoff artifacts from `aetfq3-lab / Lab` to
 
 This document defines schema only. It does not require generating or committing `lab_advisory/` files.
 
-`aetfq3-protocol` is published and available as `v0.1.0-rc1`. It defines the communication contract, schema, bundle validation, and promotion gate only; it does not grant Lab any additional authority.
+`aetfq3-protocol` is verified and available as `v0.1.0-rc1`. It defines the communication contract, schema, bundle validation, and promotion gate only; it does not grant Lab any additional authority.
 
 ```text
 Remote:
 https://github.com/C8590/aetfq3-protocol
+
+protocol_reference:
+verified
+
+protocol_repo:
+C8590/aetfq3-protocol
 
 Tag:
 v0.1.0-rc1
 
 Protocol commit:
 9e15a78c43ec874441429ef14edad34b36ab83bf
+
+Closeout ledger commit:
+6c72df96a79aa66c2780692c64af7661da07213e
 ```
 
 Protocol publication does not authorize Lab to generate formal trading plans, formal `OrderIntent`, bypass `RiskGate`, directly modify Stable, or skip the human promotion gate.
@@ -41,11 +50,13 @@ Every advisory JSON must contain:
   "schema_version": "1.0",
   "generated_at": "ISO-8601 timestamp",
   "lab_name": "aetfq3-lab",
-  "protocol_reference": "aetfq3-protocol v0.1.0-rc1",
-  "protocol_repo": "https://github.com/C8590/aetfq3-protocol",
+  "protocol_reference": "verified",
+  "protocol_repo": "C8590/aetfq3-protocol",
   "protocol_version": "v0.1.0-rc1",
+  "protocol_commit": "9e15a78c43ec874441429ef14edad34b36ab83bf",
   "protocol_freeze_commit": "9e15a78c43ec874441429ef14edad34b36ab83bf",
   "protocol_tag": "v0.1.0-rc1",
+  "protocol_closeout_ledger_commit": "6c72df96a79aa66c2780692c64af7661da07213e",
   "source_task": "task title or task id",
   "data_sources": [],
   "uses_stable_bundle": false,
@@ -58,6 +69,7 @@ Every advisory JSON must contain:
   "contains_secret": false,
   "recommended_for_stable": false,
   "requires_human_review": true,
+  "promotion_gate_required": true,
   "stable_merge_minimal_plan": "",
   "forbidden_actions": [
     "do_not_modify_final_buy_action",
@@ -81,11 +93,13 @@ Every advisory JSON must contain:
 - `schema_version`: Advisory schema version.
 - `generated_at`: Creation timestamp.
 - `lab_name`: Must identify `aetfq3-lab`.
-- `protocol_reference`: Must be `aetfq3-protocol v0.1.0-rc1`.
-- `protocol_repo`: Must be `https://github.com/C8590/aetfq3-protocol`.
+- `protocol_reference`: Must be `verified`.
+- `protocol_repo`: Must be `C8590/aetfq3-protocol`.
 - `protocol_version`: Must be `v0.1.0-rc1`.
+- `protocol_commit`: Must be `9e15a78c43ec874441429ef14edad34b36ab83bf`.
 - `protocol_freeze_commit`: Must be `9e15a78c43ec874441429ef14edad34b36ab83bf`.
 - `protocol_tag`: Must be `v0.1.0-rc1`.
+- `protocol_closeout_ledger_commit`: Must be `6c72df96a79aa66c2780692c64af7661da07213e`.
 - `source_task`: Must identify the Lab task that produced the advisory.
 - `data_sources`: Must list data origin, sample window, and whether data is local, external, or from a Stable bundle.
 - `uses_stable_bundle`: Must be explicit.
@@ -98,6 +112,7 @@ Every advisory JSON must contain:
 - `contains_secret`: Must be `false`.
 - `recommended_for_stable`: If `true`, `stable_merge_minimal_plan` must be non-empty.
 - `requires_human_review`: Must default to `true`.
+- `promotion_gate_required`: Must default to `true`.
 - `stable_merge_minimal_plan`: Must describe the smallest Stable-side change needed, if any.
 - `forbidden_actions`: Must include all required forbidden actions, including `do_not_write_stable_runtime` and `do_not_write_stable_output`.
 - `summary`: Must be concise and evidence-backed.
