@@ -92,6 +92,12 @@ python tools/lab/table_ml_baseline_smoke.py `
 
 预测 CSV 只包含 validation smoke 字段，不包含交易动作、仓位、`OrderIntent` 或 Stable 参数。
 
+## Report Contract Reader
+
+`tools/lab/table_ml_baseline_report_reader.py` 可只读校验 baseline smoke report JSON 的稳定合同。Reader 会检查 Lab-only / no-save / no-tuning / no Stable / no QMT / no OrderIntent / no output / no lab_advisory 边界，并拒绝包含 `order_intent`、`target_weight`、`final_buy_action`、`stable_action`、`qmt_order`、`live_order` 或 `trade_instruction` 的报告。
+
+Reader 输出 summary JSON 到 stdout；若边界字段缺失或失败，返回非 0。报告合同细节见 `docs/research/aetfq3_table_ml_baseline_report_contract.md`。
+
 ## Metrics 解释限制
 
 报告中的 accuracy、ROC AUC、log loss、by-date summary、by-sector summary 只证明代码路径可运行。小样本 smoke 的 metrics 不代表模型有效性，不代表策略收益，不代表 Stable 可用性，也不得作为交易建议。

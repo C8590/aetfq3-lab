@@ -1,0 +1,59 @@
+{
+  "report_type": "baseline_smoke_report",
+  "task_scope": "lab_only_baseline_smoke",
+  "lab_only": true,
+  "no_save": true,
+  "no_tuning": true,
+  "no_stable": true,
+  "no_qmt": true,
+  "no_order_intent": true,
+  "no_output": true,
+  "no_lab_advisory": true,
+  "model_saved": false,
+  "checkpoint_saved": false,
+  "target_label": "top_quantile_in_sector_3d",
+  "feature_columns": [
+    "etf_ret_1d_lag1",
+    "etf_ret_3d_lag1",
+    "etf_amount_5d_mean_lag1"
+  ],
+  "forbidden_columns": [
+    "future_return_1d",
+    "future_return_3d",
+    "max_drawdown_3d",
+    "best_in_sector_3d",
+    "top_quantile_in_sector_3d",
+    "trade_date",
+    "sector",
+    "etf_code",
+    "etf_name",
+    "ranking_group_id"
+  ],
+  "train_count": 14,
+  "valid_count": 6,
+  "split_method": "chronological",
+  "group_leakage_check": "passed",
+  "models": [
+    {
+      "model_name": "numpy_logistic_regression_smoke",
+      "no_save": true,
+      "no_tuning": true
+    }
+  ],
+  "metrics": [
+    {
+      "model_name": "numpy_logistic_regression_smoke",
+      "accuracy": 0.5,
+      "roc_auc": 0.5,
+      "log_loss": 0.7
+    }
+  ],
+  "prediction_file": ".local_research_outputs/aetfq3_lab/table_ml_baseline_smoke/sector_internal_ranking_baseline_predictions.csv",
+  "review_checklist": {
+    "researched": "Lab-only baseline smoke report contract.",
+    "uses_stable_bundle": false,
+    "affects_stable_trading": false,
+    "recommended_for_stable": false,
+    "do_not_submit_to_stable": true
+  }
+}
