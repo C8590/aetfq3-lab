@@ -1,0 +1,288 @@
+{
+  "document": "aetfq3_external_training_framework_survey",
+  "date": "2026-06-06",
+  "scope": {
+    "repo": "aetfq3-lab",
+    "track": "Lab",
+    "not_v21_stable": true,
+    "boundaries": {
+      "train_models": false,
+      "read_real_market_data": false,
+      "write_output_dir": false,
+      "create_lab_advisory": false,
+      "connect_stable": false,
+      "connect_qmt": false,
+      "generate_order_intent": false,
+      "allowed_write_roots": [
+        "docs/research"
+      ]
+    }
+  },
+  "recommended_adoption_order": [
+    "Optuna",
+    "MLflow",
+    "vectorbt",
+    "tsai",
+    "NeuralForecast",
+    "PyTorch Forecasting",
+    "Darts",
+    "Microsoft Qlib",
+    "FinRL / FinRL-X"
+  ],
+  "answers": {
+    "a_false_downgrade_best_fit": [
+      "tsai",
+      "Optuna",
+      "MLflow"
+    ],
+    "a_false_downgrade_secondary_fit": [
+      "Microsoft Qlib",
+      "PyTorch Forecasting",
+      "NeuralForecast",
+      "Darts"
+    ],
+    "a_false_downgrade_poor_direct_fit": [
+      "vectorbt",
+      "FinRL / FinRL-X"
+    ],
+    "e_same_sector_etf_ranking_best_fit": [
+      "vectorbt",
+      "Microsoft Qlib",
+      "NeuralForecast",
+      "Optuna",
+      "MLflow"
+    ],
+    "e_same_sector_etf_ranking_secondary_fit": [
+      "PyTorch Forecasting",
+      "Darts",
+      "tsai"
+    ],
+    "e_same_sector_etf_ranking_poor_direct_fit": [
+      "FinRL / FinRL-X"
+    ],
+    "f_5m_k_pytorch_execution_best_fit": [
+      "tsai",
+      "NeuralForecast",
+      "PyTorch Forecasting",
+      "Optuna",
+      "MLflow"
+    ],
+    "f_5m_k_pytorch_execution_secondary_fit": [
+      "vectorbt",
+      "Darts",
+      "Microsoft Qlib"
+    ],
+    "f_5m_k_pytorch_execution_reference_only": [
+      "FinRL / FinRL-X"
+    ],
+    "reference_only_not_direct_initial_import": [
+      "Microsoft Qlib",
+      "FinRL / FinRL-X",
+      "Darts"
+    ],
+    "next_stage_install_smoke_first_group": [
+      "Optuna",
+      "MLflow",
+      "vectorbt",
+      "tsai",
+      "NeuralForecast"
+    ],
+    "next_stage_install_smoke_second_group": [
+      "PyTorch Forecasting",
+      "Darts"
+    ],
+    "next_stage_reference_only_smoke": [
+      "Microsoft Qlib",
+      "FinRL / FinRL-X"
+    ],
+    "cannot_connect_stable": [
+      "Microsoft Qlib",
+      "vectorbt",
+      "FinRL / FinRL-X",
+      "tsai",
+      "PyTorch Forecasting",
+      "NeuralForecast",
+      "Darts",
+      "Optuna",
+      "MLflow"
+    ],
+    "cannot_connect_qmt": [
+      "Microsoft Qlib",
+      "vectorbt",
+      "FinRL / FinRL-X",
+      "tsai",
+      "PyTorch Forecasting",
+      "NeuralForecast",
+      "Darts",
+      "Optuna",
+      "MLflow"
+    ]
+  },
+  "frameworks": [
+    {
+      "name": "Microsoft Qlib",
+      "category": "quant_research_platform",
+      "source_urls": [
+        "https://github.com/microsoft/qlib"
+      ],
+      "fit": {
+        "a_false_downgrade": "medium",
+        "e_same_sector_etf_ranking": "high",
+        "f_5m_k_pytorch_execution": "medium"
+      },
+      "direct_lab_import": "no_initially",
+      "smoke_test_stage": "reference_only",
+      "stable_connection": "forbidden",
+      "qmt_connection": "forbidden",
+      "rationale": "Strong design reference for quantitative workflows, data handlers, alpha models, backtesting, and experiment organization, but initial direct adoption would impose Qlib data/workflow conventions."
+    },
+    {
+      "name": "vectorbt",
+      "category": "vectorized_backtesting",
+      "source_urls": [
+        "https://vectorbt.dev/"
+      ],
+      "fit": {
+        "a_false_downgrade": "low",
+        "e_same_sector_etf_ranking": "high",
+        "f_5m_k_pytorch_execution": "medium"
+      },
+      "direct_lab_import": "yes_research_backtest_only",
+      "smoke_test_stage": "first_group",
+      "stable_connection": "forbidden",
+      "qmt_connection": "forbidden",
+      "rationale": "Good for synthetic signal replay, parameter sweeps, and vectorized ranking strategy evaluation. It is not a model trainer or execution engine."
+    },
+    {
+      "name": "FinRL / FinRL-X",
+      "category": "reinforcement_learning_finance",
+      "source_urls": [
+        "https://github.com/AI4Finance-Foundation/FinRL",
+        "https://github.com/AI4Finance-Foundation/FinRL_Trading"
+      ],
+      "fit": {
+        "a_false_downgrade": "low",
+        "e_same_sector_etf_ranking": "low_medium",
+        "f_5m_k_pytorch_execution": "medium_reference"
+      },
+      "direct_lab_import": "no_initially",
+      "smoke_test_stage": "reference_only",
+      "stable_connection": "forbidden",
+      "qmt_connection": "forbidden",
+      "rationale": "Useful for RL environment and reward-design ideas, but direct use risks importing broker, live-trading, and policy-execution assumptions."
+    },
+    {
+      "name": "tsai",
+      "category": "pytorch_time_series_ai",
+      "source_urls": [
+        "https://timeseriesai.github.io/tsai/"
+      ],
+      "fit": {
+        "a_false_downgrade": "high",
+        "e_same_sector_etf_ranking": "medium",
+        "f_5m_k_pytorch_execution": "high"
+      },
+      "direct_lab_import": "yes_model_research_only",
+      "smoke_test_stage": "first_group",
+      "stable_connection": "forbidden",
+      "qmt_connection": "forbidden",
+      "rationale": "Strong fit for windowed time-series classification and regression in A/F with PyTorch-oriented models."
+    },
+    {
+      "name": "PyTorch Forecasting",
+      "category": "pytorch_forecasting",
+      "source_urls": [
+        "https://pytorch-forecasting.readthedocs.io/"
+      ],
+      "fit": {
+        "a_false_downgrade": "medium",
+        "e_same_sector_etf_ranking": "medium",
+        "f_5m_k_pytorch_execution": "high"
+      },
+      "direct_lab_import": "maybe_heavier_dependency",
+      "smoke_test_stage": "second_group",
+      "stable_connection": "forbidden",
+      "qmt_connection": "forbidden",
+      "rationale": "Good for covariate-rich forecasting and TFT-style models, but heavier data-loader and dependency structure should follow lighter smoke tests."
+    },
+    {
+      "name": "NeuralForecast",
+      "category": "pytorch_forecasting",
+      "source_urls": [
+        "https://nixtlaverse.nixtla.io/neuralforecast/"
+      ],
+      "fit": {
+        "a_false_downgrade": "medium",
+        "e_same_sector_etf_ranking": "high",
+        "f_5m_k_pytorch_execution": "high"
+      },
+      "direct_lab_import": "yes_forecast_research_only",
+      "smoke_test_stage": "first_group",
+      "stable_connection": "forbidden",
+      "qmt_connection": "forbidden",
+      "rationale": "Good PyTorch forecasting candidate for many short-horizon series and ranking by predicted return or relative strength."
+    },
+    {
+      "name": "Darts",
+      "category": "time_series_forecasting_suite",
+      "source_urls": [
+        "https://unit8co.github.io/darts/"
+      ],
+      "fit": {
+        "a_false_downgrade": "low_medium",
+        "e_same_sector_etf_ranking": "medium",
+        "f_5m_k_pytorch_execution": "medium"
+      },
+      "direct_lab_import": "maybe_optional",
+      "smoke_test_stage": "second_group",
+      "stable_connection": "forbidden",
+      "qmt_connection": "forbidden",
+      "rationale": "Useful unified baseline and backtesting interface, but its TimeSeries container may create adapter gravity."
+    },
+    {
+      "name": "Optuna",
+      "category": "hyperparameter_optimization",
+      "source_urls": [
+        "https://optuna.org/"
+      ],
+      "fit": {
+        "a_false_downgrade": "high",
+        "e_same_sector_etf_ranking": "high",
+        "f_5m_k_pytorch_execution": "high"
+      },
+      "direct_lab_import": "yes_optimizer_only",
+      "smoke_test_stage": "first_group",
+      "stable_connection": "forbidden",
+      "qmt_connection": "forbidden",
+      "rationale": "Low-risk optimizer that does not impose a market-data or execution framework."
+    },
+    {
+      "name": "MLflow",
+      "category": "experiment_tracking",
+      "source_urls": [
+        "https://mlflow.org/docs/latest/"
+      ],
+      "fit": {
+        "a_false_downgrade": "medium",
+        "e_same_sector_etf_ranking": "medium",
+        "f_5m_k_pytorch_execution": "medium"
+      },
+      "direct_lab_import": "yes_tracking_only",
+      "smoke_test_stage": "first_group",
+      "stable_connection": "forbidden",
+      "qmt_connection": "forbidden",
+      "rationale": "Useful for local run metadata and metrics, but registry/deployment features must not become Stable promotion or trading triggers."
+    }
+  ],
+  "smoke_test_rules": [
+    "Use synthetic arrays or synthetic pandas data only.",
+    "Do not read market data.",
+    "Do not train unless a later task explicitly allows training.",
+    "Do not write output/.",
+    "Do not create lab_advisory/.",
+    "Do not connect Stable.",
+    "Do not connect QMT.",
+    "Do not create OrderIntent.",
+    "Keep smoke code under a future Lab-only test path, not production runtime."
+  ]
+}
