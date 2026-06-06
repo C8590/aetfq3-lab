@@ -191,6 +191,12 @@ feature columns must not start with max_drawdown_
 feature columns must not include known label names
 ```
 
+## 真实样本接入前置门禁
+
+任何真实小样本 CSV 进入 dry validation 或 schema validator 前，必须先提供 Lab-only sample intake manifest，并通过 `tools/lab/table_ml_sample_intake_checker.py`。manifest 规范见 `docs/research/aetfq3_table_ml_sample_intake.md`。
+
+sample intake checker 只验证数据来源、授权范围、Stable bundle readonly 边界、future leakage 声明、训练禁止和 advisory-only 边界，不读取真实 CSV 行级内容，不训练模型，不生成 advisory 包。
+
 ## 输出文件命名
 
 未来 A false downgrade 可输出，但本任务不生成：
