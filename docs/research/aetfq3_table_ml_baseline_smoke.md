@@ -90,13 +90,41 @@ python tools/lab/table_ml_baseline_smoke.py `
 - `sector_internal_ranking_baseline_smoke_report.json`
 - `sector_internal_ranking_baseline_predictions.csv`
 
+JSON report 原生输出 flat contract 顶层字段，包括：
+
+- `report_type="table_ml_baseline_smoke"`
+- `task_scope="Lab-only no-save baseline smoke"`
+- `lab_only=true`
+- `no_save=true`
+- `no_tuning=true`
+- `no_stable=true`
+- `no_qmt=true`
+- `no_order_intent=true`
+- `no_output=true`
+- `no_lab_advisory=true`
+- `model_saved=false`
+- `checkpoint_saved=false`
+- `target_label`
+- `feature_columns`
+- `forbidden_columns`
+- `train_count`
+- `valid_count`
+- `split_method="chronological"`
+- `group_leakage_check="passed"`
+- `models`
+- `metrics`
+- `prediction_file`
+- `review_checklist`
+
+为兼容历史读取，JSON report 仍保留 `data`、`feature_leakage_check`、`split`、`boundary` 等嵌套对象；新消费者应优先读取 flat contract 字段。
+
 预测 CSV 只包含 validation smoke 字段，不包含交易动作、仓位、`OrderIntent` 或 Stable 参数。
 
 ## Report Contract Reader
 
 `tools/lab/table_ml_baseline_report_reader.py` 可只读校验 baseline smoke report JSON 的稳定合同。Reader 会检查 Lab-only / no-save / no-tuning / no Stable / no QMT / no OrderIntent / no output / no lab_advisory 边界，并拒绝包含 `order_intent`、`target_weight`、`final_buy_action`、`stable_action`、`qmt_order`、`live_order` 或 `trade_instruction` 的报告。
 
-Reader 输出 summary JSON 到 stdout；若边界字段缺失或失败，返回非 0。报告合同细节见 `docs/research/aetfq3_table_ml_baseline_report_contract.md`。
+新 writer 输出的 flat contract 可直接通过 reader；reader 仍保留旧嵌套 smoke report 的兼容读取路径。Reader 输出 summary JSON 到 stdout；若边界字段缺失或失败，返回非 0。报告合同细节见 `docs/research/aetfq3_table_ml_baseline_report_contract.md`。
 
 ## Metrics 解释限制
 

@@ -13,6 +13,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
 from tools.lab.table_ml_baseline_smoke import BaselineSmokeError, run_baseline_smoke
+from tools.lab.table_ml_baseline_report_reader import find_prohibited_fields, summarize_report
 
 
 SAMPLE = REPO_ROOT / "tests/fixtures/aetfq3_lab/mock_sector_internal_ranking_feature_samples.csv"
@@ -62,6 +63,8 @@ def test_mock_feature_sample_runs(tmp_path: Path):
     )
 
     assert report["status"] == "passed"
+    assert report["report_type"] == "table_ml_baseline_smoke"
+    assert report["task_scope"] == "Lab-only no-save baseline smoke"
     assert report["metrics"][0]["train_count"] == 14
     assert report["metrics"][0]["valid_count"] == 6
     assert report["metrics"][0]["feature_count"] == len(FEATURE_COLUMNS)
@@ -119,11 +122,53 @@ def test_output_json_contains_required_fields(tmp_path: Path):
     )
 
     report = json.loads((out_dir / "sector_internal_ranking_baseline_smoke_report.json").read_text(encoding="utf-8"))
+    assert report["report_type"] == "table_ml_baseline_smoke"
+    assert report["task_scope"] == "Lab-only no-save baseline smoke"
+    assert report["lab_only"] is True
+    assert report["no_save"] is True
+    assert report["no_tuning"] is True
+    assert report["no_stable"] is True
+    assert report["no_qmt"] is True
+    assert report["no_order_intent"] is True
+    assert report["no_output"] is True
+    assert report["no_lab_advisory"] is True
+    assert report["model_saved"] is False
+    assert report["checkpoint_saved"] is False
+    assert report["target_label"] == "top_quantile_in_sector_3d"
+    assert report["feature_columns"] == FEATURE_COLUMNS
+    assert "future_return_3d" in report["forbidden_columns"]
+    assert report["train_count"] == 14
+    assert report["valid_count"] == 6
+    assert report["split_method"] == "chronological"
+    assert report["group_leakage_check"] == "passed"
+    assert isinstance(report["models"], list) and report["models"]
+    assert isinstance(report["metrics"], list) and report["metrics"]
+    assert isinstance(report["review_checklist"], dict)
     assert report["task"] == "sector_internal_ranking_baseline_smoke"
     assert report["boundary"]["no_model_save"] is True
     assert report["feature_leakage_check"]["feature_forbidden_intersection"] == []
     assert report["split"]["group_leakage_check_passed"] is True
     assert report["metrics"][0]["target_label"] == "top_quantile_in_sector_3d"
+    assert find_prohibited_fields(report) == []
+
+
+def test_writer_output_passes_reader_contract(tmp_path: Path):
+    out_dir = tmp_path / "out"
+    run_baseline_smoke(
+        sample_path=SAMPLE,
+        manifest_path=MANIFEST,
+        feature_contract_path=write_contract(tmp_path),
+        target="top_quantile_in_sector_3d",
+        out_dir=out_dir,
+    )
+
+    summary = summarize_report(out_dir / "sector_internal_ranking_baseline_smoke_report.json")
+    assert summary["status"] == "OK"
+    assert summary["report_type"] == "table_ml_baseline_smoke"
+    assert summary["task_scope"] == "Lab-only no-save baseline smoke"
+    assert summary["models"] == ["numpy_logistic_regression_smoke"]
+    assert summary["train_count"] == 14
+    assert summary["valid_count"] == 6
 
 
 def test_no_model_file_is_generated(tmp_path: Path):

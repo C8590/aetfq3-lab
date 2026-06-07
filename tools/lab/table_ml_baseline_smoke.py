@@ -47,6 +47,9 @@ PREDICTION_FIELDS = [
     "split",
 ]
 
+REPORT_TYPE = "table_ml_baseline_smoke"
+TASK_SCOPE = "Lab-only no-save baseline smoke"
+
 
 class BaselineSmokeError(RuntimeError):
     pass
@@ -257,6 +260,21 @@ def grouped_validation_summary(
     return rows
 
 
+def build_review_checklist() -> dict[str, Any]:
+    return {
+        "researched": "E sector internal ranking Lab-only no-save baseline smoke.",
+        "data_source": "Local Lab sample, manifest, and feature contract.",
+        "uses_stable_bundle": False,
+        "future_leakage": "future / label / id / group fields are forbidden as features.",
+        "affects_stable_trading": False,
+        "read_only_advisory": False,
+        "recommended_for_stable": False,
+        "minimal_stable_merge": "not applicable",
+        "do_not_submit_to_stable": True,
+        "next_step": "Only expand no-save smoke coverage after human review.",
+    }
+
+
 def write_predictions(
     path: Path,
     valid_df: pd.DataFrame,
@@ -417,6 +435,37 @@ def run_baseline_smoke(
     }
     dates = sorted(str(value) for value in df["trade_date"].unique())
     report = {
+        "report_type": REPORT_TYPE,
+        "task_scope": TASK_SCOPE,
+        "lab_only": True,
+        "no_save": True,
+        "no_tuning": True,
+        "no_stable": True,
+        "no_qmt": True,
+        "no_order_intent": True,
+        "no_output": True,
+        "no_lab_advisory": True,
+        "model_saved": False,
+        "checkpoint_saved": False,
+        "target_label": target_label,
+        "feature_columns": list(feature_columns),
+        "forbidden_columns": sorted(FORBIDDEN_FEATURE_COLUMNS),
+        "train_count": int(len(split.train_df)),
+        "valid_count": int(len(split.valid_df)),
+        "split_method": "chronological",
+        "group_leakage_check": "passed",
+        "models": [
+            {
+                "model_name": model_name,
+                "implementation": "numpy in-memory logistic regression",
+                "no_save": True,
+                "no_tuning": True,
+                "parameters": {"epochs": 200, "learning_rate": 0.05, "l2": 0.01, "threshold": 0.5},
+            }
+        ],
+        "metrics": [metrics],
+        "prediction_file": str(prediction_path),
+        "review_checklist": build_review_checklist(),
         "task": "sector_internal_ranking_baseline_smoke",
         "lab_boundary": "aetfq3-lab / Lab, not V2.1 Stable",
         "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
@@ -451,17 +500,6 @@ def run_baseline_smoke(
             "group_leakage_check_passed": not split.group_leakage,
             "group_leakage": split.group_leakage,
         },
-        "models": [
-            {
-                "model_name": model_name,
-                "implementation": "numpy in-memory logistic regression",
-                "no_save": True,
-                "no_tuning": True,
-                "parameters": {"epochs": 200, "learning_rate": 0.05, "l2": 0.01, "threshold": 0.5},
-            }
-        ],
-        "metrics": [metrics],
-        "prediction_file": str(prediction_path),
         "boundary": {
             "no_stable": True,
             "no_qmt": True,

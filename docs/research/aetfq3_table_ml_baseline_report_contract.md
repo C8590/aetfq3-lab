@@ -6,6 +6,8 @@
 
 Baseline smoke report 是 Lab-only 的代码路径验证报告。它只证明 no-save baseline smoke 工具能读取样本、执行 chronological split、运行极小型评估并输出可审计指标。它不是正式训练报告，不是 advisory 包，不是 Stable 输入，也不是交易建议。
 
+`tools/lab/table_ml_baseline_smoke.py` 必须原生输出扁平 JSON contract 字段；旧的嵌套字段可作为兼容信息保留，但不得作为新 contract 的唯一来源。
+
 ## 必需边界
 
 报告必须明确：
@@ -33,10 +35,20 @@ Baseline smoke report 是 Lab-only 的代码路径验证报告。它只证明 no
 
 ## 必需结构
 
-`tools/lab/table_ml_baseline_report_reader.py` 至少校验以下字段：
+`tools/lab/table_ml_baseline_report_reader.py` 校验以下顶层扁平字段：
 
 - `report_type`
 - `task_scope`
+- `lab_only`
+- `no_save`
+- `no_tuning`
+- `no_stable`
+- `no_qmt`
+- `no_order_intent`
+- `no_output`
+- `no_lab_advisory`
+- `model_saved`
+- `checkpoint_saved`
 - `target_label`
 - `feature_columns`
 - `forbidden_columns`
@@ -48,6 +60,23 @@ Baseline smoke report 是 Lab-only 的代码路径验证报告。它只证明 no
 - `metrics`
 - `prediction_file`
 - `review_checklist`
+
+固定值要求：
+
+- `report_type="table_ml_baseline_smoke"`
+- `task_scope="Lab-only no-save baseline smoke"`
+- `lab_only=true`
+- `no_save=true`
+- `no_tuning=true`
+- `no_stable=true`
+- `no_qmt=true`
+- `no_order_intent=true`
+- `no_output=true`
+- `no_lab_advisory=true`
+- `model_saved=false`
+- `checkpoint_saved=false`
+- `split_method="chronological"`
+- `group_leakage_check="passed"`
 
 `split_method` 必须是 `chronological`，`group_leakage_check` 必须是 `passed`。
 
@@ -63,6 +92,8 @@ Stable 不得把 baseline smoke report 读取为正式交易输入。报告不�
 
 Reader 只读 baseline smoke report JSON，输出 summary JSON 到 stdout。若必需字段缺失、边界字段不符合要求，或发现交易相关字段，reader 必须返回非 0。
 
+新 writer 输出的 flat contract 应直接通过 reader 校验。Reader 仍支持旧嵌套 smoke report：当报告没有完整 flat 字段但包含旧 `boundary`、`feature_leakage_check` 或 `split` 结构时，reader 可将旧结构归一化为上述 flat contract 后再校验。该兼容路径只用于历史报告读取，不作为新 writer 的输出目标。
+
 ## Review Checklist 映射
 
 1. 研究了什么：Lab-only baseline smoke report contract。
@@ -74,4 +105,4 @@ Reader 只读 baseline smoke report JSON，输出 summary JSON 到 stdout。若�
 7. 是否建议进入 Stable：否。
 8. 如果建议进入 Stable，最小合并方案是什么：不适用。
 9. 不允许直接提交到 Stable：确认不允许。
-10. 下一步建议：如需要更强 contract，可在后续任务中把 report writer 输出改为扁平 contract 原生字段。
+10. 下一步建议：如需要更强 contract，可在后续任务中增加 schema 文件或更多只读 fixture，不改变 Stable/QMT/advisory/output 边界。

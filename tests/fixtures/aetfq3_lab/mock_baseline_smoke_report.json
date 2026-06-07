@@ -1,56 +1,114 @@
 {
-  "report_type": "baseline_smoke_report",
-  "task_scope": "lab_only_baseline_smoke",
-  "lab_only": true,
-  "no_save": true,
-  "no_tuning": true,
-  "no_stable": true,
-  "no_qmt": true,
-  "no_order_intent": true,
-  "no_output": true,
-  "no_lab_advisory": true,
-  "model_saved": false,
-  "checkpoint_saved": false,
-  "target_label": "top_quantile_in_sector_3d",
-  "feature_columns": [
-    "etf_ret_1d_lag1",
-    "etf_ret_3d_lag1",
-    "etf_amount_5d_mean_lag1"
-  ],
-  "forbidden_columns": [
-    "future_return_1d",
-    "future_return_3d",
-    "max_drawdown_3d",
-    "best_in_sector_3d",
-    "top_quantile_in_sector_3d",
-    "trade_date",
-    "sector",
-    "etf_code",
-    "etf_name",
-    "ranking_group_id"
-  ],
-  "train_count": 14,
-  "valid_count": 6,
-  "split_method": "chronological",
-  "group_leakage_check": "passed",
+  "task": "sector_internal_ranking_baseline_smoke",
+  "lab_boundary": "aetfq3-lab / Lab, not V2.1 Stable",
+  "generated_at": "2026-06-07T00:00:00+00:00",
+  "status": "passed",
+  "data": {
+    "sample_path": "tests/fixtures/aetfq3_lab/mock_sector_internal_ranking_feature_samples.csv",
+    "manifest_path": "tests/fixtures/aetfq3_lab/mock_sector_internal_ranking_feature_manifest.json",
+    "feature_contract_path": "tests/fixtures/aetfq3_lab/mock_feature_contract.json",
+    "rows": 20,
+    "feature_count": 3,
+    "date_start": "2026-05-01",
+    "date_end": "2026-05-10",
+    "train_dates": [
+      "2026-05-01",
+      "2026-05-04",
+      "2026-05-05",
+      "2026-05-06",
+      "2026-05-07",
+      "2026-05-08",
+      "2026-05-09"
+    ],
+    "validation_dates": [
+      "2026-05-10"
+    ]
+  },
+  "feature_leakage_check": {
+    "feature_columns": [
+      "etf_ret_1d_lag1",
+      "etf_ret_3d_lag1",
+      "etf_amount_5d_mean_lag1"
+    ],
+    "forbidden_columns": [
+      "future_return_1d",
+      "future_return_3d",
+      "max_drawdown_3d",
+      "best_in_sector_3d",
+      "top_quantile_in_sector_3d",
+      "trade_date",
+      "sector",
+      "etf_code",
+      "etf_name",
+      "ranking_group_id"
+    ],
+    "feature_forbidden_intersection": [],
+    "future_labels_only_as_labels": true,
+    "raw_sector_string_as_feature": false,
+    "etf_identity_as_feature": false,
+    "ranking_group_id_as_feature": false
+  },
+  "split": {
+    "type": "chronological",
+    "shuffle": false,
+    "train_date_count": 7,
+    "validation_date_count": 1,
+    "train_count": 14,
+    "valid_count": 6,
+    "group_leakage_check_passed": true,
+    "group_leakage": []
+  },
   "models": [
     {
       "model_name": "numpy_logistic_regression_smoke",
+      "implementation": "numpy in-memory logistic regression",
       "no_save": true,
-      "no_tuning": true
+      "no_tuning": true,
+      "parameters": {
+        "epochs": 200,
+        "learning_rate": 0.05,
+        "l2": 0.01,
+        "threshold": 0.5
+      }
     }
   ],
   "metrics": [
     {
       "model_name": "numpy_logistic_regression_smoke",
+      "train_count": 14,
+      "valid_count": 6,
+      "feature_count": 3,
+      "target_label": "top_quantile_in_sector_3d",
+      "class_balance_train": {
+        "0": 7,
+        "1": 7
+      },
+      "class_balance_valid": {
+        "0": 3,
+        "1": 3
+      },
+      "train_accuracy": 0.5,
       "accuracy": 0.5,
       "roc_auc": 0.5,
-      "log_loss": 0.7
+      "log_loss": 0.7,
+      "by_date_validation_summary": [],
+      "by_sector_validation_summary": []
     }
   ],
   "prediction_file": ".local_research_outputs/aetfq3_lab/table_ml_baseline_smoke/sector_internal_ranking_baseline_predictions.csv",
+  "boundary": {
+    "no_stable": true,
+    "no_qmt": true,
+    "no_order_intent": true,
+    "no_output": true,
+    "no_lab_advisory": true,
+    "no_model_save": true,
+    "no_checkpoint": true,
+    "no_hyperparameter_search": true,
+    "not_trading_advice": true
+  },
   "review_checklist": {
-    "researched": "Lab-only baseline smoke report contract.",
+    "researched": "Legacy nested Lab-only baseline smoke report.",
     "uses_stable_bundle": false,
     "affects_stable_trading": false,
     "recommended_for_stable": false,

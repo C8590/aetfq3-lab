@@ -96,7 +96,14 @@ def summarize_report(path: Path) -> dict[str, Any]:
 
 
 def normalize_report(report: dict[str, Any]) -> dict[str, Any]:
-    if "report_type" in report or "task_scope" in report or REQUIRED_CONTRACT_FIELDS <= set(report):
+    if REQUIRED_CONTRACT_FIELDS <= set(report):
+        return dict(report)
+
+    if not (
+        isinstance(report.get("boundary"), dict)
+        or isinstance(report.get("feature_leakage_check"), dict)
+        or isinstance(report.get("split"), dict)
+    ):
         return dict(report)
 
     boundary = dict_value(report.get("boundary"))
@@ -107,8 +114,8 @@ def normalize_report(report: dict[str, Any]) -> dict[str, Any]:
     models = list_value(report.get("models"))
 
     return {
-        "report_type": "baseline_smoke_report",
-        "task_scope": "lab_only_baseline_smoke",
+        "report_type": "table_ml_baseline_smoke",
+        "task_scope": "Lab-only no-save baseline smoke",
         "lab_only": "aetfq3-lab / Lab" in str_value(report.get("lab_boundary")),
         "no_save": all(bool_value(model.get("no_save")) is True for model in models if isinstance(model, dict))
         and bool_value(boundary.get("no_model_save")) is True,
@@ -137,6 +144,11 @@ def normalize_report(report: dict[str, Any]) -> dict[str, Any]:
 
 def validate_contract_values(report: dict[str, Any]) -> list[str]:
     errors: list[str] = []
+    if report.get("report_type") != "table_ml_baseline_smoke":
+        errors.append("report_type must be table_ml_baseline_smoke")
+    if report.get("task_scope") != "Lab-only no-save baseline smoke":
+        errors.append("task_scope must be Lab-only no-save baseline smoke")
+
     expected_true = {
         "lab_only",
         "no_save",
