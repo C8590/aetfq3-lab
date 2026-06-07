@@ -1,0 +1,5 @@
+etfs:
+  - {code: "MOCK01", name: "Mock Tech A", sector_l1: "mock", sector_l2: "tech", sector: "tech", theme: "tech"}
+  - {code: "MOCK02", name: "Mock Tech B", sector_l1: "mock", sector_l2: "tech", sector: "tech", theme: "tech"}
+  - {code: "MOCK03", name: "Mock Health A", sector_l1: "mock", sector_l2: "health", sector: "health", theme: "health"}
+  - {code: "MOCK04", name: "Mock Health B", sector_l1: "mock", sector_l2: "health", sector: "health", theme: "health"}
