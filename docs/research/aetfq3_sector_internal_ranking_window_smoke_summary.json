@@ -1,0 +1,254 @@
+{
+  "phase": "E sector internal ranking third-stage Lab-only multi-window smoke stability summary",
+  "data_source": {
+    "market_data": "AKShare ETF daily OHLCV",
+    "sector_map": "config/etf_sector_map.yaml",
+    "uses_stable_bundle": false,
+    "no_stable_output": true,
+    "no_qmt": true,
+    "no_order_intent": true,
+    "input_report_dir": ".local_research_outputs/aetfq3_lab/sector_internal_ranking_window_compare/"
+  },
+  "windows": [
+    {
+      "window_trading_days": 20,
+      "rows": 400,
+      "date_count": 20,
+      "etf_count": 20,
+      "sector_count": 5,
+      "group_count": 100,
+      "feature_count": 25,
+      "missing_rate": 0.0,
+      "intake_status": "passed",
+      "schema_status": "passed",
+      "dry_validation_status": "passed",
+      "reader_status": "OK",
+      "models_status": "passed",
+      "group_leakage_check": "passed",
+      "catboost_info_count": 0
+    },
+    {
+      "window_trading_days": 40,
+      "rows": 800,
+      "date_count": 40,
+      "etf_count": 20,
+      "sector_count": 5,
+      "group_count": 200,
+      "feature_count": 25,
+      "missing_rate": 0.0,
+      "intake_status": "passed",
+      "schema_status": "passed",
+      "dry_validation_status": "passed",
+      "reader_status": "OK",
+      "models_status": "passed",
+      "group_leakage_check": "passed",
+      "catboost_info_count": 0
+    },
+    {
+      "window_trading_days": 60,
+      "rows": 1200,
+      "date_count": 60,
+      "etf_count": 20,
+      "sector_count": 5,
+      "group_count": 300,
+      "feature_count": 25,
+      "missing_rate": 0.0,
+      "intake_status": "passed",
+      "schema_status": "passed",
+      "dry_validation_status": "passed",
+      "reader_status": "OK",
+      "models_status": "passed",
+      "group_leakage_check": "passed",
+      "catboost_info_count": 0
+    },
+    {
+      "window_trading_days": 90,
+      "rows": 1800,
+      "date_count": 90,
+      "etf_count": 20,
+      "sector_count": 5,
+      "group_count": 450,
+      "feature_count": 25,
+      "missing_rate": 0.0,
+      "intake_status": "passed",
+      "schema_status": "passed",
+      "dry_validation_status": "passed",
+      "reader_status": "OK",
+      "models_status": "passed",
+      "group_leakage_check": "passed",
+      "catboost_info_count": 0
+    }
+  ],
+  "validation_summary": {
+    "complete_windows": [
+      20,
+      40,
+      60,
+      90
+    ],
+    "failed_windows": [],
+    "intake_all_passed": true,
+    "schema_all_passed": true,
+    "dry_validation_all_passed": true,
+    "reader_contract_all_passed": true,
+    "group_leakage_all_passed": true,
+    "feature_missing_all_zero": true,
+    "catboost_info_residual_found": false
+  },
+  "model_smoke_metrics": {
+    "20": {
+      "numpy": {
+        "accuracy": 0.517,
+        "roc_auc": 0.494,
+        "log_loss": 0.708,
+        "status": "passed",
+        "no_save": true
+      },
+      "lightgbm": {
+        "accuracy": 0.55,
+        "roc_auc": 0.526,
+        "log_loss": 0.697,
+        "status": "passed",
+        "no_save": true
+      },
+      "catboost": {
+        "accuracy": 0.533,
+        "roc_auc": 0.523,
+        "log_loss": 0.695,
+        "status": "passed",
+        "no_save": true
+      },
+      "xgboost": {
+        "accuracy": 0.583,
+        "roc_auc": 0.597,
+        "log_loss": 0.68,
+        "status": "passed",
+        "no_save": true
+      }
+    },
+    "40": {
+      "numpy": {
+        "accuracy": 0.496,
+        "roc_auc": 0.472,
+        "log_loss": 0.726,
+        "status": "passed",
+        "no_save": true
+      },
+      "lightgbm": {
+        "accuracy": 0.483,
+        "roc_auc": 0.481,
+        "log_loss": 0.717,
+        "status": "passed",
+        "no_save": true
+      },
+      "catboost": {
+        "accuracy": 0.496,
+        "roc_auc": 0.495,
+        "log_loss": 0.701,
+        "status": "passed",
+        "no_save": true
+      },
+      "xgboost": {
+        "accuracy": 0.492,
+        "roc_auc": 0.514,
+        "log_loss": 0.706,
+        "status": "passed",
+        "no_save": true
+      }
+    },
+    "60": {
+      "numpy": {
+        "accuracy": 0.464,
+        "roc_auc": 0.482,
+        "log_loss": 0.704,
+        "status": "passed",
+        "no_save": true
+      },
+      "lightgbm": {
+        "accuracy": 0.522,
+        "roc_auc": 0.544,
+        "log_loss": 0.694,
+        "status": "passed",
+        "no_save": true
+      },
+      "catboost": {
+        "accuracy": 0.497,
+        "roc_auc": 0.522,
+        "log_loss": 0.696,
+        "status": "passed",
+        "no_save": true
+      },
+      "xgboost": {
+        "accuracy": 0.517,
+        "roc_auc": 0.503,
+        "log_loss": 0.705,
+        "status": "passed",
+        "no_save": true
+      }
+    },
+    "90": {
+      "numpy": {
+        "accuracy": 0.507,
+        "roc_auc": 0.509,
+        "log_loss": 0.697,
+        "status": "passed",
+        "no_save": true
+      },
+      "lightgbm": {
+        "accuracy": 0.518,
+        "roc_auc": 0.517,
+        "log_loss": 0.708,
+        "status": "passed",
+        "no_save": true
+      },
+      "catboost": {
+        "accuracy": 0.491,
+        "roc_auc": 0.485,
+        "log_loss": 0.701,
+        "status": "passed",
+        "no_save": true
+      },
+      "xgboost": {
+        "accuracy": 0.521,
+        "roc_auc": 0.527,
+        "log_loss": 0.704,
+        "status": "passed",
+        "no_save": true
+      }
+    }
+  },
+  "stability_summary": {
+    "all_windows_engineering_chain_passed": true,
+    "missing_rate_all_zero": true,
+    "reader_contract_all_passed": true,
+    "group_leakage_all_passed": true,
+    "four_models_all_windows_no_save_passed": true,
+    "catboost_info_residual_found": false,
+    "metrics_interpretation": "Metrics only validate smoke/code path and do not prove model effectiveness. They are not model acceptance evidence, trading advice, or a Stable promotion signal."
+  },
+  "boundary": {
+    "not_a_model_acceptance": true,
+    "not_a_trading_signal": true,
+    "not_stable_input": true,
+    "not_advisory_package": true,
+    "no_model_saved": true,
+    "no_checkpoint": true,
+    "no_order_intent": true,
+    "no_qmt": true,
+    "no_output": true,
+    "no_lab_advisory": true
+  },
+  "next_steps": [
+    "Lab-only expand ETF / sector coverage",
+    "Freeze input universe and dependency versions",
+    "Run multi-window revalidation",
+    "Do not enter Stable",
+    "Do not generate advisory package"
+  ],
+  "stable_allowed": false,
+  "qmt_allowed": false,
+  "order_intent_allowed": false,
+  "advisory_package_generated": false,
+  "model_saved": false,
+  "checkpoint_saved": false
+}
