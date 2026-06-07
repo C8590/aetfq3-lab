@@ -1,0 +1,132 @@
+{
+  "phase": "E sector internal ranking Lab-only replay config template",
+  "task_boundary": "aetfq3-lab / Lab, not V2.1 Stable",
+  "purpose": "Freeze inputs, dependencies, data sources, boundaries, and replay command templates for multi-window smoke revalidation.",
+  "data_source": {
+    "market_data": "AKShare ETF daily OHLCV",
+    "sector_map": "config/etf_sector_map.yaml",
+    "uses_stable_bundle": false
+  },
+  "window_parameters": {
+    "windows_trading_days": [
+      20,
+      40,
+      60,
+      90
+    ],
+    "max_etfs": 20,
+    "min_etfs_per_sector": 4,
+    "feature_count": 25,
+    "target": "top_quantile_in_sector_3d",
+    "models": [
+      "numpy_logistic",
+      "lightgbm",
+      "catboost",
+      "xgboost"
+    ]
+  },
+  "toolchain": [
+    "tools/lab/sector_internal_ranking_sample_generator.py",
+    "tools/lab/table_ml_sample_intake_checker.py",
+    "tools/lab/table_ml_schema_validator.py",
+    "tools/lab/table_ml_dry_validation_orchestrator.py",
+    "tools/lab/table_ml_baseline_smoke.py",
+    "tools/lab/table_ml_baseline_report_reader.py"
+  ],
+  "python_entry": ".\\.venv\\Scripts\\python.exe",
+  "boundary": {
+    "no_stable": true,
+    "no_qmt": true,
+    "no_order_intent": true,
+    "no_output": true,
+    "no_lab_advisory": true,
+    "no_model_save": true,
+    "no_checkpoint": true,
+    "no_trading_advice": true,
+    "stable_allowed": false,
+    "qmt_allowed": false,
+    "order_intent_allowed": false,
+    "advisory_package_allowed": false,
+    "model_training_allowed": false,
+    "model_saved": false,
+    "checkpoint_saved": false
+  },
+  "replay_commands": [
+    {
+      "window_trading_days": 20,
+      "out_dir": ".local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_20",
+      "commands": [
+        ".\\.venv\\Scripts\\python.exe tools/lab/sector_internal_ranking_sample_generator.py --source akshare --max-trading-days 20 --max-etfs 20 --min-etfs-per-sector 4 --out-dir .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_20",
+        ".\\.venv\\Scripts\\python.exe tools/lab/table_ml_sample_intake_checker.py --manifest .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_20/sector_internal_ranking_expanded_manifest.json",
+        ".\\.venv\\Scripts\\python.exe tools/lab/table_ml_schema_validator.py --sample-type sector_internal_ranking --input .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_20/sector_internal_ranking_expanded_feature_sample.csv --feature-columns <comma-separated-feature-columns-from-contract>",
+        ".\\.venv\\Scripts\\python.exe tools/lab/table_ml_dry_validation_orchestrator.py --manifest .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_20/sector_internal_ranking_expanded_manifest.json",
+        ".\\.venv\\Scripts\\python.exe tools/lab/table_ml_baseline_smoke.py --sample .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_20/sector_internal_ranking_expanded_feature_sample.csv --manifest .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_20/sector_internal_ranking_expanded_manifest.json --feature-contract .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_20/sector_internal_ranking_expanded_feature_contract.json --models numpy_logistic,lightgbm,catboost,xgboost --out-dir .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_20",
+        ".\\.venv\\Scripts\\python.exe tools/lab/table_ml_baseline_report_reader.py --report .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_20/sector_internal_ranking_baseline_smoke_report.json"
+      ]
+    },
+    {
+      "window_trading_days": 40,
+      "out_dir": ".local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_40",
+      "commands": [
+        ".\\.venv\\Scripts\\python.exe tools/lab/sector_internal_ranking_sample_generator.py --source akshare --max-trading-days 40 --max-etfs 20 --min-etfs-per-sector 4 --out-dir .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_40",
+        ".\\.venv\\Scripts\\python.exe tools/lab/table_ml_sample_intake_checker.py --manifest .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_40/sector_internal_ranking_expanded_manifest.json",
+        ".\\.venv\\Scripts\\python.exe tools/lab/table_ml_schema_validator.py --sample-type sector_internal_ranking --input .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_40/sector_internal_ranking_expanded_feature_sample.csv --feature-columns <comma-separated-feature-columns-from-contract>",
+        ".\\.venv\\Scripts\\python.exe tools/lab/table_ml_dry_validation_orchestrator.py --manifest .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_40/sector_internal_ranking_expanded_manifest.json",
+        ".\\.venv\\Scripts\\python.exe tools/lab/table_ml_baseline_smoke.py --sample .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_40/sector_internal_ranking_expanded_feature_sample.csv --manifest .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_40/sector_internal_ranking_expanded_manifest.json --feature-contract .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_40/sector_internal_ranking_expanded_feature_contract.json --models numpy_logistic,lightgbm,catboost,xgboost --out-dir .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_40",
+        ".\\.venv\\Scripts\\python.exe tools/lab/table_ml_baseline_report_reader.py --report .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_40/sector_internal_ranking_baseline_smoke_report.json"
+      ]
+    },
+    {
+      "window_trading_days": 60,
+      "out_dir": ".local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_60",
+      "commands": [
+        ".\\.venv\\Scripts\\python.exe tools/lab/sector_internal_ranking_sample_generator.py --source akshare --max-trading-days 60 --max-etfs 20 --min-etfs-per-sector 4 --out-dir .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_60",
+        ".\\.venv\\Scripts\\python.exe tools/lab/table_ml_sample_intake_checker.py --manifest .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_60/sector_internal_ranking_expanded_manifest.json",
+        ".\\.venv\\Scripts\\python.exe tools/lab/table_ml_schema_validator.py --sample-type sector_internal_ranking --input .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_60/sector_internal_ranking_expanded_feature_sample.csv --feature-columns <comma-separated-feature-columns-from-contract>",
+        ".\\.venv\\Scripts\\python.exe tools/lab/table_ml_dry_validation_orchestrator.py --manifest .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_60/sector_internal_ranking_expanded_manifest.json",
+        ".\\.venv\\Scripts\\python.exe tools/lab/table_ml_baseline_smoke.py --sample .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_60/sector_internal_ranking_expanded_feature_sample.csv --manifest .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_60/sector_internal_ranking_expanded_manifest.json --feature-contract .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_60/sector_internal_ranking_expanded_feature_contract.json --models numpy_logistic,lightgbm,catboost,xgboost --out-dir .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_60",
+        ".\\.venv\\Scripts\\python.exe tools/lab/table_ml_baseline_report_reader.py --report .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_60/sector_internal_ranking_baseline_smoke_report.json"
+      ]
+    },
+    {
+      "window_trading_days": 90,
+      "out_dir": ".local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_90",
+      "commands": [
+        ".\\.venv\\Scripts\\python.exe tools/lab/sector_internal_ranking_sample_generator.py --source akshare --max-trading-days 90 --max-etfs 20 --min-etfs-per-sector 4 --out-dir .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_90",
+        ".\\.venv\\Scripts\\python.exe tools/lab/table_ml_sample_intake_checker.py --manifest .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_90/sector_internal_ranking_expanded_manifest.json",
+        ".\\.venv\\Scripts\\python.exe tools/lab/table_ml_schema_validator.py --sample-type sector_internal_ranking --input .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_90/sector_internal_ranking_expanded_feature_sample.csv --feature-columns <comma-separated-feature-columns-from-contract>",
+        ".\\.venv\\Scripts\\python.exe tools/lab/table_ml_dry_validation_orchestrator.py --manifest .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_90/sector_internal_ranking_expanded_manifest.json",
+        ".\\.venv\\Scripts\\python.exe tools/lab/table_ml_baseline_smoke.py --sample .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_90/sector_internal_ranking_expanded_feature_sample.csv --manifest .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_90/sector_internal_ranking_expanded_manifest.json --feature-contract .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_90/sector_internal_ranking_expanded_feature_contract.json --models numpy_logistic,lightgbm,catboost,xgboost --out-dir .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_90",
+        ".\\.venv\\Scripts\\python.exe tools/lab/table_ml_baseline_report_reader.py --report .local_research_outputs/aetfq3_lab/sector_internal_ranking_replay/window_90/sector_internal_ranking_baseline_smoke_report.json"
+      ]
+    }
+  ],
+  "acceptance_criteria": {
+    "intake": "passed",
+    "schema": "passed",
+    "dry_validation": "passed",
+    "reader": "OK",
+    "group_leakage": "passed",
+    "missing_rate": 0.0,
+    "four_model_no_save": "passed"
+  },
+  "forbidden_actions": [
+    "modify_strategy_code",
+    "modify_stable",
+    "run_strategy",
+    "refresh_market_data_during_doc_task",
+    "write_output_dir",
+    "connect_qmt",
+    "generate_order_intent",
+    "train_model",
+    "save_model",
+    "generate_checkpoint",
+    "commit_local_research_outputs"
+  ],
+  "next_steps": [
+    "Use this checklist only for human-triggered Lab-only replay.",
+    "Freeze ETF universe, sector map commit, and dependency versions before broader replay.",
+    "Do not enter Stable.",
+    "Do not generate advisory package."
+  ]
+}
