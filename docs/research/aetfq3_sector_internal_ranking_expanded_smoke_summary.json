@@ -1,0 +1,92 @@
+{
+  "phase": "E sector internal ranking expanded sample second-stage Lab-only smoke baseline",
+  "data_source": {
+    "market_data": "AKShare ETF daily OHLCV",
+    "sector_map": "config/etf_sector_map.yaml",
+    "uses_stable_bundle": false,
+    "input_sample_dir": ".local_research_outputs/aetfq3_lab/sector_internal_ranking_expanded/akshare_tool_smoke/",
+    "full_smoke_dir": ".local_research_outputs/aetfq3_lab/sector_internal_ranking_expanded/akshare_full_smoke/"
+  },
+  "sample_summary": {
+    "rows": 1200,
+    "date_count": 60,
+    "etf_count": 20,
+    "sector_count": 5,
+    "group_count": 300,
+    "feature_count": 25,
+    "missing_rate": 0.0,
+    "train_count": 840,
+    "valid_count": 360,
+    "split_method": "chronological",
+    "group_leakage_check": "passed"
+  },
+  "validation_summary": {
+    "intake_passed": true,
+    "schema_passed": true,
+    "dry_validation_passed": true,
+    "dry_validation_status": "passed",
+    "rows_checked": 1200,
+    "reader_passed": true,
+    "reader_status": "OK",
+    "reader_boundary_passed": true,
+    "reader_model_count": 4,
+    "p0_blockers": [],
+    "p1_warnings": []
+  },
+  "model_smoke_metrics": [
+    {
+      "model": "numpy_logistic",
+      "report_model_name": "numpy_logistic_regression_smoke",
+      "status": "passed",
+      "accuracy": 0.4639,
+      "roc_auc": 0.4819,
+      "log_loss": 0.7041
+    },
+    {
+      "model": "lightgbm",
+      "report_model_name": "lightgbm_smoke",
+      "status": "passed",
+      "accuracy": 0.5222,
+      "roc_auc": 0.5437,
+      "log_loss": 0.6944
+    },
+    {
+      "model": "catboost",
+      "report_model_name": "catboost_smoke",
+      "status": "passed",
+      "accuracy": 0.4972,
+      "roc_auc": 0.5220,
+      "log_loss": 0.6959
+    },
+    {
+      "model": "xgboost",
+      "report_model_name": "xgboost_smoke",
+      "status": "passed",
+      "accuracy": 0.5167,
+      "roc_auc": 0.5030,
+      "log_loss": 0.7046
+    }
+  ],
+  "metrics_interpretation": "Metrics only validate smoke/code path and do not prove model effectiveness. They are not trading advice, not model acceptance evidence, and not a Stable promotion signal.",
+  "boundary": {
+    "no_stable": true,
+    "no_qmt": true,
+    "no_order_intent": true,
+    "no_output": true,
+    "no_lab_advisory": true,
+    "no_model_save": true,
+    "no_checkpoint": true,
+    "no_trading_advice": true
+  },
+  "next_steps": [
+    "Expand Lab-only sample",
+    "Freeze input universe and dependency versions",
+    "Run multi-window comparison",
+    "Do not enter Stable"
+  ],
+  "stable_allowed": false,
+  "qmt_allowed": false,
+  "order_intent_allowed": false,
+  "advisory_package_generated": false,
+  "model_saved": false
+}
