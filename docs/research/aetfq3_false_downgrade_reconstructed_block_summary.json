@@ -1,0 +1,81 @@
+{
+  "phase": "A false downgrade reconstructed Lab-only blocker summary",
+  "reconstructed_status": {
+    "task_boundary": "aetfq3-lab / Lab, not V2.1 Stable",
+    "diagnostic_type": "Lab-only reconstructed diagnostic",
+    "true_historical": false,
+    "reconstructed_not_true_historical": true,
+    "reconstructed_rule_based_not_true_ml_sim": true,
+    "v2_action_rows": 1600,
+    "ml_action_rows": 1600,
+    "false_downgrade_sample_rows": 12,
+    "intake_passed": true,
+    "schema_passed": true,
+    "dry_validation_passed": true,
+    "past_only_features": 23,
+    "baseline_precheck_status": "blocked",
+    "action_intersection_diagnostic_completed": true,
+    "uses_stable_bundle": false
+  },
+  "action_intersection_summary": {
+    "existing_exact_cross_table": {
+      "BUY|KEEP_ORIGINAL": 46,
+      "BUY|NO_BUY": 3,
+      "PROBE|KEEP_ORIGINAL": 42,
+      "PROBE|NO_BUY": 9,
+      "OBSERVE|NO_BUY": 1127,
+      "OBSERVE|UPGRADE_PROBE": 17,
+      "NO_BUY|NO_BUY": 334,
+      "NO_BUY|UPGRADE_PROBE": 22
+    },
+    "joined_action_rows": 1600,
+    "v2_buy_probe_rows": 100,
+    "v2_buy_probe_keep_original_rows": 88,
+    "legal_candidates": 12,
+    "buy_probe_ml_downgrade_rate": 0.12,
+    "primary_bottleneck_for_A": "ml_action_not_downgrading_buy_probe_enough",
+    "best_config": "A_existing_exact_20etf_80dates",
+    "best_legal_candidate_rows": 12
+  },
+  "blocker_reasons": [
+    "legal candidates = 12",
+    "row_count < 30",
+    "V2 BUY/PROBE itself is sparse",
+    "ML reconstructed rule keeps most V2 BUY/PROBE rows as KEEP_ORIGINAL",
+    "expanded diagnostic did not reliably break through 30 legal candidates",
+    "not true historical",
+    "not true ML_SIM"
+  ],
+  "decision": {
+    "a_reconstructed_no_save_smoke_allowed": false,
+    "a_reconstructed_baseline_continue": false,
+    "final_decision": "Seal A reconstructed until true historical V2/ML_SIM is available",
+    "stable_promotion_recommended": false
+  },
+  "recovery_requirements": [
+    "entry_signal.csv or pre_selection_result.csv",
+    "ml_sim_daily_comparison.csv/json or ml_sim_review_queue.csv",
+    "ml_entry_scores.csv",
+    "V2/ML action comparison",
+    "future label source"
+  ],
+  "boundary": {
+    "no_stable": true,
+    "no_qmt": true,
+    "no_order_intent": true,
+    "no_output": true,
+    "no_lab_advisory": true,
+    "no_model_training": true,
+    "no_trading_advice": true
+  },
+  "next_steps": [
+    "Return to E expansion / multi-window / fixed-input retest",
+    "Or switch to F intraday plan",
+    "Do not enter Stable"
+  ],
+  "stable_allowed": false,
+  "qmt_allowed": false,
+  "order_intent_allowed": false,
+  "advisory_package_generated": false,
+  "model_training_allowed": false
+}
