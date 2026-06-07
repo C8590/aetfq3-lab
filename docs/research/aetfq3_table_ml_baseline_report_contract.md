@@ -80,6 +80,34 @@ Baseline smoke report 是 Lab-only 的代码路径验证报告。它只证明 no
 
 `split_method` 必须是 `chronological`，`group_leakage_check` 必须是 `passed`。
 
+## 多模型字段
+
+`models` 可包含一个或多个 no-save smoke 模型：
+
+- `numpy_logistic_regression_smoke`
+- `lightgbm_smoke`
+- `catboost_smoke`
+- `xgboost_smoke`
+
+每个 `models` 条目应包含：
+
+- `model_name`
+- `status`
+- `train_count`
+- `valid_count`
+- `accuracy`
+- `roc_auc`
+- `log_loss`
+- `notes`
+- `no_save=true`
+- `no_tuning=true`
+- `model_saved=false`
+- `checkpoint_saved=false`
+
+可选依赖缺失时，模型可标记为 `status="skipped"`；已运行模型使用 `status="passed"`。无论 passed 还是 skipped，都不得保存模型、checkpoint 或 feature importance 文件。
+
+`metrics` 条目也必须带有 no-save / no-tuning / model_saved / checkpoint_saved 边界字段，避免指标被误读为正式训练结果。
+
 ## Metrics 解释限制
 
 Accuracy、ROC AUC、log loss、by-date summary、by-sector summary 只用于 smoke / code path validation。它们不代表模型有效性，不代表策略收益，不代表 Stable 可用性，也不得被解释为交易建议。

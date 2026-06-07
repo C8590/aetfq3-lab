@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import importlib
 import json
 import math
 import sys
@@ -49,6 +50,25 @@ PREDICTION_FIELDS = [
 
 REPORT_TYPE = "table_ml_baseline_smoke"
 TASK_SCOPE = "Lab-only no-save baseline smoke"
+DEFAULT_MODEL_ALIASES = ["numpy_logistic"]
+MODEL_ALIASES = {
+    "numpy": "numpy_logistic",
+    "numpy_logistic": "numpy_logistic",
+    "numpy_logistic_regression": "numpy_logistic",
+    "numpy_logistic_regression_smoke": "numpy_logistic",
+    "lightgbm": "lightgbm",
+    "lightgbm_smoke": "lightgbm",
+    "catboost": "catboost",
+    "catboost_smoke": "catboost",
+    "xgboost": "xgboost",
+    "xgboost_smoke": "xgboost",
+}
+MODEL_DISPLAY_NAMES = {
+    "numpy_logistic": "numpy_logistic_regression_smoke",
+    "lightgbm": "lightgbm_smoke",
+    "catboost": "catboost_smoke",
+    "xgboost": "xgboost_smoke",
+}
 
 
 class BaselineSmokeError(RuntimeError):
@@ -62,6 +82,27 @@ class SplitData:
     train_dates: list[str]
     valid_dates: list[str]
     group_leakage: list[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class ModelResult:
+    model_name: str
+    status: str
+    train_count: int
+    valid_count: int
+    feature_count: int
+    target_label: str
+    class_balance_train: dict[str, int]
+    class_balance_valid: dict[str, int]
+    train_accuracy: float | None
+    accuracy: float | None
+    roc_auc: float | None
+    log_loss: float | None
+    y_true: np.ndarray
+    y_score: np.ndarray
+    y_pred: np.ndarray
+    notes: str
+    parameters: dict[str, Any]
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -107,6 +148,31 @@ def feature_columns_from_contract(contract: dict[str, Any]) -> list[str]:
     if not feature_columns:
         raise BaselineSmokeError("feature contract has no feature columns")
     return feature_columns
+
+
+def parse_model_names(raw_models: str | Sequence[str] | None) -> list[str]:
+    if raw_models is None:
+        candidates = DEFAULT_MODEL_ALIASES
+    elif isinstance(raw_models, str):
+        candidates = [item.strip() for item in raw_models.split(",")]
+    else:
+        candidates = []
+        for raw_item in raw_models:
+            candidates.extend(item.strip() for item in str(raw_item).split(","))
+
+    selected: list[str] = []
+    for item in candidates:
+        if not item:
+            continue
+        canonical = MODEL_ALIASES.get(item.lower())
+        if canonical is None:
+            allowed = ", ".join(sorted(MODEL_ALIASES))
+            raise BaselineSmokeError(f"unknown model alias: {item}; allowed aliases: {allowed}")
+        if canonical not in selected:
+            selected.append(canonical)
+    if not selected:
+        raise BaselineSmokeError("at least one model must be selected")
+    return selected
 
 
 def validate_feature_columns(df: pd.DataFrame, feature_columns: Sequence[str]) -> None:
@@ -260,6 +326,363 @@ def grouped_validation_summary(
     return rows
 
 
+def metric_payload(
+    *,
+    model_name: str,
+    train_count: int,
+    valid_count: int,
+    feature_count: int,
+    target_label: str,
+    class_balance_train_value: dict[str, int],
+    class_balance_valid_value: dict[str, int],
+    train_accuracy: float | None,
+    valid_accuracy: float | None,
+    valid_roc_auc: float | None,
+    valid_log_loss: float | None,
+    notes: str,
+) -> dict[str, Any]:
+    return {
+        "model_name": model_name,
+        "status": "passed",
+        "train_count": train_count,
+        "valid_count": valid_count,
+        "feature_count": feature_count,
+        "target_label": target_label,
+        "class_balance_train": class_balance_train_value,
+        "class_balance_valid": class_balance_valid_value,
+        "train_accuracy": train_accuracy,
+        "accuracy": valid_accuracy,
+        "roc_auc": valid_roc_auc,
+        "log_loss": valid_log_loss,
+        "no_save": True,
+        "no_tuning": True,
+        "model_saved": False,
+        "checkpoint_saved": False,
+        "notes": notes,
+    }
+
+
+def skipped_model_result(
+    *,
+    model_alias: str,
+    train_count: int,
+    valid_count: int,
+    feature_count: int,
+    target_label: str,
+    class_balance_train_value: dict[str, int],
+    class_balance_valid_value: dict[str, int],
+    reason: str,
+) -> ModelResult:
+    return ModelResult(
+        model_name=MODEL_DISPLAY_NAMES[model_alias],
+        status="skipped",
+        train_count=train_count,
+        valid_count=valid_count,
+        feature_count=feature_count,
+        target_label=target_label,
+        class_balance_train=class_balance_train_value,
+        class_balance_valid=class_balance_valid_value,
+        train_accuracy=None,
+        accuracy=None,
+        roc_auc=None,
+        log_loss=None,
+        y_true=np.array([], dtype=int),
+        y_score=np.array([], dtype=float),
+        y_pred=np.array([], dtype=int),
+        notes=reason,
+        parameters={},
+    )
+
+
+def model_result_from_scores(
+    *,
+    model_name: str,
+    train_count: int,
+    valid_count: int,
+    feature_count: int,
+    target_label: str,
+    y_train: np.ndarray,
+    y_valid: np.ndarray,
+    train_score: np.ndarray,
+    valid_score: np.ndarray,
+    parameters: dict[str, Any],
+    notes: str,
+) -> ModelResult:
+    train_pred = (train_score >= 0.5).astype(int)
+    valid_pred = (valid_score >= 0.5).astype(int)
+    return ModelResult(
+        model_name=model_name,
+        status="passed",
+        train_count=train_count,
+        valid_count=valid_count,
+        feature_count=feature_count,
+        target_label=target_label,
+        class_balance_train=class_balance(y_train),
+        class_balance_valid=class_balance(y_valid),
+        train_accuracy=accuracy(y_train, train_pred),
+        accuracy=accuracy(y_valid, valid_pred),
+        roc_auc=roc_auc(y_valid, valid_score),
+        log_loss=log_loss(y_valid, valid_score),
+        y_true=y_valid,
+        y_score=valid_score,
+        y_pred=valid_pred,
+        notes=notes,
+        parameters=parameters,
+    )
+
+
+def fit_numpy_logistic_smoke(
+    x_train: np.ndarray,
+    x_valid: np.ndarray,
+    y_train: np.ndarray,
+    y_valid: np.ndarray,
+    *,
+    feature_count: int,
+    target_label: str,
+) -> ModelResult:
+    parameters = {"epochs": 200, "learning_rate": 0.05, "l2": 0.01, "threshold": 0.5}
+    weights = fit_numpy_logistic_regression(x_train, y_train, **{key: parameters[key] for key in ("epochs", "learning_rate", "l2")})
+    return model_result_from_scores(
+        model_name=MODEL_DISPLAY_NAMES["numpy_logistic"],
+        train_count=int(len(y_train)),
+        valid_count=int(len(y_valid)),
+        feature_count=feature_count,
+        target_label=target_label,
+        y_train=y_train,
+        y_valid=y_valid,
+        train_score=predict_scores(weights, x_train),
+        valid_score=predict_scores(weights, x_valid),
+        parameters=parameters,
+        notes="numpy in-memory logistic regression; no model save; no tuning",
+    )
+
+
+def fit_lightgbm_smoke(
+    x_train: np.ndarray,
+    x_valid: np.ndarray,
+    y_train: np.ndarray,
+    y_valid: np.ndarray,
+    *,
+    feature_count: int,
+    target_label: str,
+) -> ModelResult:
+    try:
+        lightgbm = importlib.import_module("lightgbm")
+    except ImportError:
+        return skipped_model_result(
+            model_alias="lightgbm",
+            train_count=int(len(y_train)),
+            valid_count=int(len(y_valid)),
+            feature_count=feature_count,
+            target_label=target_label,
+            class_balance_train_value=class_balance(y_train),
+            class_balance_valid_value=class_balance(y_valid),
+            reason="lightgbm package is not installed; skipped no-save smoke",
+        )
+
+    parameters = {
+        "n_estimators": 30,
+        "learning_rate": 0.05,
+        "max_depth": 3,
+        "random_state": 42,
+        "verbosity": -1,
+    }
+    model = lightgbm.LGBMClassifier(**parameters)
+    model.fit(x_train, y_train)
+    train_score = model.predict_proba(x_train)[:, 1]
+    valid_score = model.predict_proba(x_valid)[:, 1]
+    return model_result_from_scores(
+        model_name=MODEL_DISPLAY_NAMES["lightgbm"],
+        train_count=int(len(y_train)),
+        valid_count=int(len(y_valid)),
+        feature_count=feature_count,
+        target_label=target_label,
+        y_train=y_train,
+        y_valid=y_valid,
+        train_score=train_score,
+        valid_score=valid_score,
+        parameters=parameters,
+        notes="LightGBM tiny fixed-parameter no-save smoke; model kept in memory only",
+    )
+
+
+def fit_catboost_smoke(
+    x_train: np.ndarray,
+    x_valid: np.ndarray,
+    y_train: np.ndarray,
+    y_valid: np.ndarray,
+    *,
+    feature_count: int,
+    target_label: str,
+) -> ModelResult:
+    try:
+        catboost = importlib.import_module("catboost")
+    except ImportError:
+        return skipped_model_result(
+            model_alias="catboost",
+            train_count=int(len(y_train)),
+            valid_count=int(len(y_valid)),
+            feature_count=feature_count,
+            target_label=target_label,
+            class_balance_train_value=class_balance(y_train),
+            class_balance_valid_value=class_balance(y_valid),
+            reason="catboost package is not installed; skipped no-save smoke",
+        )
+
+    parameters = {
+        "iterations": 30,
+        "depth": 3,
+        "learning_rate": 0.05,
+        "verbose": False,
+        "random_seed": 42,
+        "allow_writing_files": False,
+    }
+    model = catboost.CatBoostClassifier(**parameters)
+    model.fit(x_train, y_train)
+    train_score = model.predict_proba(x_train)[:, 1]
+    valid_score = model.predict_proba(x_valid)[:, 1]
+    return model_result_from_scores(
+        model_name=MODEL_DISPLAY_NAMES["catboost"],
+        train_count=int(len(y_train)),
+        valid_count=int(len(y_valid)),
+        feature_count=feature_count,
+        target_label=target_label,
+        y_train=y_train,
+        y_valid=y_valid,
+        train_score=train_score,
+        valid_score=valid_score,
+        parameters=parameters,
+        notes="CatBoost tiny fixed-parameter no-save smoke with allow_writing_files=false",
+    )
+
+
+def fit_xgboost_smoke(
+    x_train: np.ndarray,
+    x_valid: np.ndarray,
+    y_train: np.ndarray,
+    y_valid: np.ndarray,
+    *,
+    feature_count: int,
+    target_label: str,
+) -> ModelResult:
+    try:
+        xgboost = importlib.import_module("xgboost")
+    except ImportError:
+        return skipped_model_result(
+            model_alias="xgboost",
+            train_count=int(len(y_train)),
+            valid_count=int(len(y_valid)),
+            feature_count=feature_count,
+            target_label=target_label,
+            class_balance_train_value=class_balance(y_train),
+            class_balance_valid_value=class_balance(y_valid),
+            reason="xgboost package is not installed; skipped no-save smoke",
+        )
+
+    parameters = {
+        "n_estimators": 30,
+        "max_depth": 3,
+        "learning_rate": 0.05,
+        "eval_metric": "logloss",
+        "random_state": 42,
+    }
+    model = xgboost.XGBClassifier(**parameters)
+    model.fit(x_train, y_train)
+    train_score = model.predict_proba(x_train)[:, 1]
+    valid_score = model.predict_proba(x_valid)[:, 1]
+    return model_result_from_scores(
+        model_name=MODEL_DISPLAY_NAMES["xgboost"],
+        train_count=int(len(y_train)),
+        valid_count=int(len(y_valid)),
+        feature_count=feature_count,
+        target_label=target_label,
+        y_train=y_train,
+        y_valid=y_valid,
+        train_score=train_score,
+        valid_score=valid_score,
+        parameters=parameters,
+        notes="XGBoost tiny fixed-parameter no-save smoke; model kept in memory only",
+    )
+
+
+def run_selected_models(
+    model_aliases: Sequence[str],
+    x_train: np.ndarray,
+    x_valid: np.ndarray,
+    y_train: np.ndarray,
+    y_valid: np.ndarray,
+    *,
+    feature_count: int,
+    target_label: str,
+) -> list[ModelResult]:
+    runners = {
+        "numpy_logistic": fit_numpy_logistic_smoke,
+        "lightgbm": fit_lightgbm_smoke,
+        "catboost": fit_catboost_smoke,
+        "xgboost": fit_xgboost_smoke,
+    }
+    results = []
+    for model_alias in model_aliases:
+        result = runners[model_alias](
+            x_train,
+            x_valid,
+            y_train,
+            y_valid,
+            feature_count=feature_count,
+            target_label=target_label,
+        )
+        results.append(result)
+    return results
+
+
+def model_contract_entry(result: ModelResult) -> dict[str, Any]:
+    return {
+        "model_name": result.model_name,
+        "status": result.status,
+        "train_count": result.train_count,
+        "valid_count": result.valid_count,
+        "accuracy": result.accuracy,
+        "roc_auc": result.roc_auc,
+        "log_loss": result.log_loss,
+        "notes": result.notes,
+        "implementation": result.model_name,
+        "no_save": True,
+        "no_tuning": True,
+        "model_saved": False,
+        "checkpoint_saved": False,
+        "parameters": result.parameters,
+    }
+
+
+def metric_entry(result: ModelResult, valid_df: pd.DataFrame) -> dict[str, Any]:
+    payload = metric_payload(
+        model_name=result.model_name,
+        train_count=result.train_count,
+        valid_count=result.valid_count,
+        feature_count=result.feature_count,
+        target_label=result.target_label,
+        class_balance_train_value=result.class_balance_train,
+        class_balance_valid_value=result.class_balance_valid,
+        train_accuracy=result.train_accuracy,
+        valid_accuracy=result.accuracy,
+        valid_roc_auc=result.roc_auc,
+        valid_log_loss=result.log_loss,
+        notes=result.notes,
+    )
+    payload["status"] = result.status
+    if result.status == "passed":
+        payload["by_date_validation_summary"] = grouped_validation_summary(
+            valid_df, "trade_date", result.y_true, result.y_pred, result.y_score
+        )
+        payload["by_sector_validation_summary"] = grouped_validation_summary(
+            valid_df, "sector", result.y_true, result.y_pred, result.y_score
+        )
+    else:
+        payload["by_date_validation_summary"] = []
+        payload["by_sector_validation_summary"] = []
+    return payload
+
+
 def build_review_checklist() -> dict[str, Any]:
     return {
         "researched": "E sector internal ranking Lab-only no-save baseline smoke.",
@@ -280,28 +703,28 @@ def write_predictions(
     valid_df: pd.DataFrame,
     *,
     target_label: str,
-    model_name: str,
-    y_true: np.ndarray,
-    y_score: np.ndarray,
-    y_pred: np.ndarray,
+    results: Sequence[ModelResult],
 ) -> None:
     rows = []
-    for index, row in valid_df.reset_index(drop=True).iterrows():
-        rows.append(
-            {
-                "trade_date": row["trade_date"],
-                "sector": row["sector"],
-                "etf_code": str(row["etf_code"]),
-                "etf_name": row["etf_name"],
-                "ranking_group_id": row["ranking_group_id"],
-                "target_label": target_label,
-                "y_true": int(y_true[index]),
-                "model_name": model_name,
-                "y_score": f"{float(y_score[index]):.10f}",
-                "y_pred": int(y_pred[index]),
-                "split": "validation",
-            }
-        )
+    for result in results:
+        if result.status != "passed":
+            continue
+        for index, row in valid_df.reset_index(drop=True).iterrows():
+            rows.append(
+                {
+                    "trade_date": row["trade_date"],
+                    "sector": row["sector"],
+                    "etf_code": str(row["etf_code"]),
+                    "etf_name": row["etf_name"],
+                    "ranking_group_id": row["ranking_group_id"],
+                    "target_label": target_label,
+                    "y_true": int(result.y_true[index]),
+                    "model_name": result.model_name,
+                    "y_score": f"{float(result.y_score[index]):.10f}",
+                    "y_pred": int(result.y_pred[index]),
+                    "split": "validation",
+                }
+            )
 
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=PREDICTION_FIELDS)
@@ -310,13 +733,34 @@ def write_predictions(
 
 
 def build_report_markdown(report: dict[str, Any]) -> str:
-    metrics = report["metrics"][0]
     data = report["data"]
     split = report["split"]
     leakage = report["feature_leakage_check"]
     boundary = report["boundary"]
-    auc = metrics["roc_auc"]
-    auc_note = "valid has both classes" if auc is not None else "valid has a single class or insufficient samples"
+    metric_lines = []
+    for metrics in report["metrics"]:
+        auc = metrics["roc_auc"]
+        auc_note = "valid has both classes" if auc is not None else "valid has a single class or insufficient samples"
+        metric_lines.append(
+            "\n".join(
+                [
+                    f"- model: `{metrics['model_name']}`",
+                    f"  - status: {metrics['status']}",
+                    f"  - target_label: `{metrics['target_label']}`",
+                    f"  - train class balance: {metrics['class_balance_train']}",
+                    f"  - valid class balance: {metrics['class_balance_valid']}",
+                    f"  - accuracy: {metrics['accuracy']}",
+                    f"  - roc_auc: {auc} ({auc_note})",
+                    f"  - log_loss: {metrics['log_loss']}",
+                    f"  - notes: {metrics['notes']}",
+                ]
+            )
+        )
+    model_lines = "\n".join(
+        f"- {model['model_name']}: {model['status']}; no-save=true; no tuning=true"
+        for model in report["models"]
+    )
+    metrics_block = "\n".join(metric_lines)
     return f"""# E Sector Internal Ranking Baseline Smoke Report
 
 本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。
@@ -344,17 +788,10 @@ Lab-only baseline smoke，不是正式训练，不是 advisory，不是 Stable �
 - group leakage check passed: {str(split["group_leakage_check_passed"]).lower()}
 
 ## Models
-- numpy logistic regression smoke
-- no-save: true
-- no tuning: true
+{model_lines}
 
 ## Metrics
-- target_label: `{metrics["target_label"]}`
-- train class balance: {metrics["class_balance_train"]}
-- valid class balance: {metrics["class_balance_valid"]}
-- accuracy: {metrics["accuracy"]}
-- roc_auc: {auc} ({auc_note})
-- log_loss: {metrics["log_loss"]}
+{metrics_block}
 
 ## Boundary
 - no Stable: {str(boundary["no_stable"]).lower()}
@@ -385,7 +822,9 @@ def run_baseline_smoke(
     feature_contract_path: Path,
     target: str,
     out_dir: Path,
+    models: str | Sequence[str] | None = None,
 ) -> dict[str, Any]:
+    selected_models = parse_model_names(models)
     manifest = load_json(manifest_path)
     require_manifest_boundaries(manifest)
     contract = load_json(feature_contract_path)
@@ -402,37 +841,22 @@ def run_baseline_smoke(
     y_valid = split.valid_df[target_label].astype(int).to_numpy()
 
     x_train, x_valid = standardize(x_train_raw, x_valid_raw)
-    weights = fit_numpy_logistic_regression(x_train, y_train)
-    train_score = predict_scores(weights, x_train)
-    valid_score = predict_scores(weights, x_valid)
-    train_pred = (train_score >= 0.5).astype(int)
-    valid_pred = (valid_score >= 0.5).astype(int)
-
-    model_name = "numpy_logistic_regression_smoke"
     prediction_path = out_dir / "sector_internal_ranking_baseline_predictions.csv"
     report_json_path = out_dir / "sector_internal_ranking_baseline_smoke_report.json"
     report_md_path = out_dir / "sector_internal_ranking_baseline_smoke_report.md"
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    metrics = {
-        "model_name": model_name,
-        "train_count": int(len(split.train_df)),
-        "valid_count": int(len(split.valid_df)),
-        "feature_count": int(len(feature_columns)),
-        "target_label": target_label,
-        "class_balance_train": class_balance(y_train),
-        "class_balance_valid": class_balance(y_valid),
-        "train_accuracy": accuracy(y_train, train_pred),
-        "accuracy": accuracy(y_valid, valid_pred),
-        "roc_auc": roc_auc(y_valid, valid_score),
-        "log_loss": log_loss(y_valid, valid_score),
-        "by_date_validation_summary": grouped_validation_summary(
-            split.valid_df, "trade_date", y_valid, valid_pred, valid_score
-        ),
-        "by_sector_validation_summary": grouped_validation_summary(
-            split.valid_df, "sector", y_valid, valid_pred, valid_score
-        ),
-    }
+    model_results = run_selected_models(
+        selected_models,
+        x_train,
+        x_valid,
+        y_train,
+        y_valid,
+        feature_count=int(len(feature_columns)),
+        target_label=target_label,
+    )
+    models_report = [model_contract_entry(result) for result in model_results]
+    metrics_report = [metric_entry(result, split.valid_df) for result in model_results]
     dates = sorted(str(value) for value in df["trade_date"].unique())
     report = {
         "report_type": REPORT_TYPE,
@@ -454,16 +878,8 @@ def run_baseline_smoke(
         "valid_count": int(len(split.valid_df)),
         "split_method": "chronological",
         "group_leakage_check": "passed",
-        "models": [
-            {
-                "model_name": model_name,
-                "implementation": "numpy in-memory logistic regression",
-                "no_save": True,
-                "no_tuning": True,
-                "parameters": {"epochs": 200, "learning_rate": 0.05, "l2": 0.01, "threshold": 0.5},
-            }
-        ],
-        "metrics": [metrics],
+        "models": models_report,
+        "metrics": metrics_report,
         "prediction_file": str(prediction_path),
         "review_checklist": build_review_checklist(),
         "task": "sector_internal_ranking_baseline_smoke",
@@ -517,10 +933,7 @@ def run_baseline_smoke(
         prediction_path,
         split.valid_df,
         target_label=target_label,
-        model_name=model_name,
-        y_true=y_valid,
-        y_score=valid_score,
-        y_pred=valid_pred,
+        results=model_results,
     )
     report_json_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     report_md_path.write_text(build_report_markdown(report), encoding="utf-8")
@@ -533,6 +946,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--manifest", required=True, type=Path)
     parser.add_argument("--feature-contract", required=True, type=Path)
     parser.add_argument("--target", default="top_quantile_in_sector_3d")
+    parser.add_argument("--models", default="numpy_logistic", help="Comma-separated model aliases.")
     parser.add_argument("--out-dir", required=True, type=Path)
     return parser
 
@@ -546,24 +960,30 @@ def main(argv: Sequence[str] | None = None) -> int:
             feature_contract_path=args.feature_contract,
             target=args.target,
             out_dir=args.out_dir,
+            models=args.models,
         )
     except BaselineSmokeError as exc:
         print(f"FAILED baseline_smoke_valid=false {exc}", file=sys.stderr)
         return 1
 
-    metrics = report["metrics"][0]
     print(
         json.dumps(
             {
                 "status": report["status"],
-                "model_name": metrics["model_name"],
-                "train_count": metrics["train_count"],
-                "valid_count": metrics["valid_count"],
-                "feature_count": metrics["feature_count"],
-                "target_label": metrics["target_label"],
-                "accuracy": metrics["accuracy"],
-                "roc_auc": metrics["roc_auc"],
-                "log_loss": metrics["log_loss"],
+                "models": [
+                    {
+                        "model_name": model["model_name"],
+                        "status": model["status"],
+                        "accuracy": model["accuracy"],
+                        "roc_auc": model["roc_auc"],
+                        "log_loss": model["log_loss"],
+                    }
+                    for model in report["models"]
+                ],
+                "train_count": report["train_count"],
+                "valid_count": report["valid_count"],
+                "feature_count": len(report["feature_columns"]),
+                "target_label": report["target_label"],
                 "prediction_file": report["prediction_file"],
             },
             ensure_ascii=False,

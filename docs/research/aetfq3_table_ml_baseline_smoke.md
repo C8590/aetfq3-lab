@@ -25,6 +25,7 @@ python tools/lab/table_ml_baseline_smoke.py `
   --manifest .local_research_outputs/aetfq3_lab/table_ml_dry_validation_inputs/sector_internal_ranking_real_feature_sample_manifest.json `
   --feature-contract .local_research_outputs/aetfq3_lab/table_ml_baseline_precheck/sector_internal_ranking_feature_contract.json `
   --target top_quantile_in_sector_3d `
+  --models numpy_logistic,lightgbm,catboost,xgboost `
   --out-dir .local_research_outputs/aetfq3_lab/table_ml_baseline_smoke/
 ```
 
@@ -68,13 +69,24 @@ python tools/lab/table_ml_baseline_smoke.py `
 
 ## 模型
 
-第一版只实现 numpy logistic regression smoke：
+默认只运行 numpy logistic regression smoke。可通过 `--models` 选择一个或多个 no-save smoke 模型：
 
-- 不依赖 sklearn
-- 不运行 LightGBM / CatBoost / XGBoost
+- `numpy_logistic`
+- `lightgbm`
+- `catboost`
+- `xgboost`
+
+所有模型都必须保持：
+
 - 模型只存在内存中
 - 不保存模型
-- 不调参
+- 不生成 checkpoint
+- 不做超参数搜索
+- 使用 tiny fixed params
+- `n_estimators` / `iterations` 不超过 30
+- `max_depth` / `depth` 不超过 3
+
+可选依赖缺失时，该模型在 report 中标记为 `status="skipped"`，不影响其它已选择模型的 no-save smoke 路径。CatBoost 必须设置 `allow_writing_files=false`，不得留下 `catboost_info`。
 
 ## 输出
 
@@ -117,6 +129,20 @@ JSON report 原生输出 flat contract 顶层字段，包括：
 - `review_checklist`
 
 为兼容历史读取，JSON report 仍保留 `data`、`feature_leakage_check`、`split`、`boundary` 等嵌套对象；新消费者应优先读取 flat contract 字段。
+
+`models` 中每个模型条目包含：
+
+- `model_name`
+- `status`
+- `train_count`
+- `valid_count`
+- `accuracy`
+- `roc_auc`
+- `log_loss`
+- `notes`
+- no-save / no-tuning / model_saved / checkpoint_saved 边界字段
+
+`metrics` 中同样保留 no-save / no-tuning / model_saved / checkpoint_saved 边界字段。Metrics 只说明 smoke 代码路径，不说明模型有效性。
 
 预测 CSV 只包含 validation smoke 字段，不包含交易动作、仓位、`OrderIntent` 或 Stable 参数。
 

@@ -4,6 +4,7 @@ import json
 import shutil
 import sys
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 import pytest
@@ -12,7 +13,7 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
-from tools.lab.table_ml_baseline_smoke import BaselineSmokeError, run_baseline_smoke
+from tools.lab.table_ml_baseline_smoke import BaselineSmokeError, parse_model_names, run_baseline_smoke
 from tools.lab.table_ml_baseline_report_reader import find_prohibited_fields, summarize_report
 
 
@@ -68,7 +69,26 @@ def test_mock_feature_sample_runs(tmp_path: Path):
     assert report["metrics"][0]["train_count"] == 14
     assert report["metrics"][0]["valid_count"] == 6
     assert report["metrics"][0]["feature_count"] == len(FEATURE_COLUMNS)
+    assert [model["model_name"] for model in report["models"]] == ["numpy_logistic_regression_smoke"]
     assert Path(report["prediction_file"]).exists()
+
+
+def test_parse_multi_model_aliases():
+    assert parse_model_names("numpy_logistic,lightgbm,catboost,xgboost") == [
+        "numpy_logistic",
+        "lightgbm",
+        "catboost",
+        "xgboost",
+    ]
+    assert parse_model_names(["numpy_logistic_regression_smoke", "lightgbm_smoke"]) == [
+        "numpy_logistic",
+        "lightgbm",
+    ]
+
+
+def test_unknown_model_alias_fails():
+    with pytest.raises(BaselineSmokeError, match="unknown model alias"):
+        parse_model_names("numpy_logistic,not_a_model")
 
 
 def test_forbidden_feature_fails(tmp_path: Path):
@@ -142,7 +162,16 @@ def test_output_json_contains_required_fields(tmp_path: Path):
     assert report["split_method"] == "chronological"
     assert report["group_leakage_check"] == "passed"
     assert isinstance(report["models"], list) and report["models"]
+    assert report["models"][0]["status"] == "passed"
+    assert report["models"][0]["no_save"] is True
+    assert report["models"][0]["no_tuning"] is True
+    assert report["models"][0]["model_saved"] is False
+    assert report["models"][0]["checkpoint_saved"] is False
     assert isinstance(report["metrics"], list) and report["metrics"]
+    assert report["metrics"][0]["no_save"] is True
+    assert report["metrics"][0]["no_tuning"] is True
+    assert report["metrics"][0]["model_saved"] is False
+    assert report["metrics"][0]["checkpoint_saved"] is False
     assert isinstance(report["review_checklist"], dict)
     assert report["task"] == "sector_internal_ranking_baseline_smoke"
     assert report["boundary"]["no_model_save"] is True
@@ -171,6 +200,89 @@ def test_writer_output_passes_reader_contract(tmp_path: Path):
     assert summary["valid_count"] == 6
 
 
+def test_multi_model_report_passes_reader_contract(tmp_path: Path):
+    out_dir = tmp_path / "out"
+    report = run_baseline_smoke(
+        sample_path=SAMPLE,
+        manifest_path=MANIFEST,
+        feature_contract_path=write_contract(tmp_path),
+        target="top_quantile_in_sector_3d",
+        out_dir=out_dir,
+        models="numpy_logistic,lightgbm,catboost,xgboost",
+    )
+
+    model_names = [model["model_name"] for model in report["models"]]
+    assert model_names == [
+        "numpy_logistic_regression_smoke",
+        "lightgbm_smoke",
+        "catboost_smoke",
+        "xgboost_smoke",
+    ]
+    for model in report["models"]:
+        assert model["status"] in {"passed", "skipped"}
+        assert model["no_save"] is True
+        assert model["no_tuning"] is True
+        assert model["model_saved"] is False
+        assert model["checkpoint_saved"] is False
+        if model["status"] == "passed":
+            assert model["train_count"] == 14
+            assert model["valid_count"] == 6
+
+    summary = summarize_report(out_dir / "sector_internal_ranking_baseline_smoke_report.json")
+    assert summary["status"] == "OK"
+    assert summary["models"] == model_names
+
+    predictions = pd.read_csv(report["prediction_file"], dtype={"etf_code": str})
+    assert set(predictions["model_name"]).issubset(set(model_names))
+    assert "target_weight" not in predictions.columns
+    assert "order_intent" not in predictions.columns
+
+
+def test_missing_optional_model_dependency_skips(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    import tools.lab.table_ml_baseline_smoke as smoke
+
+    real_import_module = smoke.importlib.import_module
+
+    def fake_import_module(name: str, package: str | None = None) -> Any:
+        if name in {"lightgbm", "catboost", "xgboost"}:
+            raise ImportError(name)
+        return real_import_module(name, package)
+
+    monkeypatch.setattr(smoke.importlib, "import_module", fake_import_module)
+    report = run_baseline_smoke(
+        sample_path=SAMPLE,
+        manifest_path=MANIFEST,
+        feature_contract_path=write_contract(tmp_path),
+        target="top_quantile_in_sector_3d",
+        out_dir=tmp_path / "out",
+        models="numpy_logistic,lightgbm,catboost,xgboost",
+    )
+
+    statuses = {model["model_name"]: model["status"] for model in report["models"]}
+    assert statuses["numpy_logistic_regression_smoke"] == "passed"
+    assert statuses["lightgbm_smoke"] == "skipped"
+    assert statuses["catboost_smoke"] == "skipped"
+    assert statuses["xgboost_smoke"] == "skipped"
+
+
+def test_catboost_smoke_does_not_leave_catboost_info(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.chdir(tmp_path)
+    out_dir = tmp_path / "out"
+    report = run_baseline_smoke(
+        sample_path=SAMPLE,
+        manifest_path=MANIFEST,
+        feature_contract_path=write_contract(tmp_path),
+        target="top_quantile_in_sector_3d",
+        out_dir=out_dir,
+        models="catboost",
+    )
+
+    assert report["models"][0]["model_name"] == "catboost_smoke"
+    assert report["models"][0]["status"] in {"passed", "skipped"}
+    assert not (tmp_path / "catboost_info").exists()
+    assert not (out_dir / "catboost_info").exists()
+
+
 def test_no_model_file_is_generated(tmp_path: Path):
     out_dir = tmp_path / "out"
     run_baseline_smoke(
@@ -190,4 +302,6 @@ def test_no_model_file_is_generated(tmp_path: Path):
     assert not list(out_dir.glob("*.pkl"))
     assert not list(out_dir.glob("*.joblib"))
     assert not list(out_dir.glob("*.cbm"))
+    assert not list(out_dir.glob("*.model"))
+    assert not list(out_dir.glob("*.bst"))
     assert not list(out_dir.glob("*.txt"))
