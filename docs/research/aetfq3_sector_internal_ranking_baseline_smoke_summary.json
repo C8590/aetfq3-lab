@@ -1,0 +1,126 @@
+{
+  "phase": "sector_internal_ranking_baseline_smoke_stage_summary",
+  "lab_boundary": "aetfq3-lab / Lab, not V2.1 Stable",
+  "task_scope": "Lab-only summary from real small sample to four-model no-save smoke",
+  "sample_summary": {
+    "rows": 60,
+    "date_start": "2026-05-20",
+    "date_end": "2026-06-02",
+    "etf_count": 6,
+    "sector_count": 3,
+    "group_count": 30,
+    "missing_rate": 0.0,
+    "uses_stable_bundle": false,
+    "no_stable_output": true,
+    "no_qmt": true,
+    "no_order_intent": true,
+    "data_sources": [
+      "AKShare ETF daily data",
+      "local sector map",
+      "Lab ignored dry validation and baseline reports"
+    ]
+  },
+  "feature_summary": {
+    "feature_count": 25,
+    "feature_family": "lag1 / past-only numeric features",
+    "future_labels_excluded_from_features": true,
+    "id_group_fields_excluded_from_features": true,
+    "raw_sector_string_excluded_from_features": true,
+    "target_label": "top_quantile_in_sector_3d",
+    "forbidden_feature_categories": [
+      "future return",
+      "future drawdown",
+      "label fields",
+      "trade_date",
+      "sector raw string",
+      "etf_code",
+      "etf_name",
+      "ranking_group_id",
+      "model_version",
+      "feature_version"
+    ]
+  },
+  "completed_pipeline": [
+    "sample intake",
+    "schema validator",
+    "dry validation",
+    "past-only feature sample",
+    "baseline precheck",
+    "no-save baseline smoke",
+    "report reader contract",
+    "four-model .venv smoke"
+  ],
+  "model_smoke_summary": {
+    "status": "passed",
+    "metric_interpretation": "metrics only validate code path, not model effectiveness",
+    "models": [
+      {
+        "model": "numpy_logistic",
+        "status": "passed",
+        "accuracy": 0.3333,
+        "roc_auc": 0.2716,
+        "log_loss": 1.6458
+      },
+      {
+        "model": "lightgbm",
+        "status": "passed",
+        "accuracy": 0.3333,
+        "roc_auc": 0.3889,
+        "log_loss": 0.9611
+      },
+      {
+        "model": "catboost",
+        "status": "passed",
+        "accuracy": 0.3333,
+        "roc_auc": 0.3086,
+        "log_loss": 1.0178
+      },
+      {
+        "model": "xgboost",
+        "status": "passed",
+        "accuracy": 0.3333,
+        "roc_auc": 0.2963,
+        "log_loss": 1.0364
+      }
+    ]
+  },
+  "boundary": {
+    "lab_only": true,
+    "not_model_acceptance": true,
+    "not_trading_signal": true,
+    "not_stable_input": true,
+    "not_advisory_package": true,
+    "no_model_saved": true,
+    "no_checkpoint": true,
+    "no_order_intent": true,
+    "no_stable": true,
+    "no_qmt": true,
+    "no_output": true,
+    "no_lab_advisory": true,
+    "metrics_not_model_effectiveness": true,
+    "metrics_not_trading_advice": true
+  },
+  "review_checklist": {
+    "researched": "E sector internal ranking Lab-only chain from real small sample through dry validation, feature contract, baseline precheck, report reader, and four-model no-save smoke.",
+    "data_source": "AKShare ETF daily data, local sector map, and Lab ignored reports.",
+    "uses_stable_bundle": false,
+    "future_leakage": "Future return, drawdown, label, id/group, ETF identity, and raw sector fields are forbidden as features; current features are lag1 / past-only.",
+    "affects_stable_trading": false,
+    "read_only_advisory": false,
+    "recommended_for_stable": false,
+    "minimal_stable_merge": "not applicable",
+    "do_not_submit_to_stable": true,
+    "next_step": "Expand Lab-only sample coverage while preserving intake/schema/dry validation/report reader gates; do not enter Stable."
+  },
+  "next_steps": [
+    "Expand Lab-only sample",
+    "Add more dates and sectors",
+    "Keep intake/schema/dry validation/report reader gates",
+    "Do not enter Stable"
+  ],
+  "stable_allowed": false,
+  "qmt_allowed": false,
+  "order_intent_allowed": false,
+  "advisory_package_generated": false,
+  "model_saved": false
+}
