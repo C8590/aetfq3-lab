@@ -61,6 +61,20 @@ risk_warning > market_state > sector_rank > etf_rank > entry_signal
 
 ## 常用命令
 
+Lab 表格 ML / PyTorch / baseline smoke 命令必须使用当前仓库 `.venv` Python：
+
+```powershell
+.\.venv\Scripts\python.exe
+```
+
+或先激活：
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+不推荐裸 `python`，因为它可能指向系统 Python。若使用裸 `python`，必须先执行 `python -c "import sys; print(sys.executable)"`，确认输出为 `E:\aetfq3-lab\.venv\Scripts\python.exe`。
+
 更新 ETF 日线数据：
 
 ```powershell

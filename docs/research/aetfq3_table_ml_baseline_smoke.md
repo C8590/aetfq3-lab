@@ -19,8 +19,34 @@
 
 ## CLI
 
+Lab 表格 ML 命令必须使用当前仓库 `.venv` Python：
+
 ```powershell
-python tools/lab/table_ml_baseline_smoke.py `
+.\.venv\Scripts\python.exe
+```
+
+也可以先激活：
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+不推荐裸 `python`，因为它可能指向系统 Python。若使用裸 `python`，必须先执行：
+
+```powershell
+python -c "import sys; print(sys.executable)"
+```
+
+确认输出为：
+
+```text
+E:\aetfq3-lab\.venv\Scripts\python.exe
+```
+
+当前系统 Python `E:\Program Files (x86)\Python\Python312\python.exe` 缺少 `lightgbm` / `catboost` / `xgboost` / `torch`。这不是 P0；只要 `.venv` 正常并使用 `.venv` Python 运行 Lab 命令即可。
+
+```powershell
+.\.venv\Scripts\python.exe tools/lab/table_ml_baseline_smoke.py `
   --sample .local_research_outputs/aetfq3_lab/table_ml_dry_validation_inputs/sector_internal_ranking_real_feature_sample.csv `
   --manifest .local_research_outputs/aetfq3_lab/table_ml_dry_validation_inputs/sector_internal_ranking_real_feature_sample_manifest.json `
   --feature-contract .local_research_outputs/aetfq3_lab/table_ml_baseline_precheck/sector_internal_ranking_feature_contract.json `
@@ -151,6 +177,13 @@ JSON report 原生输出 flat contract 顶层字段，包括：
 `tools/lab/table_ml_baseline_report_reader.py` 可只读校验 baseline smoke report JSON 的稳定合同。Reader 会检查 Lab-only / no-save / no-tuning / no Stable / no QMT / no OrderIntent / no output / no lab_advisory 边界，并拒绝包含 `order_intent`、`target_weight`、`final_buy_action`、`stable_action`、`qmt_order`、`live_order` 或 `trade_instruction` 的报告。
 
 新 writer 输出的 flat contract 可直接通过 reader；reader 仍保留旧嵌套 smoke report 的兼容读取路径。Reader 输出 summary JSON 到 stdout；若边界字段缺失或失败，返回非 0。报告合同细节见 `docs/research/aetfq3_table_ml_baseline_report_contract.md`。
+
+Reader 示例同样必须使用 `.venv` Python：
+
+```powershell
+.\.venv\Scripts\python.exe tools\lab\table_ml_baseline_report_reader.py `
+  --report .local_research_outputs\aetfq3_lab\table_ml_baseline_smoke\sector_internal_ranking_baseline_smoke_report.json
+```
 
 ## Metrics 解释限制
 

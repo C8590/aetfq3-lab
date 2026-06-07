@@ -198,6 +198,7 @@ Lab 给 Stable 的输出只能是只读建议包。允许的建议包文件名�
 
 - 默认只允许修改当前任务明确授权的文件。
 - 未经明确授权，不运行策略、不刷新行情、不生成信号、不写入 `output`、不触碰 `data/cache`。
+- Lab 表格 ML / PyTorch / baseline smoke 命令必须使用 `E:\aetfq3-lab\.venv\Scripts\python.exe`，或先执行 `.\.venv\Scripts\Activate.ps1`。不推荐裸 `python`；若使用裸 `python`，必须先执行 `python -c "import sys; print(sys.executable)"` 并确认输出为 `E:\aetfq3-lab\.venv\Scripts\python.exe`。系统 Python 缺少 ML 包不是 P0，只要 `.venv` 正常即可。
 - 涉及交易、执行、真实持仓、风控冻结的任务，必须先经过 `aetfv2_08_control_center`。
 - 涉及 QMT 的任务，第一阶段只允许人工确认流程、mock broker、适配层审查和日志审查，不允许实盘全自动。
 

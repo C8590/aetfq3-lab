@@ -27,6 +27,43 @@
 - `pyarrow`：`24.0.0`
 - `matplotlib`：`3.10.9`
 
+## Lab Python 运行入口
+
+Lab 表格 ML / PyTorch / GPU / baseline smoke 命令必须使用当前仓库 `.venv`：
+
+```powershell
+.\.venv\Scripts\python.exe
+```
+
+也可以先激活 `.venv`：
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+不推荐裸 `python`，因为它可能指向系统 Python。若使用裸 `python`，必须先执行：
+
+```powershell
+python -c "import sys; print(sys.executable)"
+```
+
+确认输出为：
+
+```text
+E:\aetfq3-lab\.venv\Scripts\python.exe
+```
+
+已确认当前系统 Python `E:\Program Files (x86)\Python\Python312\python.exe` 缺少 `lightgbm` / `catboost` / `xgboost` / `torch`。这不是 P0；只要 `.venv` 正常、Lab 命令使用 `.venv` Python 即可。
+
+当前 `.venv` 已验证：
+
+- `lightgbm`：`4.6.0`
+- `catboost`：`1.2.10`
+- `xgboost`：`3.2.0`
+- `torch`：`2.11.0+cu128`
+
+用 `.venv` Python 运行四模型 ignored baseline smoke 已全部 passed，report reader 校验 `status=OK`，且未生成 `catboost_info` 残留。
+
 NVIDIA 驱动检查摘要：
 
 - `nvidia-smi` 可正常执行。
@@ -41,9 +78,9 @@ NVIDIA 驱动检查摘要：
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip setuptools wheel
-python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
-python -m pip install numpy pandas scikit-learn pyarrow matplotlib
+.\.venv\Scripts\python.exe -m pip install --upgrade pip setuptools wheel
+.\.venv\Scripts\python.exe -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+.\.venv\Scripts\python.exe -m pip install numpy pandas scikit-learn pyarrow matplotlib
 ```
 
 注意：如果 CUDA wheel 下载失败，不应自动改用 CPU 版；需要人工确认后再调整安装方案。
@@ -86,19 +123,19 @@ cd E:\aetfq3-lab
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip setuptools wheel
+.\.venv\Scripts\python.exe -m pip install --upgrade pip setuptools wheel
 ```
 
 3. 安装 PyTorch CUDA wheel：
 
 ```powershell
-python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+.\.venv\Scripts\python.exe -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
 ```
 
 4. 安装基础 ML 包：
 
 ```powershell
-python -m pip install numpy pandas scikit-learn pyarrow matplotlib
+.\.venv\Scripts\python.exe -m pip install numpy pandas scikit-learn pyarrow matplotlib
 ```
 
 5. 验证 CUDA：
@@ -113,13 +150,13 @@ print("device_count", torch.cuda.device_count())
 if torch.cuda.is_available():
     print("device_name", torch.cuda.get_device_name(0))
 '@
-$code | python -
+$code | .\.venv\Scripts\python.exe -
 ```
 
 6. 生成本地 freeze 快照：
 
 ```powershell
-python -m pip freeze > .local_research_outputs\aetfq3_lab\gpu_env\requirements.freeze.txt
+.\.venv\Scripts\python.exe -m pip freeze > .local_research_outputs\aetfq3_lab\gpu_env\requirements.freeze.txt
 ```
 
 ## 边界声明

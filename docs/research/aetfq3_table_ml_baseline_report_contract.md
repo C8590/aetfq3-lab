@@ -122,6 +122,27 @@ Reader 只读 baseline smoke report JSON，输出 summary JSON 到 stdout。若�
 
 新 writer 输出的 flat contract 应直接通过 reader 校验。Reader 仍支持旧嵌套 smoke report：当报告没有完整 flat 字段但包含旧 `boundary`、`feature_leakage_check` 或 `split` 结构时，reader 可将旧结构归一化为上述 flat contract 后再校验。该兼容路径只用于历史报告读取，不作为新 writer 的输出目标。
 
+Reader 命令必须使用 Lab `.venv` Python，或先激活 `.venv` 后再运行。推荐入口：
+
+```powershell
+.\.venv\Scripts\python.exe tools\lab\table_ml_baseline_report_reader.py `
+  --report .local_research_outputs\aetfq3_lab\table_ml_baseline_smoke\sector_internal_ranking_baseline_smoke_report.json
+```
+
+不推荐裸 `python`，因为它可能指向系统 Python。若使用裸 `python`，必须先确认：
+
+```powershell
+python -c "import sys; print(sys.executable)"
+```
+
+输出应为：
+
+```text
+E:\aetfq3-lab\.venv\Scripts\python.exe
+```
+
+系统 Python 缺少 `lightgbm` / `catboost` / `xgboost` / `torch` 不是 P0；只要 `.venv` 正常并使用 `.venv` Python 运行 Lab 表格 ML 命令即可。
+
 ## Review Checklist 映射
 
 1. 研究了什么：Lab-only baseline smoke report contract。
