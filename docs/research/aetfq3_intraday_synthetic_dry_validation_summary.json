@@ -1,0 +1,107 @@
+{
+  "document_type": "aetfq3_intraday_synthetic_dry_validation_summary",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "boundary_statement": "Lab-only synthetic dry validation summary; not real market data, not a trading system, no QMT, no OrderIntent, no model training.",
+  "phase": "F-9 synthetic intraday dry validation summary",
+  "completed_chain": [
+    "manifest intake checker",
+    "5m schema validator",
+    "forbidden feature scan",
+    "tensor shape dry validation",
+    "Intraday Watch state machine dry-run",
+    "dry validation orchestrator",
+    "report reader"
+  ],
+  "tests": {
+    "specified_tests": {
+      "status": "passed",
+      "passed": 17,
+      "failed": 0
+    },
+    "tests_lab": {
+      "status": "passed",
+      "passed": 118,
+      "failed": 0,
+      "warnings": 2
+    },
+    "coverage_summary": [
+      "valid mock manifest passed",
+      "future feature leakage fails",
+      "training_allowed=true fails",
+      "contains_order_intent=true fails",
+      "invalid qmt_mode fails",
+      "valid mock CSV schema passed",
+      "missing required column fails",
+      "bad OHLC fails",
+      "insufficient bars fails",
+      "orchestrator end-to-end passed",
+      "report reader boundary checks passed and fail on violations"
+    ]
+  },
+  "smoke_results": {
+    "orchestrator": "passed",
+    "reader": "passed",
+    "no_order_intent": true,
+    "no_qmt": true,
+    "no_stable": true,
+    "no_checkpoint": true,
+    "no_model_save": true,
+    "rows_checked": 48,
+    "trade_date_count": 2,
+    "etf_count": 2,
+    "min_bars_per_etf_day": 12,
+    "batch_size": 4,
+    "time_steps": 12,
+    "feature_count": 20,
+    "target_count": 4,
+    "visited_states": [
+      "WAIT_OPEN",
+      "INTRADAY_CONFIRMING",
+      "PROBE_READY",
+      "WAIT_PULLBACK",
+      "HOLD_LOCKED",
+      "PROFIT_PROTECT",
+      "EXIT_READY"
+    ],
+    "terminal_state": "EXIT_READY",
+    "p0_blockers": [],
+    "p1_warnings": []
+  },
+  "current_blockers": [
+    "no safe real 5m provider",
+    "no human-exported 5m data package"
+  ],
+  "recovery_requirements": [
+    "independent safe provider file",
+    "or human exported 5m package",
+    "manifest + hash + source_note",
+    "intake-only before dry validation"
+  ],
+  "boundary": {
+    "access_mode": "READ_ONLY",
+    "final_action_change_allowed": false,
+    "contains_live_order": false,
+    "contains_secret": false,
+    "requires_human_review": true,
+    "promotion_gate_required": true,
+    "no_stable": true,
+    "no_qmt_trading": true,
+    "no_order_intent": true,
+    "no_advisory_package": true,
+    "no_model_training": true,
+    "no_trading_advice": true,
+    "real_intraday_data_used": false,
+    "stable_bundle_used": false
+  },
+  "next_steps": [
+    "Keep F-8 synthetic/mock tooling as a Lab-only gate.",
+    "If an independent safe provider file is provided, rerun F-7 first.",
+    "If a human exported 5m package is provided, run manifest + hash + source_note intake-only checks first.",
+    "Do not enter Stable."
+  ],
+  "stable_allowed": false,
+  "qmt_allowed": false,
+  "order_intent_allowed": false,
+  "advisory_package_generated": false,
+  "model_training_allowed": false
+}
