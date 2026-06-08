@@ -23,6 +23,9 @@ REQUIRED_CONTRACT_FIELDS = {
     "no_lab_advisory",
     "model_saved",
     "checkpoint_saved",
+    "task_name",
+    "output_prefix",
+    "sample_type",
     "target_label",
     "feature_columns",
     "forbidden_columns",
@@ -84,6 +87,9 @@ def summarize_report(path: Path) -> dict[str, Any]:
         "models": model_names(models),
         "model_count": len(models),
         "metrics_keys": sorted({key for metric in metrics if isinstance(metric, dict) for key in metric}),
+        "task_name": str_value(normalized.get("task_name")),
+        "output_prefix": str_value(normalized.get("output_prefix")),
+        "sample_type": str_value(normalized.get("sample_type")),
         "target_label": str_value(normalized.get("target_label")),
         "train_count": int_value(normalized.get("train_count")),
         "valid_count": int_value(normalized.get("valid_count")),
@@ -128,6 +134,9 @@ def normalize_report(report: dict[str, Any]) -> dict[str, Any]:
         "no_lab_advisory": bool_value(boundary.get("no_lab_advisory")),
         "model_saved": False if bool_value(boundary.get("no_model_save")) is True else None,
         "checkpoint_saved": False if bool_value(boundary.get("no_checkpoint")) is True else None,
+        "task_name": str_value(report.get("task_name")) or "sector_internal_ranking",
+        "output_prefix": str_value(report.get("output_prefix")) or "sector_internal_ranking",
+        "sample_type": str_value(report.get("sample_type")) or "sector_internal_ranking",
         "target_label": first_metric.get("target_label"),
         "feature_columns": leakage.get("feature_columns"),
         "forbidden_columns": leakage.get("forbidden_columns"),
@@ -185,6 +194,12 @@ def validate_contract_values(report: dict[str, Any]) -> list[str]:
         errors.append("valid_count must be positive")
     if not str_value(report.get("target_label")):
         errors.append("target_label must be non-empty")
+    if not str_value(report.get("task_name")):
+        errors.append("task_name must be non-empty")
+    if not str_value(report.get("output_prefix")):
+        errors.append("output_prefix must be non-empty")
+    if not str_value(report.get("sample_type")):
+        errors.append("sample_type must be non-empty")
     if not str_value(report.get("prediction_file")):
         errors.append("prediction_file must be non-empty")
     if not isinstance(report.get("review_checklist"), dict):

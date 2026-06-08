@@ -154,6 +154,9 @@ def test_output_json_contains_required_fields(tmp_path: Path):
     assert report["no_lab_advisory"] is True
     assert report["model_saved"] is False
     assert report["checkpoint_saved"] is False
+    assert report["task_name"] == "sector_internal_ranking"
+    assert report["output_prefix"] == "sector_internal_ranking"
+    assert report["sample_type"] == "sector_internal_ranking"
     assert report["target_label"] == "top_quantile_in_sector_3d"
     assert report["feature_columns"] == FEATURE_COLUMNS
     assert "future_return_3d" in report["forbidden_columns"]
@@ -181,6 +184,53 @@ def test_output_json_contains_required_fields(tmp_path: Path):
     assert find_prohibited_fields(report) == []
 
 
+def test_custom_task_name_and_output_prefix(tmp_path: Path):
+    out_dir = tmp_path / "out"
+    report = run_baseline_smoke(
+        sample_path=SAMPLE,
+        manifest_path=MANIFEST,
+        feature_contract_path=write_contract(tmp_path),
+        target="top_quantile_in_sector_3d",
+        out_dir=out_dir,
+        task_name="false_downgrade_reconstructed_v2",
+        output_prefix="false_downgrade_reconstructed_v2",
+    )
+
+    assert report["task_name"] == "false_downgrade_reconstructed_v2"
+    assert report["output_prefix"] == "false_downgrade_reconstructed_v2"
+    assert report["sample_type"] == "sector_internal_ranking"
+    assert report["task"] == "false_downgrade_reconstructed_v2_baseline_smoke"
+    assert Path(report["prediction_file"]).name == "false_downgrade_reconstructed_v2_baseline_predictions.csv"
+    assert (out_dir / "false_downgrade_reconstructed_v2_baseline_smoke_report.json").exists()
+    assert (out_dir / "false_downgrade_reconstructed_v2_baseline_smoke_report.md").exists()
+
+    summary = summarize_report(out_dir / "false_downgrade_reconstructed_v2_baseline_smoke_report.json")
+    assert summary["status"] == "OK"
+    assert summary["task_name"] == "false_downgrade_reconstructed_v2"
+    assert summary["output_prefix"] == "false_downgrade_reconstructed_v2"
+
+
+def test_missing_ranking_group_id_is_derived_for_smoke(tmp_path: Path):
+    sample = copy_sample(tmp_path)
+    df = pd.read_csv(sample, dtype={"etf_code": str})
+    df = df.drop(columns=["ranking_group_id"])
+    df.to_csv(sample, index=False)
+
+    report = run_baseline_smoke(
+        sample_path=sample,
+        manifest_path=MANIFEST,
+        feature_contract_path=write_contract(tmp_path),
+        target="top_quantile_in_sector_3d",
+        out_dir=tmp_path / "out",
+        output_prefix="no_group_sample",
+    )
+
+    assert report["data"]["ranking_group_id_source"] == "derived_trade_date_sector"
+    assert report["split"]["group_leakage_check_passed"] is True
+    predictions = pd.read_csv(report["prediction_file"], dtype={"etf_code": str})
+    assert "ranking_group_id" in predictions.columns
+
+
 def test_writer_output_passes_reader_contract(tmp_path: Path):
     out_dir = tmp_path / "out"
     run_baseline_smoke(
@@ -195,6 +245,9 @@ def test_writer_output_passes_reader_contract(tmp_path: Path):
     assert summary["status"] == "OK"
     assert summary["report_type"] == "table_ml_baseline_smoke"
     assert summary["task_scope"] == "Lab-only no-save baseline smoke"
+    assert summary["task_name"] == "sector_internal_ranking"
+    assert summary["output_prefix"] == "sector_internal_ranking"
+    assert summary["sample_type"] == "sector_internal_ranking"
     assert summary["models"] == ["numpy_logistic_regression_smoke"]
     assert summary["train_count"] == 14
     assert summary["valid_count"] == 6

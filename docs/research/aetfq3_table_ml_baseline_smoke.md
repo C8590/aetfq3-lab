@@ -52,7 +52,30 @@ E:\aetfq3-lab\.venv\Scripts\python.exe
   --feature-contract .local_research_outputs/aetfq3_lab/table_ml_baseline_precheck/sector_internal_ranking_feature_contract.json `
   --target top_quantile_in_sector_3d `
   --models numpy_logistic,lightgbm,catboost,xgboost `
+  --task-name sector_internal_ranking `
+  --output-prefix sector_internal_ranking `
   --out-dir .local_research_outputs/aetfq3_lab/table_ml_baseline_smoke/
+```
+
+`--task-name` 与 `--output-prefix` 为可选参数。旧命令不传时默认保持：
+
+```text
+task_name=sector_internal_ranking
+output_prefix=sector_internal_ranking
+```
+
+A false downgrade reconstructed v2 no-save smoke 示例：
+
+```powershell
+.\.venv\Scripts\python.exe tools/lab/table_ml_baseline_smoke.py `
+  --sample .local_research_outputs\aetfq3_lab\false_downgrade_reconstructed_v2\false_downgrade_reconstructed_v2_feature_samples.csv `
+  --manifest .local_research_outputs\aetfq3_lab\false_downgrade_reconstructed_v2\false_downgrade_reconstructed_v2_feature_manifest.json `
+  --feature-contract .local_research_outputs\aetfq3_lab\false_downgrade_reconstructed_v2\false_downgrade_reconstructed_v2_feature_contract.json `
+  --target false_downgrade_3d `
+  --models numpy_logistic,lightgbm,catboost,xgboost `
+  --task-name false_downgrade_reconstructed_v2 `
+  --output-prefix false_downgrade_reconstructed_v2 `
+  --out-dir .local_research_outputs\aetfq3_lab\false_downgrade_reconstructed_v2\baseline_smoke_named\
 ```
 
 ## 输入检查
@@ -124,9 +147,9 @@ E:\aetfq3-lab\.venv\Scripts\python.exe
 
 生成：
 
-- `sector_internal_ranking_baseline_smoke_report.md`
-- `sector_internal_ranking_baseline_smoke_report.json`
-- `sector_internal_ranking_baseline_predictions.csv`
+- `<output_prefix>_baseline_smoke_report.md`
+- `<output_prefix>_baseline_smoke_report.json`
+- `<output_prefix>_baseline_predictions.csv`
 
 JSON report 原生输出 flat contract 顶层字段，包括：
 
@@ -142,6 +165,9 @@ JSON report 原生输出 flat contract 顶层字段，包括：
 - `no_lab_advisory=true`
 - `model_saved=false`
 - `checkpoint_saved=false`
+- `task_name`
+- `output_prefix`
+- `sample_type`
 - `target_label`
 - `feature_columns`
 - `forbidden_columns`

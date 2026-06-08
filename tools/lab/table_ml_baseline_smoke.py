@@ -20,6 +20,11 @@ FORBIDDEN_FEATURE_COLUMNS = {
     "future_return_1d",
     "future_return_3d",
     "max_drawdown_3d",
+    "false_downgrade_1d",
+    "false_downgrade_3d",
+    "false_downgrade_lock3",
+    "true_downgrade",
+    "neutral_downgrade",
     "best_in_sector_1d",
     "best_in_sector_3d",
     "top_quantile_in_sector_3d",
@@ -30,6 +35,8 @@ FORBIDDEN_FEATURE_COLUMNS = {
     "etf_code",
     "etf_name",
     "ranking_group_id",
+    "v2_action",
+    "ml_action",
     "model_version",
     "feature_version",
 }
@@ -50,6 +57,8 @@ PREDICTION_FIELDS = [
 
 REPORT_TYPE = "table_ml_baseline_smoke"
 TASK_SCOPE = "Lab-only no-save baseline smoke"
+DEFAULT_TASK_NAME = "sector_internal_ranking"
+DEFAULT_OUTPUT_PREFIX = "sector_internal_ranking"
 DEFAULT_MODEL_ALIASES = ["numpy_logistic"]
 MODEL_ALIASES = {
     "numpy": "numpy_logistic",
@@ -150,6 +159,15 @@ def feature_columns_from_contract(contract: dict[str, Any]) -> list[str]:
     return feature_columns
 
 
+def non_empty_identifier(value: str, field_name: str) -> str:
+    cleaned = value.strip()
+    if not cleaned:
+        raise BaselineSmokeError(f"{field_name} must be non-empty")
+    if any(char in cleaned for char in "\\/:*?\"<>|"):
+        raise BaselineSmokeError(f"{field_name} contains characters that are not safe for file names")
+    return cleaned
+
+
 def parse_model_names(raw_models: str | Sequence[str] | None) -> list[str]:
     if raw_models is None:
         candidates = DEFAULT_MODEL_ALIASES
@@ -200,6 +218,21 @@ def choose_target(df: pd.DataFrame, requested_target: str) -> str:
     if fallback in df.columns:
         return fallback
     raise BaselineSmokeError(f"target not found and fallback unavailable: {requested_target}")
+
+
+def ensure_ranking_group_id(df: pd.DataFrame) -> tuple[pd.DataFrame, str]:
+    if "ranking_group_id" in df.columns:
+        return df, "sample_column"
+    if "trade_date" not in df.columns:
+        raise BaselineSmokeError("sample must contain trade_date")
+
+    result = df.copy()
+    if "sector" in result.columns:
+        result["ranking_group_id"] = result["trade_date"].astype(str) + "|" + result["sector"].astype(str)
+        return result, "derived_trade_date_sector"
+
+    result["ranking_group_id"] = result["trade_date"].astype(str)
+    return result, "derived_trade_date"
 
 
 def chronological_split(df: pd.DataFrame) -> SplitData:
@@ -683,9 +716,9 @@ def metric_entry(result: ModelResult, valid_df: pd.DataFrame) -> dict[str, Any]:
     return payload
 
 
-def build_review_checklist() -> dict[str, Any]:
+def build_review_checklist(task_name: str) -> dict[str, Any]:
     return {
-        "researched": "E sector internal ranking Lab-only no-save baseline smoke.",
+        "researched": f"{task_name} Lab-only no-save baseline smoke.",
         "data_source": "Local Lab sample, manifest, and feature contract.",
         "uses_stable_bundle": False,
         "future_leakage": "future / label / id / group fields are forbidden as features.",
@@ -737,6 +770,8 @@ def build_report_markdown(report: dict[str, Any]) -> str:
     split = report["split"]
     leakage = report["feature_leakage_check"]
     boundary = report["boundary"]
+    task_name = report["task_name"]
+    sample_type = report["sample_type"]
     metric_lines = []
     for metrics in report["metrics"]:
         auc = metrics["roc_auc"]
@@ -761,12 +796,18 @@ def build_report_markdown(report: dict[str, Any]) -> str:
         for model in report["models"]
     )
     metrics_block = "\n".join(metric_lines)
-    return f"""# E Sector Internal Ranking Baseline Smoke Report
+    return f"""# {task_name} Baseline Smoke Report
 
 本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。
 
 ## 任务定位
 Lab-only baseline smoke，不是正式训练，不是 advisory，不是 Stable 接口。
+
+## Metadata
+- task_name: `{task_name}`
+- output_prefix: `{report["output_prefix"]}`
+- sample_type: `{sample_type}`
+- target_label: `{report["target_label"]}`
 
 ## 数据
 - rows: {data["rows"]}
@@ -803,7 +844,7 @@ Lab-only baseline smoke，不是正式训练，不是 advisory，不是 Stable �
 - no trading advice: {str(boundary["not_trading_advice"]).lower()}
 
 ## Review Checklist 自检
-1. 研究了什么：E sector internal ranking Lab-only no-save baseline smoke 工具路径。
+1. 研究了什么：{task_name} Lab-only no-save baseline smoke 工具路径。
 2. 数据来自哪里：本地 Lab sample、manifest 和 feature contract。
 3. 是否来自 Stable bundle：否。
 4. 是否有未来函数：未发现；future / label / id / group 字段未进入 feature。
@@ -823,14 +864,20 @@ def run_baseline_smoke(
     target: str,
     out_dir: Path,
     models: str | Sequence[str] | None = None,
+    task_name: str = DEFAULT_TASK_NAME,
+    output_prefix: str = DEFAULT_OUTPUT_PREFIX,
 ) -> dict[str, Any]:
+    task_name = non_empty_identifier(task_name, "task_name")
+    output_prefix = non_empty_identifier(output_prefix, "output_prefix")
     selected_models = parse_model_names(models)
     manifest = load_json(manifest_path)
     require_manifest_boundaries(manifest)
+    sample_type = str(manifest.get("sample_type") or task_name)
     contract = load_json(feature_contract_path)
     feature_columns = feature_columns_from_contract(contract)
 
     df = pd.read_csv(sample_path, dtype={"etf_code": str})
+    df, ranking_group_id_source = ensure_ranking_group_id(df)
     validate_feature_columns(df, feature_columns)
     target_label = choose_target(df, target)
 
@@ -841,9 +888,9 @@ def run_baseline_smoke(
     y_valid = split.valid_df[target_label].astype(int).to_numpy()
 
     x_train, x_valid = standardize(x_train_raw, x_valid_raw)
-    prediction_path = out_dir / "sector_internal_ranking_baseline_predictions.csv"
-    report_json_path = out_dir / "sector_internal_ranking_baseline_smoke_report.json"
-    report_md_path = out_dir / "sector_internal_ranking_baseline_smoke_report.md"
+    prediction_path = out_dir / f"{output_prefix}_baseline_predictions.csv"
+    report_json_path = out_dir / f"{output_prefix}_baseline_smoke_report.json"
+    report_md_path = out_dir / f"{output_prefix}_baseline_smoke_report.md"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     model_results = run_selected_models(
@@ -871,6 +918,9 @@ def run_baseline_smoke(
         "no_lab_advisory": True,
         "model_saved": False,
         "checkpoint_saved": False,
+        "task_name": task_name,
+        "output_prefix": output_prefix,
+        "sample_type": sample_type,
         "target_label": target_label,
         "feature_columns": list(feature_columns),
         "forbidden_columns": sorted(FORBIDDEN_FEATURE_COLUMNS),
@@ -881,8 +931,8 @@ def run_baseline_smoke(
         "models": models_report,
         "metrics": metrics_report,
         "prediction_file": str(prediction_path),
-        "review_checklist": build_review_checklist(),
-        "task": "sector_internal_ranking_baseline_smoke",
+        "review_checklist": build_review_checklist(task_name),
+        "task": f"{task_name}_baseline_smoke",
         "lab_boundary": "aetfq3-lab / Lab, not V2.1 Stable",
         "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "status": "passed",
@@ -892,6 +942,7 @@ def run_baseline_smoke(
             "feature_contract_path": str(feature_contract_path),
             "rows": int(len(df)),
             "feature_count": int(len(feature_columns)),
+            "ranking_group_id_source": ranking_group_id_source,
             "date_start": dates[0],
             "date_end": dates[-1],
             "train_dates": split.train_dates,
@@ -905,6 +956,7 @@ def run_baseline_smoke(
             "raw_sector_string_as_feature": False,
             "etf_identity_as_feature": False,
             "ranking_group_id_as_feature": False,
+            "ranking_group_id_source": ranking_group_id_source,
         },
         "split": {
             "type": "chronological",
@@ -947,6 +999,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--feature-contract", required=True, type=Path)
     parser.add_argument("--target", default="top_quantile_in_sector_3d")
     parser.add_argument("--models", default="numpy_logistic", help="Comma-separated model aliases.")
+    parser.add_argument("--task-name", default=DEFAULT_TASK_NAME)
+    parser.add_argument("--output-prefix", default=DEFAULT_OUTPUT_PREFIX)
     parser.add_argument("--out-dir", required=True, type=Path)
     return parser
 
@@ -961,6 +1015,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             target=args.target,
             out_dir=args.out_dir,
             models=args.models,
+            task_name=args.task_name,
+            output_prefix=args.output_prefix,
         )
     except BaselineSmokeError as exc:
         print(f"FAILED baseline_smoke_valid=false {exc}", file=sys.stderr)
@@ -983,6 +1039,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "train_count": report["train_count"],
                 "valid_count": report["valid_count"],
                 "feature_count": len(report["feature_columns"]),
+                "task_name": report["task_name"],
+                "output_prefix": report["output_prefix"],
+                "sample_type": report["sample_type"],
                 "target_label": report["target_label"],
                 "prediction_file": report["prediction_file"],
             },

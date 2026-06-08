@@ -22,6 +22,9 @@ Baseline smoke report 是 Lab-only 的代码路径验证报告。它只证明 no
 - `no_lab_advisory=true`
 - `model_saved=false`
 - `checkpoint_saved=false`
+- `task_name`
+- `output_prefix`
+- `sample_type`
 
 报告不得包含：
 
@@ -49,6 +52,9 @@ Baseline smoke report 是 Lab-only 的代码路径验证报告。它只证明 no
 - `no_lab_advisory`
 - `model_saved`
 - `checkpoint_saved`
+- `task_name`
+- `output_prefix`
+- `sample_type`
 - `target_label`
 - `feature_columns`
 - `forbidden_columns`
@@ -77,6 +83,12 @@ Baseline smoke report 是 Lab-only 的代码路径验证报告。它只证明 no
 - `checkpoint_saved=false`
 - `split_method="chronological"`
 - `group_leakage_check="passed"`
+
+`task_name`、`output_prefix`、`sample_type` 必须为非空字符串。`output_prefix` 用于生成：
+
+- `<output_prefix>_baseline_smoke_report.json`
+- `<output_prefix>_baseline_smoke_report.md`
+- `<output_prefix>_baseline_predictions.csv`
 
 `split_method` 必须是 `chronological`，`group_leakage_check` 必须是 `passed`。
 
@@ -118,9 +130,9 @@ Stable 不得把 baseline smoke report 读取为正式交易输入。报告不�
 
 ## Reader 行为
 
-Reader 只读 baseline smoke report JSON，输出 summary JSON 到 stdout。若必需字段缺失、边界字段不符合要求，或发现交易相关字段，reader 必须返回非 0。
+Reader 只读 baseline smoke report JSON，输出 summary JSON 到 stdout。若必需字段缺失、`task_name` / `output_prefix` / `sample_type` 为空、边界字段不符合要求，或发现交易相关字段，reader 必须返回非 0。
 
-新 writer 输出的 flat contract 应直接通过 reader 校验。Reader 仍支持旧嵌套 smoke report：当报告没有完整 flat 字段但包含旧 `boundary`、`feature_leakage_check` 或 `split` 结构时，reader 可将旧结构归一化为上述 flat contract 后再校验。该兼容路径只用于历史报告读取，不作为新 writer 的输出目标。
+新 writer 输出的 flat contract 应直接通过 reader 校验。Reader 仍支持旧嵌套 smoke report：当报告没有完整 flat 字段但包含旧 `boundary`、`feature_leakage_check` 或 `split` 结构时，reader 可将旧结构归一化为上述 flat contract 后再校验。旧报告缺少 task metadata 时，兼容路径按旧默认补为 `task_name=sector_internal_ranking`、`output_prefix=sector_internal_ranking`、`sample_type=sector_internal_ranking`。该兼容路径只用于历史报告读取，不作为新 writer 的输出目标。
 
 Reader 命令必须使用 Lab `.venv` Python，或先激活 `.venv` 后再运行。推荐入口：
 

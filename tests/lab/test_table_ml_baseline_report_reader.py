@@ -34,6 +34,9 @@ def flat_report() -> dict:
         "no_lab_advisory": True,
         "model_saved": False,
         "checkpoint_saved": False,
+        "task_name": "sector_internal_ranking",
+        "output_prefix": "sector_internal_ranking",
+        "sample_type": "sector_internal_ranking",
         "target_label": "top_quantile_in_sector_3d",
         "feature_columns": [
             "etf_ret_1d_lag1",
@@ -96,6 +99,9 @@ def test_valid_flat_report_passes(tmp_path: Path):
     assert summary["task_scope"] == "Lab-only no-save baseline smoke"
     assert summary["boundary_passed"] is True
     assert summary["models"] == ["numpy_logistic_regression_smoke"]
+    assert summary["task_name"] == "sector_internal_ranking"
+    assert summary["output_prefix"] == "sector_internal_ranking"
+    assert summary["sample_type"] == "sector_internal_ranking"
     assert "accuracy" in summary["metrics_keys"]
 
 
@@ -107,6 +113,9 @@ def test_valid_legacy_nested_mock_report_passes():
     assert summary["task_scope"] == "Lab-only no-save baseline smoke"
     assert summary["boundary_passed"] is True
     assert summary["models"] == ["numpy_logistic_regression_smoke"]
+    assert summary["task_name"] == "sector_internal_ranking"
+    assert summary["output_prefix"] == "sector_internal_ranking"
+    assert summary["sample_type"] == "sector_internal_ranking"
     assert "accuracy" in summary["metrics_keys"]
 
 
@@ -115,6 +124,22 @@ def test_missing_required_field_fails(tmp_path: Path):
     report.pop("lab_only")
 
     with pytest.raises(BaselineReportContractError, match="Missing required fields: lab_only"):
+        summarize_report(write_report(tmp_path, report))
+
+
+def test_missing_task_metadata_fails(tmp_path: Path):
+    report = flat_report()
+    report.pop("task_name")
+
+    with pytest.raises(BaselineReportContractError, match="Missing required fields: task_name"):
+        summarize_report(write_report(tmp_path, report))
+
+
+def test_empty_output_prefix_fails(tmp_path: Path):
+    report = flat_report()
+    report["output_prefix"] = ""
+
+    with pytest.raises(BaselineReportContractError, match="output_prefix must be non-empty"):
         summarize_report(write_report(tmp_path, report))
 
 
