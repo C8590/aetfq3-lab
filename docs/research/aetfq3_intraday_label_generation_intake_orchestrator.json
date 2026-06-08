@@ -1,0 +1,78 @@
+{
+  "document_type": "aetfq3_intraday_label_generation_intake_orchestrator",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "boundary_statement": "Lab-only intake orchestration before real label generation; no labels generated, no training, no QMT, no OrderIntent, no Stable effect.",
+  "phase": "F public intraday label generation intake-only orchestration",
+  "orchestrator_type": "intake_only",
+  "orchestration_steps": [
+    "manifest-only leakage checker",
+    "hash/source note presence check",
+    "public no-label tensor report check",
+    "data quality report check",
+    "future-window readiness fields check",
+    "boundary check",
+    "readiness decision"
+  ],
+  "readiness_decisions": [
+    "READY_FOR_LABEL_GENERATION_DRY_RUN",
+    "BLOCKED_MISSING_FUTURE_WINDOW_SOURCE",
+    "BLOCKED_MANIFEST_P0",
+    "BLOCKED_HASH_OR_SOURCE_NOTE",
+    "BLOCKED_BOUNDARY_VIOLATION"
+  ],
+  "ignored_outputs": [
+    ".local_research_outputs/aetfq3_lab/intraday_label_generation_intake/intraday_label_generation_intake_report.md",
+    ".local_research_outputs/aetfq3_lab/intraday_label_generation_intake/intraday_label_generation_intake_report.json",
+    ".local_research_outputs/aetfq3_lab/intraday_label_generation_intake/readiness_decision.json"
+  ],
+  "report_contract": {
+    "report_type": "intraday_label_generation_intake",
+    "required_fields": [
+      "status",
+      "readiness_decision",
+      "manifest_leakage_check",
+      "hash_source_note_check",
+      "no_label_tensor_report_check",
+      "data_quality_report_check",
+      "future_window_readiness_check",
+      "boundary_check",
+      "p0_blockers",
+      "p1_warnings"
+    ],
+    "readiness_does_not_authorize_supervised_training": true
+  },
+  "boundary": {
+    "access_mode": "READ_ONLY",
+    "final_action_change_allowed": false,
+    "contains_live_order": false,
+    "contains_secret": false,
+    "requires_human_review": true,
+    "promotion_gate_required": true,
+    "intake_only": true,
+    "no_real_label_file_generated": true,
+    "no_more_real_market_data_read": true,
+    "no_stable": true,
+    "no_qmt": true,
+    "no_order_intent": true,
+    "no_output": true,
+    "no_lab_advisory": true,
+    "no_model_training": true,
+    "no_torchrun": true,
+    "no_checkpoint": true,
+    "no_model_save": true,
+    "no_trading_advice": true
+  },
+  "next_steps": [
+    "Provide future-window data with hash, source note, manifest, and human authorization before any real label generation dry-run.",
+    "Rerun this intake-only orchestrator after future-window source is available.",
+    "Do not treat readiness as supervised training authorization.",
+    "Do not enter Stable."
+  ],
+  "stable_allowed": false,
+  "qmt_allowed": false,
+  "order_intent_allowed": false,
+  "label_generation_performed": false,
+  "model_training_allowed": false,
+  "checkpoint_allowed": false,
+  "advisory_package_generated": false
+}
