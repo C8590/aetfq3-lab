@@ -1,0 +1,14 @@
+{
+  "source": "Lab-only handcrafted mock events; not real intraday data",
+  "events": [
+    {"event_id": "OPEN_PRINTED", "mock_note": "open price is available"},
+    {"event_id": "OPEN_RANGE_CONFIRMED", "mock_note": "open range confirmed"},
+    {"event_id": "SECTOR_CONFIRM", "mock_note": "sector confirms"},
+    {"event_id": "VWAP_PULLBACK", "mock_note": "wait for pullback"},
+    {"event_id": "VWAP_RECLAIM", "mock_note": "candidate reclaims VWAP"},
+    {"event_id": "LOCK_HOLD_START", "mock_note": "hold lock starts"},
+    {"event_id": "PROFIT_PROTECT_TRIGGER", "mock_note": "profit protection trigger"},
+    {"event_id": "EXIT_SIGNAL_RESEARCH_ONLY", "mock_note": "research-only exit state"}
+  ]
+}
+
