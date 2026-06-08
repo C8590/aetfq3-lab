@@ -1,0 +1,75 @@
+{
+  "document_type": "aetfq3_pytorch_intraday_execution_model_plan",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "boundary_statement": "本文件只用于 Lab research，不是 Stable 交易规则，不接 QMT，不生成 OrderIntent，不自动下单。",
+  "scope": {
+    "task_family": "F-0 intraday / 5m / PyTorch execution research",
+    "pytorch_role": "intraday execution timing research only",
+    "selects_etf": false,
+    "changes_stable_entry": false,
+    "changes_final_buy_action": false,
+    "changes_target_weight": false,
+    "changes_buy_or_probe_thresholds": false,
+    "training_allowed_in_phase_1": false,
+    "torchrun_allowed": false,
+    "model_save_allowed": false,
+    "checkpoint_save_allowed": false,
+    "qmt_allowed": false,
+    "order_intent_allowed": false,
+    "auto_trade_allowed": false
+  },
+  "targets": [
+    {"name": "p_buy_now", "type": "binary_probability", "meaning": "research probability that current bar is a candidate execution point"},
+    {"name": "p_wait_pullback", "type": "binary_probability", "meaning": "research probability to wait for a pullback"},
+    {"name": "p_cancel_buy", "type": "binary_probability", "meaning": "research probability to cancel buy observation"},
+    {"name": "p_three_day_positive", "type": "binary_probability", "meaning": "T+3 positive label probability"},
+    {"name": "expected_3d_return", "type": "regression", "meaning": "expected 3-day return outcome"},
+    {"name": "expected_3d_drawdown", "type": "regression", "meaning": "expected 3-day drawdown outcome"}
+  ],
+  "candidate_models": [
+    {"name": "logistic / MLP baseline", "purpose": "minimal mock tensor smoke baseline"},
+    {"name": "GRU", "purpose": "short sequence memory"},
+    {"name": "TCN", "purpose": "fixed-window temporal convolution"},
+    {"name": "small Transformer", "purpose": "light attention model for intraday windows"},
+    {"name": "temporal CNN", "purpose": "lightweight sequence convolution baseline"},
+    {"name": "tabular + sequence hybrid", "purpose": "combine candidate context and 5m sequence features"}
+  ],
+  "input_tensor": {
+    "shape": ["batch", "time_steps", "features"],
+    "time_steps": [6, 12, 24, 48],
+    "bar_interval": "5m",
+    "feature_groups": ["price", "volume", "vwap", "open range", "sector context", "candidate context"],
+    "forbidden_inputs": ["future_*", "*_label", "execution_return_*", "max_drawdown_3d", "post-hoc returns", "post-hoc drawdowns", "real execution outcomes"]
+  },
+  "split_rules": {
+    "chronological_split": true,
+    "walk_forward": true,
+    "random_shuffle_as_formal_evaluation": false,
+    "same_trade_date_can_leak_between_train_valid_for_same_scenario": false,
+    "group_split_when_needed": ["trade_date", "etf_code", "sector"]
+  },
+  "loss_design": {
+    "binary_classification_targets": ["p_buy_now", "p_cancel_buy"],
+    "regression_targets": ["expected_3d_return", "expected_3d_drawdown"],
+    "multi_task_loss_optional": true,
+    "class_imbalance_handling_optional": true,
+    "effectiveness_claim_allowed_from_mock_smoke": false
+  },
+  "evaluation_metrics": [
+    "AUC",
+    "accuracy",
+    "precision",
+    "recall",
+    "calibration",
+    "MAE",
+    "RMSE",
+    "drawdown error",
+    "decision bucket stability"
+  ],
+  "phase_gate": [
+    {"phase": 1, "name": "plan only", "reads_real_5m_data": false, "training_allowed": false, "checkpoint_allowed": false},
+    {"phase": 2, "name": "mock tensor smoke", "reads_real_5m_data": false, "training_allowed": false, "checkpoint_allowed": false},
+    {"phase": 3, "name": "real 5m dry validation", "requires_separate_approval": true, "stable_allowed": false, "qmt_allowed": false}
+  ]
+}
+

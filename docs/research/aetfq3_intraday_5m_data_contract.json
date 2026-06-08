@@ -1,0 +1,123 @@
+{
+  "document_type": "aetfq3_intraday_5m_data_contract",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "boundary_statement": "本文件只用于 Lab research，不是 Stable 交易规则，不接 QMT，不生成 OrderIntent，不自动下单。",
+  "scope": {
+    "task_family": "F-0 intraday / 5m / PyTorch execution research",
+    "lab_only": true,
+    "reads_real_5m_data": false,
+    "reads_tick_data": false,
+    "reads_orderbook_data": false,
+    "training_allowed": false,
+    "stable_effect_allowed": false,
+    "qmt_allowed": false,
+    "order_intent_allowed": false,
+    "advisory_package_generated": false
+  },
+  "sample_grain": {
+    "unit": "one ETF, one trade_date, one 5-minute bar",
+    "bar_interval": "5m",
+    "feature_time_rule": "features may use only current bar or earlier information",
+    "label_time_rule": "T+1/T+3 and post-entry outcomes are labels or outcomes only"
+  },
+  "field_groups": {
+    "primary_keys": [
+      {"name": "trade_date", "type": "date", "feature_allowed": false, "purpose": "chronological split and audit"},
+      {"name": "datetime", "type": "datetime", "feature_allowed": false, "purpose": "bar ordering and audit"},
+      {"name": "etf_code", "type": "string", "feature_allowed": false, "purpose": "instrument identity"},
+      {"name": "etf_name", "type": "string", "feature_allowed": false, "purpose": "instrument name"},
+      {"name": "sector", "type": "string", "feature_allowed": false, "purpose": "sector grouping and audit"},
+      {"name": "bar_index", "type": "integer", "feature_allowed": true, "purpose": "intraday elapsed bar position"},
+      {"name": "session_phase", "type": "enum", "feature_allowed": true, "allowed_values": ["open_range", "midday", "afternoon", "close_window"]}
+    ],
+    "ohlcv": [
+      {"name": "open", "type": "number", "feature_allowed": true},
+      {"name": "high", "type": "number", "feature_allowed": true},
+      {"name": "low", "type": "number", "feature_allowed": true},
+      {"name": "close", "type": "number", "feature_allowed": true},
+      {"name": "volume", "type": "number", "feature_allowed": true},
+      {"name": "amount", "type": "number", "feature_allowed": true},
+      {"name": "vwap", "type": "number", "feature_allowed": true}
+    ],
+    "previous_day_and_open_context": [
+      {"name": "prev_close", "type": "number", "feature_allowed": true},
+      {"name": "open_price", "type": "number", "feature_allowed": true},
+      {"name": "open_gap_pct", "type": "number", "feature_allowed": true},
+      {"name": "open_range_high", "type": "number", "feature_allowed": true},
+      {"name": "open_range_low", "type": "number", "feature_allowed": true},
+      {"name": "open_range_return", "type": "number", "feature_allowed": true}
+    ],
+    "intraday_features": [
+      {"name": "intraday_return", "type": "number", "feature_allowed": true},
+      {"name": "return_from_open", "type": "number", "feature_allowed": true},
+      {"name": "drawdown_from_open", "type": "number", "feature_allowed": true},
+      {"name": "high_from_open", "type": "number", "feature_allowed": true},
+      {"name": "pullback_to_vwap", "type": "number", "feature_allowed": true},
+      {"name": "distance_to_vwap", "type": "number", "feature_allowed": true},
+      {"name": "break_open_low", "type": "boolean", "feature_allowed": true},
+      {"name": "reclaim_vwap", "type": "boolean", "feature_allowed": true},
+      {"name": "volume_ratio_5m", "type": "number", "feature_allowed": true},
+      {"name": "amount_ratio_5m", "type": "number", "feature_allowed": true},
+      {"name": "volatility_5m", "type": "number", "feature_allowed": true},
+      {"name": "volatility_15m", "type": "number", "feature_allowed": true}
+    ],
+    "sector_context": [
+      {"name": "sector_top1_flag", "type": "boolean", "feature_allowed": true},
+      {"name": "sector_rank_at_open", "type": "integer", "feature_allowed": true},
+      {"name": "sector_momentum_lag1", "type": "number", "feature_allowed": true},
+      {"name": "sector_acceleration_lag1", "type": "number", "feature_allowed": true},
+      {"name": "sector_breadth_lag1", "type": "number", "feature_allowed": true},
+      {"name": "sector_overheat_lag1", "type": "number", "feature_allowed": true},
+      {"name": "sector_crowding_lag1", "type": "number", "feature_allowed": true}
+    ],
+    "candidate_context": [
+      {"name": "source_candidate_type", "type": "enum", "feature_allowed": true},
+      {"name": "v2_action_context", "type": "enum", "feature_allowed": true},
+      {"name": "lab_research_context", "type": "string", "feature_allowed": true},
+      {"name": "candidate_rank", "type": "integer", "feature_allowed": true},
+      {"name": "ranking_group_id", "type": "string", "feature_allowed": false, "purpose": "group leakage audit"}
+    ],
+    "labels_and_outcomes": [
+      {"name": "buy_now_label", "type": "binary", "feature_allowed": false},
+      {"name": "wait_pullback_label", "type": "binary", "feature_allowed": false},
+      {"name": "cancel_buy_label", "type": "binary", "feature_allowed": false},
+      {"name": "three_day_positive_label", "type": "binary", "feature_allowed": false},
+      {"name": "future_return_1d", "type": "number", "feature_allowed": false},
+      {"name": "future_return_3d", "type": "number", "feature_allowed": false},
+      {"name": "max_drawdown_3d", "type": "number", "feature_allowed": false},
+      {"name": "execution_return_to_close", "type": "number", "feature_allowed": false},
+      {"name": "execution_return_to_next_open", "type": "number", "feature_allowed": false},
+      {"name": "execution_drawdown_after_entry", "type": "number", "feature_allowed": false}
+    ]
+  },
+  "forbidden_feature_rules": [
+    "all future_* fields",
+    "all *_label fields",
+    "all execution_return_* fields",
+    "max_drawdown_3d",
+    "post-hoc return fields",
+    "post-hoc drawdown fields",
+    "real execution outcome fields",
+    "trade_date",
+    "datetime",
+    "etf_code",
+    "etf_name",
+    "sector",
+    "ranking_group_id"
+  ],
+  "leakage_controls": {
+    "current_bar_or_past_only": true,
+    "future_5m_bar_as_feature_allowed": false,
+    "cross_day_leakage_allowed": false,
+    "true_execution_return_as_feature_allowed": false,
+    "t_plus_1_or_t_plus_3_as_feature_allowed": false,
+    "chronological_split_required": true,
+    "walk_forward_allowed": true
+  },
+  "phase_gate": {
+    "phase_1": "plan and contract only; no data read",
+    "phase_2": "mock tensor smoke only",
+    "phase_3": "real 5m dry validation only after separate approval"
+  }
+}
+

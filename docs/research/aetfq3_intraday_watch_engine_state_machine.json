@@ -1,0 +1,140 @@
+{
+  "document_type": "aetfq3_intraday_watch_engine_state_machine",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "boundary_statement": "本文件只用于 Lab research，不是 Stable 交易规则，不接 QMT，不生成 OrderIntent，不自动下单。",
+  "defaults": {
+    "does_not_generate_order_intent": true,
+    "advisory_only": true,
+    "stable_effect_allowed": false,
+    "qmt_allowed": false,
+    "auto_trade_allowed": false
+  },
+  "states": [
+    {
+      "state_id": "WAIT_OPEN",
+      "zh_explanation": "等待开盘打印和开盘区间形成。",
+      "entry_conditions": ["candidate is queued for Lab watch", "open print is not yet confirmed"],
+      "exit_conditions": ["OPEN_PRINTED", "GAP_TOO_HIGH"],
+      "input_fields": ["trade_date", "etf_code", "open_price", "prev_close"],
+      "output_fields": ["watch_state", "open_gap_pct"],
+      "trading_action_allowed": false,
+      "advisory_only": true,
+      "may_generate_order_intent": false
+    },
+    {
+      "state_id": "OPEN_GAP_TOO_HIGH",
+      "zh_explanation": "开盘跳空过高，暂不追入。",
+      "entry_conditions": ["open_gap_pct exceeds research threshold", "event GAP_TOO_HIGH is observed"],
+      "exit_conditions": ["VWAP_PULLBACK", "RISK_CANCEL", "end of observation day"],
+      "input_fields": ["open_gap_pct", "open_range_high", "distance_to_vwap"],
+      "output_fields": ["watch_state", "cancel_reason"],
+      "trading_action_allowed": false,
+      "advisory_only": true,
+      "may_generate_order_intent": false
+    },
+    {
+      "state_id": "INTRADAY_CONFIRMING",
+      "zh_explanation": "盘中确认板块和 ETF 强度。",
+      "entry_conditions": ["open is printed", "candidate is not cancelled", "open range is forming"],
+      "exit_conditions": ["OPEN_RANGE_CONFIRMED", "SECTOR_CONFIRM", "SECTOR_FADE", "BREAK_OPEN_LOW"],
+      "input_fields": ["open_range_high", "open_range_low", "sector_momentum_lag1", "sector_breadth_lag1"],
+      "output_fields": ["watch_state", "confirm_score"],
+      "trading_action_allowed": false,
+      "advisory_only": true,
+      "may_generate_order_intent": false
+    },
+    {
+      "state_id": "PROBE_READY",
+      "zh_explanation": "研究意义上的试探准备状态。",
+      "entry_conditions": ["sector confirmation is present", "open low is not broken", "VWAP structure is acceptable"],
+      "exit_conditions": ["VWAP_PULLBACK", "BREAK_OPEN_LOW", "RISK_CANCEL", "LOCK_HOLD_START"],
+      "input_fields": ["reclaim_vwap", "distance_to_vwap", "sector_top1_flag", "candidate_rank"],
+      "output_fields": ["watch_state", "research_signal"],
+      "trading_action_allowed": false,
+      "advisory_only": true,
+      "may_generate_order_intent": false
+    },
+    {
+      "state_id": "WAIT_PULLBACK",
+      "zh_explanation": "等待靠近 VWAP 或开盘区间的回落。",
+      "entry_conditions": ["open gap is elevated", "price is far from VWAP", "execution timing is not favorable for research"],
+      "exit_conditions": ["VWAP_PULLBACK", "VWAP_RECLAIM", "BREAK_OPEN_LOW", "RISK_CANCEL"],
+      "input_fields": ["pullback_to_vwap", "distance_to_vwap", "volume_ratio_5m"],
+      "output_fields": ["watch_state", "pullback_status"],
+      "trading_action_allowed": false,
+      "advisory_only": true,
+      "may_generate_order_intent": false
+    },
+    {
+      "state_id": "CANCEL_BUY",
+      "zh_explanation": "研究视角取消买入观察。",
+      "entry_conditions": ["BREAK_OPEN_LOW", "SECTOR_FADE", "RISK_CANCEL", "structure invalidated"],
+      "exit_conditions": ["end of observation day", "manual review removes candidate"],
+      "input_fields": ["break_open_low", "sector_fade", "risk_flag"],
+      "output_fields": ["watch_state", "cancel_reason"],
+      "trading_action_allowed": false,
+      "advisory_only": true,
+      "may_generate_order_intent": false
+    },
+    {
+      "state_id": "HOLD_LOCKED",
+      "zh_explanation": "已进入持有锁定观察，仅研究持有状态。",
+      "entry_conditions": ["LOCK_HOLD_START"],
+      "exit_conditions": ["PROFIT_PROTECT_TRIGGER", "EXIT_SIGNAL_RESEARCH_ONLY", "end of observation day"],
+      "input_fields": ["intraday_return", "drawdown_from_open", "sector_momentum_lag1"],
+      "output_fields": ["watch_state", "hold_lock_reason"],
+      "trading_action_allowed": false,
+      "advisory_only": true,
+      "may_generate_order_intent": false
+    },
+    {
+      "state_id": "PROFIT_PROTECT",
+      "zh_explanation": "盈利保护观察状态。",
+      "entry_conditions": ["PROFIT_PROTECT_TRIGGER"],
+      "exit_conditions": ["EXIT_SIGNAL_RESEARCH_ONLY", "research structure recovers"],
+      "input_fields": ["high_from_open", "drawdown_from_open", "distance_to_vwap"],
+      "output_fields": ["watch_state", "protect_reason"],
+      "trading_action_allowed": false,
+      "advisory_only": true,
+      "may_generate_order_intent": false
+    },
+    {
+      "state_id": "EXIT_READY",
+      "zh_explanation": "研究意义上的退出准备状态。",
+      "entry_conditions": ["EXIT_SIGNAL_RESEARCH_ONLY", "profit protect escalates", "risk exit research signal is present"],
+      "exit_conditions": ["end of observation day", "manual review"],
+      "input_fields": ["break_open_low", "sector_fade", "drawdown_from_open"],
+      "output_fields": ["watch_state", "exit_research_reason"],
+      "trading_action_allowed": false,
+      "advisory_only": true,
+      "may_generate_order_intent": false
+    }
+  ],
+  "events": [
+    {"event_id": "OPEN_PRINTED", "description": "opening price is available"},
+    {"event_id": "GAP_TOO_HIGH", "description": "opening gap exceeds research threshold"},
+    {"event_id": "OPEN_RANGE_CONFIRMED", "description": "open range high and low are confirmed"},
+    {"event_id": "VWAP_PULLBACK", "description": "price pulls back toward VWAP"},
+    {"event_id": "VWAP_RECLAIM", "description": "price reclaims VWAP"},
+    {"event_id": "BREAK_OPEN_LOW", "description": "price breaks open range low"},
+    {"event_id": "SECTOR_CONFIRM", "description": "sector strength confirms"},
+    {"event_id": "SECTOR_FADE", "description": "sector strength fades"},
+    {"event_id": "RISK_CANCEL", "description": "research risk cancellation is triggered"},
+    {"event_id": "LOCK_HOLD_START", "description": "hold lock observation starts"},
+    {"event_id": "PROFIT_PROTECT_TRIGGER", "description": "profit protect observation is triggered"},
+    {"event_id": "EXIT_SIGNAL_RESEARCH_ONLY", "description": "research-only exit observation signal"}
+  ],
+  "planned_outputs_not_generated_by_this_task": [
+    "intraday_watch_snapshot.json",
+    "intraday_watch_events.csv",
+    "intraday_watch_strategy_report.md"
+  ],
+  "stable_boundary": {
+    "writes_stable_output": false,
+    "writes_stable_runtime": false,
+    "contains_live_order": false,
+    "contains_order_intent": false,
+    "final_action_change_allowed": false
+  }
+}
+

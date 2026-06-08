@@ -1,0 +1,183 @@
+{
+  "document_type": "aetfq3_intraday_execution_research_checklist",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "boundary_statement": "This checklist is for Lab research only; it is not a Stable trading rule, does not connect QMT, does not generate OrderIntent, and does not auto-trade.",
+  "checklist": {
+    "task_positioning": [
+      {
+        "check_id": "TASK_POSITIONING_LAB_ONLY",
+        "question": "Is the task explicitly scoped to aetfq3-lab / Lab and not V2.1 Stable?",
+        "required_answer_type": "boolean",
+        "pass_condition": "true",
+        "fail_action": "Stop and restate Lab boundary before continuing.",
+        "severity": "P1"
+      }
+    ],
+    "data_sources": [
+      {
+        "check_id": "DATA_NO_REAL_5M_PHASE_1",
+        "question": "Does phase 1 avoid reading real 5m, tick, orderbook, or market cache data?",
+        "required_answer_type": "boolean",
+        "pass_condition": "true",
+        "fail_action": "Stop and request a separate dry-validation task.",
+        "severity": "P1"
+      },
+      {
+        "check_id": "DATA_NO_DATA_OR_ARTIFACTS_COMMIT",
+        "question": "Are data/, artifacts/, output/, and .local_research_outputs/ excluded from commit?",
+        "required_answer_type": "boolean",
+        "pass_condition": "true",
+        "fail_action": "Remove generated data outputs from tracked changes before commit.",
+        "severity": "P1"
+      }
+    ],
+    "future_leakage": [
+      {
+        "check_id": "P0_NO_FUTURE_BAR_FEATURE",
+        "question": "Are future 5m bars excluded from current-bar features?",
+        "required_answer_type": "boolean",
+        "pass_condition": "true",
+        "fail_action": "P0 stop; rebuild features with current-bar-or-past-only rule.",
+        "severity": "P0"
+      },
+      {
+        "check_id": "P0_NO_TPLUS_RESULT_FEATURE",
+        "question": "Are T+1/T+3 returns and outcomes excluded from current features?",
+        "required_answer_type": "boolean",
+        "pass_condition": "true",
+        "fail_action": "P0 stop; move T+1/T+3 fields to labels/outcomes only.",
+        "severity": "P0"
+      },
+      {
+        "check_id": "FEATURE_FORBIDDEN_FIELD_SCAN",
+        "question": "Do feature columns exclude future_*, *_label, execution_return_*, max_drawdown_3d, and post-hoc outcome fields?",
+        "required_answer_type": "boolean",
+        "pass_condition": "true",
+        "fail_action": "Fail validation and regenerate feature contract.",
+        "severity": "P1"
+      }
+    ],
+    "stable_boundary": [
+      {
+        "check_id": "P0_NO_STABLE_OUTPUT_RUNTIME_WRITE",
+        "question": "Does the task avoid writing Stable output/ or runtime/?",
+        "required_answer_type": "boolean",
+        "pass_condition": "true",
+        "fail_action": "P0 stop; delete unauthorized outputs and report boundary breach.",
+        "severity": "P0"
+      },
+      {
+        "check_id": "P0_NO_FINAL_ACTION_OR_WEIGHT_CHANGE",
+        "question": "Does the task avoid changing final_buy_action, target_weight, and BUY / PROBE thresholds?",
+        "required_answer_type": "boolean",
+        "pass_condition": "true",
+        "fail_action": "P0 stop; revert unauthorized strategy changes.",
+        "severity": "P0"
+      }
+    ],
+    "qmt_boundary": [
+      {
+        "check_id": "P0_NO_REAL_QMT",
+        "question": "Does the task avoid connecting real QMT?",
+        "required_answer_type": "boolean",
+        "pass_condition": "true",
+        "fail_action": "P0 stop; disconnect QMT and report.",
+        "severity": "P0"
+      }
+    ],
+    "order_intent_boundary": [
+      {
+        "check_id": "P0_NO_ORDER_INTENT",
+        "question": "Does the task avoid generating OrderIntent?",
+        "required_answer_type": "boolean",
+        "pass_condition": "true",
+        "fail_action": "P0 stop; remove unauthorized OrderIntent artifacts.",
+        "severity": "P0"
+      },
+      {
+        "check_id": "P0_NO_AUTO_TRADE",
+        "question": "Does the task avoid automatic trading or live order creation?",
+        "required_answer_type": "boolean",
+        "pass_condition": "true",
+        "fail_action": "P0 stop; report live-trading boundary breach.",
+        "severity": "P0"
+      }
+    ],
+    "output_files": [
+      {
+        "check_id": "OUTPUT_DOCS_RESEARCH_ONLY",
+        "question": "Are committed outputs limited to small docs/research Markdown and JSON files?",
+        "required_answer_type": "boolean",
+        "pass_condition": "true",
+        "fail_action": "Remove unauthorized files from commit.",
+        "severity": "P1"
+      }
+    ],
+    "model_training_boundary": [
+      {
+        "check_id": "P0_NO_FORMAL_TRAINING_WITHOUT_AUTH",
+        "question": "Does the task avoid formal model training unless explicitly authorized?",
+        "required_answer_type": "boolean",
+        "pass_condition": "true",
+        "fail_action": "P0 stop; discard unauthorized training artifacts and report.",
+        "severity": "P0"
+      },
+      {
+        "check_id": "P0_NO_CHECKPOINT_WITHOUT_AUTH",
+        "question": "Does the task avoid saving checkpoints unless explicitly authorized?",
+        "required_answer_type": "boolean",
+        "pass_condition": "true",
+        "fail_action": "P0 stop; remove checkpoint files and report.",
+        "severity": "P0"
+      },
+      {
+        "check_id": "MODEL_NO_TORCHRUN_PHASE_1",
+        "question": "Does phase 1 avoid torchrun and any training command?",
+        "required_answer_type": "boolean",
+        "pass_condition": "true",
+        "fail_action": "Stop and convert to a separate mock-smoke task.",
+        "severity": "P1"
+      }
+    ],
+    "advisory_only": [
+      {
+        "check_id": "ADVISORY_NOT_GENERATED_PHASE_1",
+        "question": "Does this phase avoid generating a Lab advisory package?",
+        "required_answer_type": "boolean",
+        "pass_condition": "true",
+        "fail_action": "Remove lab_advisory outputs unless separately authorized.",
+        "severity": "P1"
+      },
+      {
+        "check_id": "NOT_TRADING_ADVICE",
+        "question": "Are research plans and metrics not interpreted as trading advice?",
+        "required_answer_type": "boolean",
+        "pass_condition": "true",
+        "fail_action": "Rewrite report language to remove trading recommendation claims.",
+        "severity": "P2"
+      }
+    ],
+    "required_final_answers": [
+      {
+        "check_id": "FINAL_LAB_REQUIRED_FIELDS",
+        "question": "Does the final response state research scope, data source, Stable bundle status, future leakage, Stable effect, advisory status, Stable recommendation, and minimum merge path if any?",
+        "required_answer_type": "boolean",
+        "pass_condition": "true",
+        "fail_action": "Revise final answer to include Lab required fields.",
+        "severity": "P1"
+      }
+    ]
+  },
+  "p0_blockers": [
+    "Using future 5m bars as current features",
+    "Using T+1/T+3 results as current features",
+    "Generating OrderIntent",
+    "Connecting real QMT",
+    "Automatic order placement",
+    "Writing Stable output/runtime",
+    "Changing final_buy_action / target_weight / BUY or PROBE thresholds",
+    "Formal model training without authorization",
+    "Saving checkpoint without authorization"
+  ]
+}
+
