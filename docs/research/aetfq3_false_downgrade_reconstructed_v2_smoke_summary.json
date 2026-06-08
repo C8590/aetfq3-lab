@@ -1,0 +1,165 @@
+{
+  "phase": "A false downgrade reconstructed v2 Lab-only named no-save baseline smoke summary",
+  "reconstructed_status": {
+    "task_boundary": "aetfq3-lab / Lab, not V2.1 Stable",
+    "diagnostic_type": "Lab-only reconstructed v2 no-save smoke",
+    "ml_action_source": "deterministic reconstructed ML action v2",
+    "selected_variant": "balanced_past_only",
+    "rulebook": "replay-equivalent audit artifact",
+    "recovery_status": "reconstructed_from_csv_replay_equivalent",
+    "true_historical_available": false,
+    "true_ml_sim_available": false,
+    "not_true_historical": true,
+    "not_true_ml_sim": true,
+    "not_stable": true,
+    "not_advisory": true,
+    "not_trading_signal": true
+  },
+  "sample_summary": {
+    "rows": 37,
+    "date_range": {
+      "start": "2026-01-06",
+      "end": "2026-04-30"
+    },
+    "etf_count": 8,
+    "sector_count": 3,
+    "feature_count": 23,
+    "train_count": 28,
+    "valid_count": 9,
+    "target": "false_downgrade_3d",
+    "split_method": "chronological",
+    "group_leakage_check": "passed"
+  },
+  "rulebook_summary": {
+    "rulebook_version": "v2.recovered_replay_equivalent.1",
+    "rulebook_recovery_passed": true,
+    "selfcheck_passed": true,
+    "selected_variant": "balanced_past_only",
+    "balanced_past_only_legal_candidates": 37,
+    "strict_current_legal_candidates": 12,
+    "exploratory_past_only_legal_candidates": 56,
+    "balanced_past_only_replay_mismatch_count": 0,
+    "uses_future_labels": false,
+    "not_true_ml_sim": true,
+    "risk_note": "Recovered thresholds are replay-equivalent from CSV action boundaries, not proof of true historical ML_SIM source code."
+  },
+  "validation_summary": {
+    "base_dry_validation": "passed",
+    "feature_dry_validation": "passed",
+    "rulebook_recovery": "passed",
+    "review_recommendation": "allow_no_save_smoke",
+    "baseline_smoke": "passed",
+    "reader_boundary_passed": true,
+    "baseline_smoke_allowed": true,
+    "remaining_risks": [
+      "reconstructed_rule_based_not_true_ml_sim",
+      "not_true_historical",
+      "not_for_formal_training"
+    ]
+  },
+  "model_smoke_metrics": [
+    {
+      "model": "numpy_logistic",
+      "report_model_name": "numpy_logistic_regression_smoke",
+      "status": "passed",
+      "accuracy": 0.1111111111111111,
+      "roc_auc": 0.0,
+      "log_loss": 1.6801540231371865,
+      "train_count": 28,
+      "valid_count": 9,
+      "no_save": true,
+      "model_saved": false,
+      "checkpoint_saved": false
+    },
+    {
+      "model": "lightgbm",
+      "report_model_name": "lightgbm_smoke",
+      "status": "passed",
+      "accuracy": 0.6666666666666666,
+      "roc_auc": 0.5,
+      "log_loss": 0.6555098120860163,
+      "train_count": 28,
+      "valid_count": 9,
+      "no_save": true,
+      "model_saved": false,
+      "checkpoint_saved": false
+    },
+    {
+      "model": "catboost",
+      "report_model_name": "catboost_smoke",
+      "status": "passed",
+      "accuracy": 0.5555555555555556,
+      "roc_auc": 0.4444444444444444,
+      "log_loss": 0.7014873814149075,
+      "train_count": 28,
+      "valid_count": 9,
+      "no_save": true,
+      "model_saved": false,
+      "checkpoint_saved": false
+    },
+    {
+      "model": "xgboost",
+      "report_model_name": "xgboost_smoke",
+      "status": "passed",
+      "accuracy": 0.5555555555555556,
+      "roc_auc": 0.3333333333333333,
+      "log_loss": 0.8087322612603506,
+      "train_count": 28,
+      "valid_count": 9,
+      "no_save": true,
+      "model_saved": false,
+      "checkpoint_saved": false
+    }
+  ],
+  "metrics_interpretation": "Metrics only validate smoke/code path and do not prove model effectiveness.",
+  "naming_contract": {
+    "output_prefix": "false_downgrade_reconstructed_v2",
+    "previous_wrong_prefix": "sector_internal_ranking",
+    "sector_internal_ranking_prefix_used": false,
+    "report_metadata_contains": [
+      "task_name",
+      "output_prefix",
+      "sample_type",
+      "target_label"
+    ],
+    "task_name": "false_downgrade_reconstructed_v2",
+    "sample_type": "false_downgrade",
+    "target_label": "false_downgrade_3d"
+  },
+  "boundary": {
+    "no_stable": true,
+    "no_qmt": true,
+    "no_order_intent": true,
+    "no_output": true,
+    "no_lab_advisory": true,
+    "no_model_save": true,
+    "no_checkpoint": true,
+    "no_formal_training": true,
+    "no_trading_advice": true,
+    "not_stable_input": true
+  },
+  "decision": {
+    "a_reconstructed_v2_no_save_smoke_completed": true,
+    "enter_stable": false,
+    "advisory_generated": false,
+    "formal_training": false,
+    "continue_requires": [
+      "true historical V2/ML_SIM",
+      "or larger Lab reconstructed sample"
+    ]
+  },
+  "next_steps": [
+    "Recover true historical V2/ML_SIM",
+    "Expand reconstructed sample while keeping downgraded boundary",
+    "Run more Lab-only smoke",
+    "Do not enter Stable"
+  ],
+  "stable_allowed": false,
+  "qmt_allowed": false,
+  "order_intent_allowed": false,
+  "advisory_package_generated": false,
+  "model_saved": false,
+  "checkpoint_saved": false,
+  "true_historical_available": false,
+  "true_ml_sim_available": false
+}
