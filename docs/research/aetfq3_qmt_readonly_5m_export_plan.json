@@ -1,0 +1,172 @@
+{
+  "document_type": "aetfq3_qmt_readonly_5m_export_plan",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "boundary_statement": "本文件只用于 Lab research，不是 Stable 交易规则，不接 QMT，不生成 OrderIntent，不自动下单。",
+  "phase": "F-3 QMT readonly/export 5m data acquisition plan",
+  "task_positioning": {
+    "lab_only": true,
+    "not_qmt_integration": true,
+    "not_trading_execution": true,
+    "connects_real_qmt": false,
+    "calls_qmt_api": false,
+    "reads_real_qmt_data": false,
+    "exports_real_5m_data": false
+  },
+  "data_targets": [
+    "5m OHLCV",
+    "vwap or auditable amount/volume calculation",
+    "trade_date",
+    "datetime",
+    "etf_code",
+    "etf_name",
+    "sector",
+    "prev_close",
+    "open_price"
+  ],
+  "allowed_modes": [
+    "readonly",
+    "mock",
+    "export_only"
+  ],
+  "forbidden_modes": [
+    "trade",
+    "live_order",
+    "submit_order",
+    "cancel_order",
+    "account query with secrets",
+    "position export without separate authorization and desensitization",
+    "fund export without separate authorization and desensitization"
+  ],
+  "export_directory_policy": {
+    "allowed_examples": [
+      ".local_artifact_backup/aetfq3_lab_sources/intraday_5m_qmt_export/",
+      ".local_research_outputs/aetfq3_lab/intraday_dry_validation_inputs/"
+    ],
+    "forbidden_locations": [
+      "output/",
+      "Stable runtime/",
+      "Stable output/",
+      "Git tracked directories",
+      "data/ unless separately authorized and not committed",
+      "artifacts/ unless separately authorized and not committed"
+    ],
+    "must_be_committed": false,
+    "requires_human_authorization": true
+  },
+  "file_format": {
+    "recommended_formats": [
+      "CSV",
+      "parquet"
+    ],
+    "partitioning": [
+      "one file per trade_date",
+      "one file per ETF"
+    ],
+    "requires_manifest": true,
+    "requires_hash": true,
+    "hash_algorithm_recommended": "SHA256",
+    "requires_source_note": true,
+    "source_note_fields": [
+      "manual_exporter",
+      "export_time",
+      "market_data_source",
+      "qmt_mode",
+      "authorization_scope"
+    ]
+  },
+  "manifest_requirements": {
+    "inherits_from": "aetfq3_intraday_dry_validation_manifest_v1",
+    "required_values": {
+      "sample_type": "intraday_5m",
+      "source_kind": "qmt_export_5m_bar",
+      "uses_qmt_export": true,
+      "qmt_related": true,
+      "qmt_mode_allowed": [
+        "readonly",
+        "mock",
+        "export_only"
+      ],
+      "contains_secret": false,
+      "contains_live_order": false,
+      "contains_order_intent": false,
+      "training_allowed": false,
+      "stable_effect_allowed": false,
+      "affects_stable_trading": false,
+      "advisory_only": true,
+      "allowed_for": [
+        "dry_validation_only"
+      ]
+    },
+    "must_fill": [
+      "sample_path",
+      "sample_path_type",
+      "source_description",
+      "generated_at",
+      "human_authorized",
+      "authorized_by",
+      "authorization_scope",
+      "qmt_export_path",
+      "data_time_start",
+      "data_time_end",
+      "row_count",
+      "etf_count",
+      "trade_date_count",
+      "bar_count_per_etf_day",
+      "feature_columns",
+      "forbidden_feature_columns",
+      "has_future_leakage_check",
+      "review_checklist_passed",
+      "notes"
+    ]
+  },
+  "p0_blockers": [
+    "qmt_mode is not readonly/mock/export_only",
+    "account/fund/position/order/fill/secret/live order appears",
+    "OrderIntent appears",
+    "writes output/ or Stable runtime",
+    "human authorization is missing",
+    "feature contains future bar or future label",
+    "connects real QMT",
+    "automatic order placement",
+    "changes final_buy_action / target_weight / BUY or PROBE thresholds"
+  ],
+  "manual_workflow": [
+    "Human opens QMT or market data source.",
+    "Human manually exports 5m bars into an ignored directory.",
+    "Human generates file hashes.",
+    "Human fills manifest and source note.",
+    "Codex performs intake/dry validation only.",
+    "Codex must not place orders or connect trading APIs."
+  ],
+  "next_task_card": {
+    "title": "人工导出 5分钟K 后的 manifest 填写 + intake-only 检查任务",
+    "inputs": [
+      "ignored export directory",
+      "manifest.json",
+      "source_note.md",
+      "hashes.sha256"
+    ],
+    "allowed_actions": [
+      "manifest schema validation",
+      "hash validation",
+      "field check",
+      "future leakage precheck",
+      "QMT/Stable/OrderIntent boundary check"
+    ],
+    "forbidden_actions": [
+      "connect QMT",
+      "read account/fund/position/order/fill data",
+      "train model",
+      "generate OrderIntent",
+      "write Stable",
+      "write output/"
+    ]
+  },
+  "stable_allowed": false,
+  "qmt_trade_allowed": false,
+  "order_intent_allowed": false,
+  "model_training_allowed": false,
+  "advisory_package_allowed": false,
+  "auto_trade_allowed": false
+}
+
