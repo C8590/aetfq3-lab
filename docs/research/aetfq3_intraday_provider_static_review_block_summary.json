@@ -1,0 +1,114 @@
+{
+  "document_type": "aetfq3_intraday_provider_static_review_block_summary",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "boundary_statement": "Lab-only provider static review block summary; not real QMT integration, not trading execution, not Stable change.",
+  "phase": "F-7 intraday provider static review blocked before F-8",
+  "review_summary": {
+    "candidates_reviewed": 17,
+    "safe_real_5m_provider_candidates": 0,
+    "unsafe_candidates": 9,
+    "not_intraday_provider": 8,
+    "requires_manual_review": 0,
+    "source_reports": [
+      ".local_research_outputs/aetfq3_lab/intraday_provider_static_review/provider_static_review.md",
+      ".local_research_outputs/aetfq3_lab/intraday_provider_static_review/provider_static_review.json",
+      ".local_research_outputs/aetfq3_lab/intraday_provider_static_review/provider_candidate_inventory.csv"
+    ],
+    "reference_docs": [
+      "docs/research/aetfq3_intraday_market_data_adapter.md",
+      "docs/research/aetfq3_intraday_market_data_adapter.json",
+      "docs/research/aetfq3_intraday_real_provider_template.md",
+      "docs/research/aetfq3_intraday_real_provider_template.json",
+      "docs/research/aetfq3_qmt_readonly_5m_export_plan.md",
+      "docs/research/aetfq3_qmt_readonly_5m_export_plan.json",
+      "docs/research/aetfq3_intraday_real_data_source_inventory.md",
+      "docs/research/aetfq3_intraday_real_data_source_inventory.json"
+    ],
+    "f_direction_status": {
+      "F-0": "completed",
+      "F-1": "completed",
+      "F-2": "completed",
+      "F-3": "completed",
+      "F-4": "blocked because no safe adapter",
+      "F-5": "completed",
+      "F-6": "completed",
+      "F-7": "blocked because no safe real provider"
+    }
+  },
+  "blocker_reasons": [
+    "QMT adapter / readonly smoke / mock broker contain account / positions / orders / trades or order paths",
+    "data/quotes.py is quote snapshot, not 5m sequence",
+    "data/daily_export.py is daily, not 5m",
+    "No candidate exposes a verified real 5m readonly/export_only provider interface without account/order/trade/secret risk"
+  ],
+  "unsafe_candidates_summary": {
+    "count": 9,
+    "common_forbidden_categories": [
+      "account",
+      "positions",
+      "orders",
+      "trades",
+      "OrderIntent",
+      "submit_or_cancel",
+      "buy_or_sell",
+      "cash_or_fund",
+      "token_or_secret"
+    ],
+    "blocked_candidate_types": [
+      "known_qmt_execution_adapter",
+      "known_qmt_readonly_account_order_trade_smoke",
+      "execution_or_broker_contract",
+      "intraday_execution_placeholder",
+      "intraday_research_or_mock_with_forbidden_order_intent_hits"
+    ],
+    "not_intraday_provider_count": 8
+  },
+  "decision": {
+    "f8_real_provider_wrapper_allowed": false,
+    "call_existing_qmt_adapter_allowed": false,
+    "use_qmt_readonly_smoke_allowed": false,
+    "use_mock_broker_allowed": false,
+    "real_intraday_dry_validation_allowed": false,
+    "stable_promotion_allowed": false,
+    "reason": "F-7 found zero safe real 5m provider candidates."
+  },
+  "recovery_requirements": [
+    "independent provider file",
+    "only 5m market data methods",
+    "no account / position / order / trade",
+    "no submit / cancel",
+    "no secret",
+    "safety scan safe=true",
+    "human authorization",
+    "output only ignored directory"
+  ],
+  "boundary": {
+    "access_mode": "READ_ONLY",
+    "final_action_change_allowed": false,
+    "contains_live_order": false,
+    "contains_secret": false,
+    "requires_human_review": true,
+    "promotion_gate_required": true,
+    "no_stable": true,
+    "no_qmt_trading": true,
+    "no_order_intent": true,
+    "no_output_dir": true,
+    "no_lab_advisory": true,
+    "no_model_training": true,
+    "no_trading_advice": true,
+    "connects_qmt": false,
+    "calls_qmt_api": false,
+    "exports_real_5m": false,
+    "reads_account_position_order_trade": false
+  },
+  "next_steps": [
+    "人工提供独立 provider 文件后重跑 F-7",
+    "或继续 synthetic/mock intraday dry validation tooling",
+    "不进入 Stable"
+  ],
+  "stable_allowed": false,
+  "qmt_trade_allowed": false,
+  "order_intent_allowed": false,
+  "real_provider_enabled": false,
+  "advisory_package_generated": false
+}
