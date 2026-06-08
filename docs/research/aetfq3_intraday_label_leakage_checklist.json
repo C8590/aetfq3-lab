@@ -1,0 +1,131 @@
+{
+  "document_type": "aetfq3_intraday_label_leakage_checklist",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "phase": "F public intraday supervised label leakage checklist",
+  "purpose": "Define P0 leakage checks before any supervised intraday dry validation.",
+  "lab_only": true,
+  "checklist_scope": {
+    "generates_real_labels": false,
+    "reads_more_real_market_data": false,
+    "runs_training": false,
+    "uses_qmt": false,
+    "generates_order_intent": false,
+    "affects_stable": false
+  },
+  "label_columns": [
+    "buy_now_label",
+    "wait_pullback_label",
+    "cancel_buy_label",
+    "three_day_positive_label"
+  ],
+  "outcome_columns": [
+    "future_return_1d",
+    "future_return_3d",
+    "max_drawdown_3d",
+    "execution_return_to_close",
+    "execution_return_to_next_open",
+    "execution_drawdown_after_entry",
+    "expected_3d_return",
+    "expected_3d_drawdown"
+  ],
+  "p0_checks": [
+    {
+      "id": "label_column_in_feature_columns",
+      "severity": "P0",
+      "description": "Any label column appears in feature_columns.",
+      "block_when": "intersection(feature_columns, label_columns) is not empty"
+    },
+    {
+      "id": "future_outcome_in_feature_columns",
+      "severity": "P0",
+      "description": "Any future outcome or outcome-derived field appears in feature_columns.",
+      "block_when": "intersection(feature_columns, outcome_columns) is not empty or any feature starts with future_"
+    },
+    {
+      "id": "current_bar_feature_uses_future_bar",
+      "severity": "P0",
+      "description": "A feature for the current bar depends on a later bar.",
+      "block_when": "feature metadata declares lookahead, negative lag, future window, post-entry return, or outcome-derived source"
+    },
+    {
+      "id": "label_generated_without_sufficient_future_window",
+      "severity": "P0",
+      "description": "A label is generated when the required future window is unavailable.",
+      "block_when": "label_status is not insufficient_future_window for rows with missing horizon data"
+    },
+    {
+      "id": "synthetic_label_marked_as_real",
+      "severity": "P0",
+      "description": "Synthetic or mock labels are marked as real labels.",
+      "block_when": "label_source_kind=synthetic_mock and any real_label flag is true"
+    },
+    {
+      "id": "qmt_fill_or_real_trade_result_used_as_feature",
+      "severity": "P0",
+      "description": "QMT fills or real trade results are used as model features.",
+      "block_when": "feature metadata references qmt_fill, real_fill, account, position, order, trade, execution_result, or real_trade_result"
+    },
+    {
+      "id": "supervised_training_allowed_without_authorization",
+      "severity": "P0",
+      "description": "Supervised training is allowed before explicit authorization.",
+      "block_when": "supervised_training_allowed=true and label_generation_authorized is not true"
+    },
+    {
+      "id": "order_intent_generated",
+      "severity": "P0",
+      "description": "Any OrderIntent is generated or declared present.",
+      "block_when": "contains_order_intent=true or order_intent_generated=true"
+    },
+    {
+      "id": "stable_affected",
+      "severity": "P0",
+      "description": "Stable runtime, outputs, or trading behavior are affected.",
+      "block_when": "stable_effect_allowed=true or affects_stable_trading=true or writes Stable runtime/output"
+    }
+  ],
+  "required_manifest_fields": [
+    "label_generated",
+    "label_source_kind",
+    "label_horizon",
+    "label_generation_method",
+    "label_columns",
+    "outcome_columns",
+    "label_status_column",
+    "insufficient_future_window_policy",
+    "feature_label_overlap_check",
+    "label_generation_authorized",
+    "supervised_training_allowed"
+  ],
+  "required_safe_values": {
+    "feature_label_overlap_check": true,
+    "supervised_training_allowed": false,
+    "contains_order_intent": false,
+    "order_intent_generated": false,
+    "qmt_allowed": false,
+    "stable_effect_allowed": false,
+    "affects_stable_trading": false
+  },
+  "boundary": {
+    "access_mode": "READ_ONLY",
+    "final_action_change_allowed": false,
+    "contains_live_order": false,
+    "contains_secret": false,
+    "requires_human_review": true,
+    "promotion_gate_required": true,
+    "no_stable": true,
+    "no_qmt": true,
+    "no_order_intent": true,
+    "no_output": true,
+    "no_lab_advisory": true,
+    "no_model_training": true,
+    "no_checkpoint": true,
+    "no_trading_advice": true
+  },
+  "stable_allowed": false,
+  "qmt_allowed": false,
+  "order_intent_allowed": false,
+  "model_training_allowed": false,
+  "checkpoint_allowed": false,
+  "advisory_package_generated": false
+}

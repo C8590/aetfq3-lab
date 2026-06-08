@@ -1,0 +1,190 @@
+{
+  "document_type": "aetfq3_intraday_label_outcome_design",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "boundary_statement": "Lab-only supervised label/outcome design; no real label file generation, no training, no QMT, no OrderIntent, no Stable effect.",
+  "phase": "F public intraday supervised label / outcome design",
+  "current_prerequisites": {
+    "public_5m_export_rows": 432,
+    "no_label_tensor_validation": "passed",
+    "batch_size": 9,
+    "time_steps": 48,
+    "feature_count": 10,
+    "qmt_used": false,
+    "stable_bundle_used": false,
+    "labels_available": false
+  },
+  "labels": [
+    {
+      "name": "buy_now_label",
+      "type": "binary_label",
+      "feature_allowed": false,
+      "generation_rule": "derived only from data after the current bar"
+    },
+    {
+      "name": "wait_pullback_label",
+      "type": "binary_label",
+      "feature_allowed": false,
+      "generation_rule": "derived only from data after the current bar"
+    },
+    {
+      "name": "cancel_buy_label",
+      "type": "binary_label",
+      "feature_allowed": false,
+      "generation_rule": "derived only from data after the current bar"
+    },
+    {
+      "name": "three_day_positive_label",
+      "type": "binary_label",
+      "feature_allowed": false,
+      "generation_rule": "derived from future three-day or equivalent future-window outcome"
+    }
+  ],
+  "outcomes": [
+    {"name": "future_return_1d", "type": "numeric_outcome", "feature_allowed": false},
+    {"name": "future_return_3d", "type": "numeric_outcome", "feature_allowed": false},
+    {"name": "max_drawdown_3d", "type": "numeric_outcome", "feature_allowed": false},
+    {"name": "execution_return_to_close", "type": "numeric_outcome", "feature_allowed": false},
+    {"name": "execution_return_to_next_open", "type": "numeric_outcome", "feature_allowed": false},
+    {"name": "execution_drawdown_after_entry", "type": "numeric_outcome", "feature_allowed": false},
+    {"name": "expected_3d_return", "type": "outcome_derived_expectation", "feature_allowed": false},
+    {"name": "expected_3d_drawdown", "type": "outcome_derived_expectation", "feature_allowed": false}
+  ],
+  "label_generation_principles": [
+    "labels/outcomes can only be generated from data after the current bar",
+    "labels/outcomes must never enter feature_columns",
+    "current bar features may only use the current bar or earlier data",
+    "label_horizon must be recorded for each bar_index",
+    "missing future windows must set label_status=insufficient_future_window",
+    "fake labels must not be filled",
+    "synthetic labels must not be marked as real",
+    "QMT fill returns must not be used as features",
+    "real trade results must not be used as features",
+    "the label design is not trading advice"
+  ],
+  "manifest_extension": {
+    "label_generated": {
+      "type": "boolean",
+      "required": true,
+      "current_design_value": false
+    },
+    "label_source_kind": {
+      "type": "enum",
+      "required": true,
+      "allowed_values": [
+        "none",
+        "human_exported_future_window",
+        "public_future_window",
+        "synthetic_mock"
+      ],
+      "rule": "synthetic_mock must not be marked as real"
+    },
+    "label_horizon": {
+      "type": "object_or_column",
+      "required": true,
+      "rule": "must record the horizon for each bar_index"
+    },
+    "label_generation_method": {
+      "type": "string",
+      "required": true,
+      "rule": "must be versioned or otherwise auditable"
+    },
+    "label_columns": {
+      "type": "array[string]",
+      "required": true,
+      "value": [
+        "buy_now_label",
+        "wait_pullback_label",
+        "cancel_buy_label",
+        "three_day_positive_label"
+      ]
+    },
+    "outcome_columns": {
+      "type": "array[string]",
+      "required": true,
+      "value": [
+        "future_return_1d",
+        "future_return_3d",
+        "max_drawdown_3d",
+        "execution_return_to_close",
+        "execution_return_to_next_open",
+        "execution_drawdown_after_entry",
+        "expected_3d_return",
+        "expected_3d_drawdown"
+      ]
+    },
+    "label_status_column": {
+      "type": "string",
+      "required": true,
+      "recommended_value": "label_status"
+    },
+    "insufficient_future_window_policy": {
+      "type": "string",
+      "required": true,
+      "recommended_value": "set label_status=insufficient_future_window and exclude from supervised target"
+    },
+    "feature_label_overlap_check": {
+      "type": "boolean",
+      "required": true,
+      "must_be": true
+    },
+    "label_generation_authorized": {
+      "type": "boolean",
+      "required": true,
+      "must_be_true_for_real_label_generation": true
+    },
+    "supervised_training_allowed": {
+      "type": "boolean",
+      "required": true,
+      "current_design_value": false,
+      "must_be": false
+    }
+  },
+  "leakage_checker_design": {
+    "input": "supervised intraday manifest plus optional schema metadata",
+    "output": "p0_blockers, p1_warnings, overlap details, boundary flags",
+    "required_p0_checks": [
+      "label column in feature_columns",
+      "future outcome in feature_columns",
+      "current bar feature uses future bar",
+      "label generated without sufficient future window",
+      "synthetic label marked as real",
+      "QMT fill/real trade result used as feature",
+      "supervised_training_allowed=true without authorization",
+      "OrderIntent generated",
+      "Stable affected"
+    ]
+  },
+  "boundary": {
+    "access_mode": "READ_ONLY",
+    "final_action_change_allowed": false,
+    "contains_live_order": false,
+    "contains_secret": false,
+    "requires_human_review": true,
+    "promotion_gate_required": true,
+    "no_real_label_file_generated": true,
+    "no_more_real_market_data_read": true,
+    "no_stable": true,
+    "no_qmt": true,
+    "no_order_intent": true,
+    "no_output": true,
+    "no_lab_advisory": true,
+    "no_model_training": true,
+    "no_torchrun": true,
+    "no_checkpoint": true,
+    "no_model_save": true,
+    "no_trading_advice": true
+  },
+  "next_steps": [
+    "Implement a manifest-only label leakage checker using this checklist.",
+    "Require future-window data, hash, source note, manifest, and human authorization before any real label generation.",
+    "Run intake-only and leakage-only checks before any supervised dry validation.",
+    "Do not enter Stable."
+  ],
+  "stable_allowed": false,
+  "qmt_allowed": false,
+  "order_intent_allowed": false,
+  "model_training_allowed": false,
+  "checkpoint_allowed": false,
+  "real_label_file_generated": false,
+  "advisory_package_generated": false
+}
