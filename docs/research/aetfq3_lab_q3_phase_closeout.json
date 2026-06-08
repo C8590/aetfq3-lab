@@ -1,0 +1,173 @@
+{
+  "document_type": "aetfq3_lab_q3_phase_closeout",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "boundary_statement": "Q3 Lab phase closeout only; not Stable, not advisory, no QMT, no OrderIntent, no model training, no trading advice.",
+  "phase": "Q3 Lab A/E/F phase closeout",
+  "generated_for": "aetfq3-lab",
+  "not_v21_stable": true,
+  "overall_decision": {
+    "enter_stable": false,
+    "generate_advisory_package": false,
+    "connect_qmt": false,
+    "generate_order_intent": false,
+    "modify_final_buy_action": false,
+    "modify_target_weight": false,
+    "modify_buy_probe_thresholds": false,
+    "trading_advice": false
+  },
+  "line_summaries": {
+    "E_sector_internal_ranking": {
+      "status": "completed_lab_only_engineering_chain",
+      "completed_items": [
+        "small sample smoke",
+        "expanded sample smoke",
+        "multi-window smoke",
+        "replay config"
+      ],
+      "evidence_docs": [
+        "docs/research/aetfq3_sector_internal_ranking_baseline_smoke_summary.md",
+        "docs/research/aetfq3_sector_internal_ranking_baseline_smoke_summary.json",
+        "docs/research/aetfq3_sector_internal_ranking_expanded_smoke_summary.md",
+        "docs/research/aetfq3_sector_internal_ranking_expanded_smoke_summary.json",
+        "docs/research/aetfq3_sector_internal_ranking_window_smoke_summary.md",
+        "docs/research/aetfq3_sector_internal_ranking_window_smoke_summary.json",
+        "docs/research/aetfq3_sector_internal_ranking_replay_config.md",
+        "docs/research/aetfq3_sector_internal_ranking_replay_config.json"
+      ],
+      "conclusion": "Engineering chain is usable for Lab-only validation, but it is not trading advice and must not enter Stable.",
+      "stable_allowed": false,
+      "advisory_package_generated": false
+    },
+    "A_false_downgrade": {
+      "status": "A-R completed, A-H blocked",
+      "completed_items": [
+        "reconstructed v2 Lab-only no-save smoke",
+        "reconstructed rulebook / replay-equivalent audit",
+        "report reader boundary check"
+      ],
+      "blocked_items": [
+        "true historical V2 / ML_SIM",
+        "true false downgrade historical evidence"
+      ],
+      "evidence_docs": [
+        "docs/research/aetfq3_false_downgrade_reconstructed_v2_smoke_summary.md",
+        "docs/research/aetfq3_false_downgrade_reconstructed_v2_smoke_summary.json",
+        "docs/research/aetfq3_false_downgrade_reconstructed_block_summary.md",
+        "docs/research/aetfq3_false_downgrade_reconstructed_block_summary.json"
+      ],
+      "conclusion": "Reconstructed v2 smoke is complete, but it is not true historical ML_SIM evidence and cannot be used as real ML false-downgrade proof.",
+      "true_historical_available": false,
+      "true_ml_sim_available": false,
+      "stable_allowed": false,
+      "advisory_package_generated": false
+    },
+    "F_intraday_5m_pytorch": {
+      "status": "synthetic_chain_completed_real_intraday_blocked",
+      "completed_items": [
+        "F-0 through F-9 stage docs/tools",
+        "mock/synthetic dry validation tooling",
+        "manifest intake checker",
+        "5m schema validator",
+        "forbidden feature scan",
+        "tensor shape dry validation",
+        "Intraday Watch state-machine dry-run",
+        "dry validation orchestrator",
+        "report reader"
+      ],
+      "test_results": {
+        "specified_tests": "17 passed",
+        "tests_lab": "118 passed, 2 warnings"
+      },
+      "smoke_results": {
+        "orchestrator": "passed",
+        "reader": "passed",
+        "no_order_intent": true,
+        "no_qmt": true,
+        "no_stable": true,
+        "no_checkpoint": true,
+        "no_model_save": true
+      },
+      "real_provider_review": {
+        "candidates_reviewed": 17,
+        "safe_real_5m_provider_candidates": 0,
+        "unsafe_candidates": 9,
+        "not_intraday_provider": 8,
+        "requires_manual_review": 0
+      },
+      "current_blockers": [
+        "no safe real 5m provider",
+        "no human-exported 5m data package"
+      ],
+      "evidence_docs": [
+        "docs/research/aetfq3_intraday_synthetic_dry_validation.md",
+        "docs/research/aetfq3_intraday_synthetic_dry_validation.json",
+        "docs/research/aetfq3_intraday_synthetic_dry_validation_summary.md",
+        "docs/research/aetfq3_intraday_synthetic_dry_validation_summary.json",
+        "docs/research/aetfq3_intraday_provider_static_review_block_summary.md",
+        "docs/research/aetfq3_intraday_provider_static_review_block_summary.json"
+      ],
+      "conclusion": "F synthetic chain is complete, but real intraday remains blocked because no safe real 5m provider exists.",
+      "stable_allowed": false,
+      "advisory_package_generated": false
+    }
+  },
+  "current_unified_blockers": [
+    "missing real data",
+    "missing true historical V2 / ML_SIM",
+    "missing safe real 5m provider",
+    "missing human-exported 5m data package"
+  ],
+  "next_stage_requirements": [
+    "true historical V2 / ML_SIM evidence package",
+    "independent safe real 5m provider file",
+    "or human exported 5m package",
+    "manifest + hash + source_note",
+    "intake-only before dry validation",
+    "F-7 static review before any real provider wrapper"
+  ],
+  "boundary": {
+    "access_mode": "READ_ONLY",
+    "final_action_change_allowed": false,
+    "contains_live_order": false,
+    "contains_secret": false,
+    "requires_human_review": true,
+    "promotion_gate_required": true,
+    "stable_allowed": false,
+    "qmt_allowed": false,
+    "qmt_trade_allowed": false,
+    "order_intent_allowed": false,
+    "advisory_package_generated": false,
+    "model_training_allowed": false,
+    "trading_advice": false,
+    "modify_final_buy_action_allowed": false,
+    "modify_target_weight_allowed": false,
+    "modify_buy_probe_thresholds_allowed": false,
+    "write_output_allowed": false,
+    "write_stable_runtime_output_allowed": false,
+    "create_lab_advisory_allowed": false,
+    "commit_local_research_outputs_allowed": false
+  },
+  "closeout_checklist": {
+    "researched": "A / E / F Lab-only Q3 phase closeout.",
+    "data_source": "Committed docs/research summaries and ignored F-8 smoke report summaries.",
+    "uses_stable_bundle": false,
+    "future_leakage": "No feature computation in this closeout; existing A/E/F gates require forbidden feature and future label checks.",
+    "affects_stable_trading": false,
+    "read_only_advisory": false,
+    "advisory_package_generated": false,
+    "recommended_for_stable": false,
+    "minimal_stable_merge": "not applicable",
+    "do_not_submit_to_stable": true
+  },
+  "next_steps": [
+    "Do not enter Stable.",
+    "Recover true historical V2 / ML_SIM before reopening A-H.",
+    "Provide independent safe real 5m provider or human-exported 5m package before reopening F real intraday.",
+    "Keep E results as Lab-only engineering-chain evidence, not trading advice."
+  ],
+  "stable_allowed": false,
+  "qmt_allowed": false,
+  "order_intent_allowed": false,
+  "advisory_package_generated": false,
+  "model_training_allowed": false
+}
