@@ -47,9 +47,19 @@ class ForbiddenHit:
     keyword: str
     line: int
     text: str
+    severity: str = "P0"
+    path: str | None = None
 
     def as_dict(self) -> dict[str, object]:
-        return {"keyword": self.keyword, "line": self.line, "text": self.text}
+        result: dict[str, object] = {
+            "keyword": self.keyword,
+            "line": self.line,
+            "text": self.text,
+            "severity": self.severity,
+        }
+        if self.path is not None:
+            result["path"] = self.path
+        return result
 
 
 def scan_text(text: str) -> list[ForbiddenHit]:
@@ -65,12 +75,22 @@ def scan_text(text: str) -> list[ForbiddenHit]:
 def scan_path(path: Path) -> dict[str, object]:
     resolved = path.resolve()
     text = resolved.read_text(encoding="utf-8")
-    hits = scan_text(text)
+    hits = [
+        ForbiddenHit(
+            keyword=hit.keyword,
+            line=hit.line,
+            text=hit.text,
+            severity=hit.severity,
+            path=str(resolved),
+        )
+        for hit in scan_text(text)
+    ]
     p0_blockers = [
-        f"forbidden keyword '{hit.keyword}' found at line {hit.line}" for hit in hits
+        f"forbidden keyword '{hit.keyword}' found at {resolved}:{hit.line}" for hit in hits
     ]
     return {
         "safe": not hits,
+        "severity": "none" if not hits else "P0",
         "forbidden_hits": [hit.as_dict() for hit in hits],
         "path": str(resolved),
         "scan_scope": "single_file_static_keyword_scan",

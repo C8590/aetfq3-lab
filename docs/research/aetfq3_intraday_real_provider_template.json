@@ -1,8 +1,8 @@
 {
-  "document_type": "aetfq3_intraday_market_data_adapter",
+  "document_type": "aetfq3_intraday_real_provider_template",
   "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
-  "boundary_statement": "Lab-only market-data adapter wrapper; not QMT integration, not trading execution, not Stable parameter change.",
-  "phase": "F-5 pure readonly 5m market-data adapter design and static safety review",
+  "boundary_statement": "Lab-only provider template; not real QMT integration and not trading execution.",
+  "phase": "F-6 real 5m provider adapter template and safety gate",
   "supported_providers": {
     "mock": "supported",
     "real_provider_template": "template_only",
@@ -13,16 +13,31 @@
   "provider_template": {
     "file": "tools/lab/intraday_provider_template.py",
     "class": "Intraday5mProviderTemplate",
-    "status": "template_only",
-    "real_provider_enabled": false
+    "get_5m_bars": "raises NotImplementedError until separate human authorization and safety review",
+    "validate_output_schema": true,
+    "provider_capabilities": {
+      "market_data_only": true,
+      "supports_account": false,
+      "supports_position": false,
+      "supports_order": false,
+      "supports_trade": false,
+      "supports_submit_order": false,
+      "supports_cancel_order": false,
+      "supports_order_intent": false,
+      "requires_secret": false,
+      "requires_live_session": false
+    }
   },
   "forbidden_api_categories": [
-    "account",
-    "positions",
-    "orders",
-    "trades",
     "submit_or_cancel",
     "buy_or_sell",
+    "account",
+    "position",
+    "order",
+    "trade",
+    "fund",
+    "balance",
+    "cash",
     "OrderIntent",
     "live_order",
     "secret",
@@ -45,18 +60,14 @@
     "committable": false
   },
   "safety_scan_required": true,
-  "safety_scan_output_fields": [
-    "safe",
-    "severity",
-    "forbidden_hits",
-    "path",
-    "scan_scope",
-    "p0_blockers"
-  ],
+  "safety_scan": {
+    "tool": "tools/lab/intraday_market_data_safety_scan.py",
+    "severity_enabled": true,
+    "p0_on_forbidden_hit": true
+  },
   "real_provider_requirements": [
     "separate_task_card",
     "human_authorization",
-    "adapter_safety_scan",
     "provider_file_safety_scan",
     "readonly_or_export_only",
     "no_secret",
@@ -66,19 +77,10 @@
     "no_QMT_trading",
     "no_OrderIntent"
   ],
-  "default_boundary": {
-    "access_mode": "READ_ONLY",
-    "final_action_change_allowed": false,
-    "contains_live_order": false,
-    "contains_secret": false,
-    "requires_human_review": true,
-    "promotion_gate_required": true
-  },
   "stable_allowed": false,
   "qmt_trade_allowed": false,
   "order_intent_allowed": false,
   "real_provider_enabled": false,
   "model_training_allowed": false,
-  "advisory_package_generated": false,
-  "mock_data_is_real_market_data": false
+  "advisory_package_generated": false
 }

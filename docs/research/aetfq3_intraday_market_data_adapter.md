@@ -21,6 +21,7 @@ promotion_gate_required: true
 ## 支持状态
 
 - mock provider supported
+- real provider template only
 - qmt provider not implemented
 - xtdata provider not implemented
 - real provider requires separate human authorization and safety review
@@ -62,6 +63,7 @@ real provider not implemented; requires separate human authorization and safety 
 输出 JSON 到 stdout，包含：
 
 - `safe`
+- `severity`
 - `forbidden_hits`
 - `path`
 - `scan_scope`
@@ -76,6 +78,13 @@ real provider not implemented; requires separate human authorization and safety 
 - secret/token/password/api_key
 
 任一命中默认 `safe=false`，并进入 P0 blocker。
+
+F-6 provider template:
+
+- `tools/lab/intraday_provider_template.py`
+- `docs/research/aetfq3_intraday_real_provider_template.md`
+
+该模板只定义接口、schema 校验和 market-data-only 能力声明。真实 provider 方法仍固定抛出人工授权和安全审查错误。
 
 ## Mock Export Smoke
 
@@ -98,11 +107,14 @@ real provider not implemented; requires separate human authorization and safety 
 
 - 单独任务卡
 - 人工授权
-- adapter safety scan
+- provider file safety scan
 - readonly/export_only
 - no secret
 - no account/position/order/trade
 - output only ignored directory
+- no Stable
+- no QMT trading
+- no OrderIntent
 
 真实 provider 仍不得自动进入 Stable，不得生成正式交易计划，不得触发 QMT 或真实下单。
 
