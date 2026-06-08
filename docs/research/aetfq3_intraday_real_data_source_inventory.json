@@ -1,0 +1,132 @@
+{
+  "document_type": "aetfq3_intraday_real_data_source_inventory",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "boundary_statement": "本文件只用于 Lab research，不是 Stable 交易规则，不接 QMT，不生成 OrderIntent，不自动下单。",
+  "inventory_scope": {
+    "task": "F-2 intraday real data source inventory and dry validation gate",
+    "inventory_mode": "metadata_only_no_row_level_read_strict_relative_path_data_like_files",
+    "read_full_csv_rows": false,
+    "read_full_json_rows": false,
+    "read_full_parquet_rows": false,
+    "copied_real_data": false,
+    "generated_real_intraday_sample": false,
+    "training_allowed": false,
+    "qmt_connected": false,
+    "order_intent_generated": false
+  },
+  "search_roots": [
+    {"path": "E:\\aetfq3-lab\\", "exists": true},
+    {"path": "E:\\aetfq3-lab\\data\\", "exists": true},
+    {"path": "E:\\aetfq3-lab.local_research_outputs\\", "exists": false},
+    {"path": "E:\\aetfq3-lab.local_artifact_backup\\", "exists": false},
+    {"path": "E:\\aetfq3-stable\\", "exists": false},
+    {"path": "E:\\aetfv2.1ml\\", "exists": true},
+    {"path": "E:\\AETF-ModelLab\\", "exists": false}
+  ],
+  "keywords": [
+    "5m",
+    "5min",
+    "intraday",
+    "minute",
+    "tick",
+    "orderbook",
+    "order_book",
+    "盘口",
+    "分钟",
+    "vwap",
+    "qmt",
+    "quote",
+    "xtdata",
+    "bar",
+    "kline",
+    "1m",
+    "5分钟",
+    "tick_data",
+    "depth",
+    "level2"
+  ],
+  "strict_inventory_filters": {
+    "excluded_path_fragments": [
+      "\\.git\\",
+      "\\.venv\\",
+      "\\__pycache__\\",
+      "\\docs\\",
+      "\\tools\\",
+      "\\tests\\",
+      "\\.pytest_cache\\",
+      "\\.local_research_outputs\\"
+    ],
+    "keyword_matching_basis": "relative path under each search root, to avoid root-name keyword contamination",
+    "allowed_extensions": [".csv", ".json", ".jsonl", ".parquet", ".pq", ".feather", ".xlsx", ".xls", ".tsv", ".txt", ".yaml", ".yml"]
+  },
+  "local_ignored_outputs": {
+    "directory": ".local_research_outputs/aetfq3_lab/intraday_data_inventory/",
+    "files": [
+      "intraday_data_source_inventory.md",
+      "intraday_data_source_inventory.json",
+      "intraday_candidate_files.csv"
+    ],
+    "committed": false
+  },
+  "category_counts": {
+    "usable_for_intraday_dry_validation": 0,
+    "qmt_export_readonly_candidate": 2,
+    "quote_cache_or_realtime_snapshot": 0,
+    "unsafe_or_forbidden": 0,
+    "not_relevant": 0
+  },
+  "candidates": [
+    {
+      "path": "E:\\aetfq3-lab\\config",
+      "filename": "qmt_execution.example.yaml",
+      "size": 447,
+      "modified_time": "2026-06-04T13:36:41.1391579+08:00",
+      "likely_type": "qmt_or_xtdata_candidate",
+      "category": "qmt_export_readonly_candidate",
+      "whether_qmt_related": true,
+      "whether_contains_possible_secret": false,
+      "whether_requires_human_authorization": true,
+      "whether_can_be_used_for_dry_validation": false,
+      "notes": "QMT example config only; not an intraday data export and not usable for dry validation."
+    },
+    {
+      "path": "E:\\aetfv2.1ml\\config",
+      "filename": "qmt_execution.example.yaml",
+      "size": 447,
+      "modified_time": "2026-06-03T22:36:04.7617590+08:00",
+      "likely_type": "qmt_or_xtdata_candidate",
+      "category": "qmt_export_readonly_candidate",
+      "whether_qmt_related": true,
+      "whether_contains_possible_secret": false,
+      "whether_requires_human_authorization": true,
+      "whether_can_be_used_for_dry_validation": false,
+      "notes": "QMT example config only; not an intraday data export and not usable for dry validation."
+    }
+  ],
+  "findings": {
+    "found_real_5m_data_source": false,
+    "found_qmt_export": false,
+    "found_qmt_example_config": true,
+    "found_tick_or_orderbook": false,
+    "can_enter_real_intraday_dry_validation": false,
+    "missing_for_dry_validation": [
+      "real intraday 5m or minute-bar data source",
+      "human_authorized=true",
+      "dry validation manifest instance",
+      "future leakage check",
+      "data quality report"
+    ]
+  },
+  "boundary": {
+    "uses_stable_bundle": false,
+    "stable_effect_allowed": false,
+    "training_allowed": false,
+    "advisory_only": true,
+    "contains_secret": false,
+    "contains_live_order": false,
+    "contains_order_intent": false,
+    "qmt_allowed": false,
+    "auto_trade_allowed": false
+  }
+}
+
