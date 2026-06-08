@@ -158,6 +158,16 @@ Manifest 还必须记录 `data_time_start`、`data_time_end`、`row_count`、`et
 - 写 Stable output/runtime。
 - 生成 advisory 包或 OrderIntent。
 
+## F-5 Adapter Safety Gate
+
+F-5 已新增 Lab-only market-data adapter wrapper 与静态安全扫描工具：
+
+- `tools/lab/intraday_5m_market_data_adapter.py`
+- `tools/lab/intraday_market_data_safety_scan.py`
+- `docs/research/aetfq3_intraday_market_data_adapter.md`
+
+该 gate 当前只允许 mock provider。真实 `qmt` / `xtdata` / `live` provider 仍未实现，必须在单独任务卡、人工授权、静态安全扫描通过后才允许继续设计。F-5 不连接真实 QMT，不读取账户、持仓、委托、成交，不生成 OrderIntent，不写 `output/`。
+
 ## 后续任务卡
 
 任务名：人工导出 5分钟K 后的 manifest 填写 + intake-only 检查任务。
@@ -167,4 +177,3 @@ Manifest 还必须记录 `data_time_start`、`data_time_end`、`row_count`、`et
 - 输入：人工导出的 ignored 目录、manifest、source note、hash 文件。
 - 只做：manifest schema 校验、hash 校验、字段检查、future leakage precheck、QMT/Stable/OrderIntent 边界检查。
 - 禁止：连接 QMT、读取账户、训练、生成 OrderIntent、写 Stable、写 `output/`。
-

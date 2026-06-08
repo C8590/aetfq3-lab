@@ -1,0 +1,72 @@
+{
+  "document_type": "aetfq3_intraday_market_data_adapter",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "boundary_statement": "Lab-only market-data adapter wrapper; not QMT integration, not trading execution, not Stable parameter change.",
+  "phase": "F-5 pure readonly 5m market-data adapter design and static safety review",
+  "supported_providers": {
+    "mock": "supported",
+    "qmt": "not_implemented",
+    "xtdata": "not_implemented",
+    "live": "not_implemented"
+  },
+  "forbidden_api_categories": [
+    "account",
+    "positions",
+    "orders",
+    "trades",
+    "submit_or_cancel",
+    "buy_or_sell",
+    "OrderIntent",
+    "live_order",
+    "secret",
+    "token",
+    "password",
+    "api_key"
+  ],
+  "output_policy": {
+    "allowed_roots": [
+      ".local_research_outputs",
+      ".local_artifact_backup"
+    ],
+    "forbidden_roots": [
+      "output",
+      "Stable runtime",
+      "Stable output",
+      "data/cache"
+    ],
+    "must_be_git_ignored": true,
+    "committable": false
+  },
+  "safety_scan_required": true,
+  "safety_scan_output_fields": [
+    "safe",
+    "forbidden_hits",
+    "path",
+    "scan_scope",
+    "p0_blockers"
+  ],
+  "real_provider_requirements": [
+    "separate_task_card",
+    "human_authorization",
+    "adapter_safety_scan",
+    "readonly_or_export_only",
+    "no_secret",
+    "no_account_position_order_trade",
+    "output_only_ignored_directory"
+  ],
+  "default_boundary": {
+    "access_mode": "READ_ONLY",
+    "final_action_change_allowed": false,
+    "contains_live_order": false,
+    "contains_secret": false,
+    "requires_human_review": true,
+    "promotion_gate_required": true
+  },
+  "stable_allowed": false,
+  "qmt_trade_allowed": false,
+  "order_intent_allowed": false,
+  "real_provider_enabled": false,
+  "model_training_allowed": false,
+  "advisory_package_generated": false,
+  "mock_data_is_real_market_data": false
+}

@@ -138,6 +138,24 @@
     "Codex performs intake/dry validation only.",
     "Codex must not place orders or connect trading APIs."
   ],
+  "f5_adapter_safety_gate": {
+    "status": "added",
+    "adapter": "tools/lab/intraday_5m_market_data_adapter.py",
+    "scanner": "tools/lab/intraday_market_data_safety_scan.py",
+    "research_doc": "docs/research/aetfq3_intraday_market_data_adapter.md",
+    "mock_provider_supported": true,
+    "real_provider_enabled": false,
+    "qmt_provider_implemented": false,
+    "xtdata_provider_implemented": false,
+    "requires_separate_human_authorization": true,
+    "requires_static_safety_scan": true,
+    "forbidden": [
+      "connect real QMT",
+      "read account/fund/position/order/fill data",
+      "generate OrderIntent",
+      "write output/"
+    ]
+  },
   "next_task_card": {
     "title": "人工导出 5分钟K 后的 manifest 填写 + intake-only 检查任务",
     "inputs": [
@@ -169,4 +187,3 @@
   "advisory_package_allowed": false,
   "auto_trade_allowed": false
 }
-
