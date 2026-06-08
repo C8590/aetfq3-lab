@@ -1,0 +1,45 @@
+{
+  "manifest_version": "intraday_label_manifest_v1",
+  "sample_type": "intraday_5m",
+  "source_kind": "synthetic_mock",
+  "feature_columns": [
+    "bar_index",
+    "open",
+    "close",
+    "buy_now_label"
+  ],
+  "label_generated": false,
+  "label_source_kind": "synthetic_mock",
+  "label_horizon": {
+    "unit": "bar_index",
+    "future_window_days": 3,
+    "requires_per_bar_horizon": true
+  },
+  "label_generation_method": "mock_manifest_only_no_real_labels_v1",
+  "label_columns": [
+    "buy_now_label",
+    "wait_pullback_label",
+    "cancel_buy_label",
+    "three_day_positive_label"
+  ],
+  "outcome_columns": [
+    "future_return_1d",
+    "future_return_3d",
+    "max_drawdown_3d",
+    "execution_return_to_close",
+    "execution_return_to_next_open",
+    "execution_drawdown_after_entry",
+    "expected_3d_return",
+    "expected_3d_drawdown"
+  ],
+  "label_status_column": "label_status",
+  "insufficient_future_window_policy": "set label_status=insufficient_future_window and exclude from supervised target",
+  "feature_label_overlap_check": true,
+  "label_generation_authorized": true,
+  "supervised_training_allowed": false,
+  "training_allowed": false,
+  "stable_effect_allowed": false,
+  "contains_order_intent": false,
+  "contains_live_order": false,
+  "contains_secret": false
+}
