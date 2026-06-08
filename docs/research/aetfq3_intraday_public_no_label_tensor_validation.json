@@ -1,0 +1,101 @@
+{
+  "document_type": "aetfq3_intraday_public_no_label_tensor_validation",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "boundary_statement": "Lab-only public intraday no-label tensor validation; no labels required, no supervised learning, no QMT, no OrderIntent, no Stable effect.",
+  "phase": "F public intraday no-label tensor-shape validation",
+  "input_type": {
+    "source": "AKShare stock_zh_a_minute / Sina public minute data",
+    "period": "5m",
+    "format": "public OHLCV export CSV",
+    "stable_bundle_used": false,
+    "qmt_used": false
+  },
+  "labels_required": false,
+  "validation_steps": [
+    "read public OHLCV export",
+    "validate required columns: trade_date, datetime, etf_code, open, high, low, close, volume, amount",
+    "compute vwap from amount / volume when vwap is absent, with safe handling for volume=0",
+    "compute no-label feature columns: open, high, low, close, volume, amount, vwap, intraday_return, return_from_open, distance_to_vwap",
+    "block forbidden feature columns: future_*, *_label, max_drawdown_3d, execution_return_to_close, execution_return_to_next_open, execution_drawdown_after_entry",
+    "group by etf_code + trade_date",
+    "validate tensor shape [batch, time_steps, features] with min_time_steps >= 12 and feature_count > 0",
+    "check NaN and Inf counts",
+    "write ignored local report only"
+  ],
+  "report_contract": {
+    "report_type": "intraday_public_no_label_tensor_validation",
+    "lab_only": true,
+    "no_training": true,
+    "no_qmt": true,
+    "no_order_intent": true,
+    "no_stable": true,
+    "no_lab_advisory": true,
+    "model_saved": false,
+    "checkpoint_saved": false,
+    "labels_required": false,
+    "target_count": 0,
+    "required_metrics": [
+      "rows_checked",
+      "etf_count",
+      "trade_date_count",
+      "batch_size",
+      "min_time_steps",
+      "max_time_steps",
+      "feature_count",
+      "feature_columns",
+      "nan_count",
+      "inf_count",
+      "tensor_shape_passed"
+    ],
+    "ignored_outputs": [
+      ".local_research_outputs/aetfq3_lab/intraday_public_no_label_tensor_validation/intraday_public_no_label_tensor_report.md",
+      ".local_research_outputs/aetfq3_lab/intraday_public_no_label_tensor_validation/intraday_public_no_label_tensor_report.json"
+    ]
+  },
+  "public_smoke": {
+    "status": "passed",
+    "rows_checked": 432,
+    "etf_count": 3,
+    "trade_date_count": 3,
+    "batch_size": 9,
+    "min_time_steps": 48,
+    "max_time_steps": 48,
+    "feature_count": 10,
+    "labels_required": false,
+    "target_count": 0,
+    "tensor_shape_passed": true,
+    "model_saved": false,
+    "checkpoint_saved": false,
+    "order_intent_generated": false
+  },
+  "boundary": {
+    "access_mode": "READ_ONLY",
+    "final_action_change_allowed": false,
+    "contains_live_order": false,
+    "contains_secret": false,
+    "requires_human_review": true,
+    "promotion_gate_required": true,
+    "no_stable": true,
+    "no_qmt": true,
+    "no_order_intent": true,
+    "no_output": true,
+    "no_lab_advisory": true,
+    "no_model_training": true,
+    "no_checkpoint": true,
+    "no_model_save": true,
+    "no_fake_labels": true,
+    "no_synthetic_labels": true,
+    "no_trading_advice": true
+  },
+  "next_steps": [
+    "Use this validator only as a public OHLCV no-label tensor shape gate.",
+    "If supervised training is requested later, require real labels or future outcomes and run a separate dry validation.",
+    "If a real provider is requested later, require an independent safe provider file and rerun F-7 first.",
+    "Do not enter Stable."
+  ],
+  "stable_allowed": false,
+  "qmt_allowed": false,
+  "order_intent_allowed": false,
+  "model_training_allowed": false,
+  "checkpoint_allowed": false
+}
