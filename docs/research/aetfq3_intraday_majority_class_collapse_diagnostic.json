@@ -1,0 +1,115 @@
+{
+  "document_type": "aetfq3_intraday_majority_class_collapse_diagnostic",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "phase": "F public intraday majority-class collapse feature label split probability diagnostic",
+  "report_type": "intraday_majority_class_collapse_diagnostic",
+  "purpose": "diagnose possible causes of logistic_regression majority-class collapse in Lab no-save supervised smoke",
+  "diagnostic_only": true,
+  "formal_training_allowed": false,
+  "hyperparameter_tuning_allowed": false,
+  "model_save_allowed": false,
+  "checkpoint_allowed": false,
+  "gpu_allowed": false,
+  "torchrun_allowed": false,
+  "qmt_allowed": false,
+  "order_intent_allowed": false,
+  "stable_allowed": false,
+  "advisory_package_allowed": false,
+  "not_trading_advice": true,
+  "metrics_are_effectiveness_evidence": false,
+  "input_contract": {
+    "samples": ".local_research_outputs/aetfq3_lab/intraday_larger_eligible_anchor_readiness/larger_eligible_anchor_label_samples.csv",
+    "manifest": ".local_research_outputs/aetfq3_lab/intraday_larger_eligible_anchor_readiness/larger_eligible_anchor_label_manifest.json",
+    "readiness": ".local_research_outputs/aetfq3_lab/intraday_larger_eligible_anchor_readiness/supervised_smoke_readiness_report.json",
+    "repeatability": ".local_research_outputs/aetfq3_lab/intraday_larger_eligible_anchor_no_save_repeatability_check/intraday_larger_eligible_anchor_no_save_repeatability_report.json",
+    "target": "three_day_positive_label"
+  },
+  "output_contract": {
+    "allowed_output_dir": ".local_research_outputs/aetfq3_lab/intraday_majority_class_collapse_diagnostic/",
+    "files": [
+      "intraday_majority_class_collapse_diagnostic_report.json",
+      "intraday_majority_class_collapse_diagnostic_report.md",
+      "diagnostic_decision.json"
+    ],
+    "tracked_output_allowed": false
+  },
+  "required_report_sections": [
+    "report_type",
+    "input_sample",
+    "target",
+    "feature_columns",
+    "label_distribution",
+    "train_valid_label_shift",
+    "sample_granularity",
+    "feature_scale_diagnostic",
+    "univariate_signal_diagnostic",
+    "logistic_probability_diagnostic",
+    "balanced_scaled_probe",
+    "diagnostic_flags",
+    "diagnostic_decision",
+    "model_saved",
+    "checkpoint_saved",
+    "gpu_used",
+    "torchrun_used",
+    "qmt_used",
+    "order_intent_generated",
+    "stable_affected",
+    "metrics_are_effectiveness_evidence",
+    "not_trading_advice"
+  ],
+  "feature_leakage_recheck": {
+    "forbidden_feature_fields": [
+      "future_return_1d",
+      "future_return_3d",
+      "max_drawdown_3d",
+      "three_day_positive_label"
+    ],
+    "forbidden_patterns": [
+      "future_*",
+      "*_label",
+      "execution",
+      "outcome"
+    ]
+  },
+  "diagnostic_flags": [
+    "TRAIN_VALID_LABEL_SHIFT_OBSERVED",
+    "FEATURE_SCALE_RISK_OBSERVED",
+    "WEAK_UNIVARIATE_SIGNAL_OBSERVED",
+    "GROUP_REPEATED_LABEL_STRUCTURE_OBSERVED",
+    "LOGISTIC_THRESHOLD_COLLAPSE_OBSERVED",
+    "BALANCED_SCALED_PROBE_REDUCES_COLLAPSE",
+    "BALANCED_SCALED_PROBE_STILL_COLLAPSED",
+    "NO_FORMAL_MODEL_EVIDENCE"
+  ],
+  "diagnostic_decisions": [
+    "DIAGNOSTIC_COMPLETED_FEATURE_LABEL_REVIEW_REQUIRED",
+    "DIAGNOSTIC_COMPLETED_BALANCED_SCALED_PROBE_RECOMMENDED",
+    "DIAGNOSTIC_COMPLETED_PAST_ONLY_FEATURE_EXPANSION_RECOMMENDED",
+    "DIAGNOSTIC_COMPLETED_GROUP_LEVEL_SAMPLE_RECOMMENDED",
+    "BLOCKED_MANIFEST_LEAKAGE_P0",
+    "BLOCKED_BOUNDARY_FLAG",
+    "BLOCKED_DIAGNOSTIC_RUNTIME_ERROR"
+  ],
+  "mandatory_false_fields": {
+    "stable_promotion_ready": false,
+    "formal_training_ready": false,
+    "qmt_ready": false,
+    "order_intent_ready": false,
+    "automatic_promotion_ready": false,
+    "metrics_are_effectiveness_evidence": false
+  },
+  "allowed_next_steps": [
+    "feature/label review",
+    "past-only feature expansion design",
+    "group-level sample design",
+    "explicit no-save diagnostic smoke request"
+  ],
+  "forbidden_next_steps": [
+    "formal training",
+    "Stable promotion",
+    "QMT",
+    "OrderIntent",
+    "model deployment",
+    "trading conclusion"
+  ]
+}
