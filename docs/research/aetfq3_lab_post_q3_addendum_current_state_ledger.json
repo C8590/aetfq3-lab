@@ -60,6 +60,18 @@
       "short_commit": "c6323f6",
       "work": "F public intraday supervised no-save smoke",
       "status": "NO_SAVE_SUPERVISED_SMOKE_COMPLETED_REVIEW_REQUIRED"
+    },
+    {
+      "commit": "5e9e254",
+      "short_commit": "5e9e254",
+      "work": "F public intraday no-save smoke repeatability checker",
+      "status": "repeatability tooling completed"
+    },
+    {
+      "commit": "this_closeout_commit",
+      "short_commit": "this_closeout_commit",
+      "work": "F public intraday larger eligible-anchor no-save smoke + repeatability closeout / ledger update",
+      "status": "LARGER_NO_SAVE_REPEATABILITY_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED"
     }
   ],
   "current_state": {
@@ -95,8 +107,8 @@
       "trading_advice": false
     },
     "F_public": {
-      "status": "F_PUBLIC_STATUS=NO_SAVE_SUPERVISED_SMOKE_COMPLETED_REVIEW_REQUIRED",
-      "summary": "Public 5m OHLCV export, eligible-anchor expansion, three_day_positive_label dry-run, class-diverse precheck, supervised smoke readiness precheck, and no-save supervised smoke are complete; human review is required.",
+      "status": "F_PUBLIC_STATUS=LARGER_NO_SAVE_REPEATABILITY_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED",
+      "summary": "Public 5m OHLCV export, larger eligible-anchor data collection, three_day_positive_label dry-run, class-balance precheck, supervised smoke readiness precheck, larger no-save supervised smoke, and larger no-save repeatability check are complete; model-signal review is required because logistic regression matched the majority-class dummy.",
       "evidence_docs": [
         "docs/research/aetfq3_intraday_public_no_label_tensor_validation.md",
         "docs/research/aetfq3_intraday_public_no_label_tensor_validation.json",
@@ -114,11 +126,24 @@
         "docs/research/aetfq3_intraday_supervised_no_save_smoke.md",
         "docs/research/aetfq3_intraday_supervised_no_save_smoke.json",
         "docs/research/aetfq3_intraday_supervised_no_save_smoke_review_closeout.md",
-        "docs/research/aetfq3_intraday_supervised_no_save_smoke_review_closeout.json"
+        "docs/research/aetfq3_intraday_supervised_no_save_smoke_review_closeout.json",
+        "docs/research/aetfq3_intraday_supervised_no_save_repeatability_check.md",
+        "docs/research/aetfq3_intraday_supervised_no_save_repeatability_check.json",
+        "docs/research/aetfq3_intraday_larger_eligible_anchor_smoke_repeatability_closeout.md",
+        "docs/research/aetfq3_intraday_larger_eligible_anchor_smoke_repeatability_closeout.json",
+        ".local_research_outputs/aetfq3_lab/intraday_larger_eligible_anchor_readiness/readiness_decision.json",
+        ".local_research_outputs/aetfq3_lab/intraday_larger_eligible_anchor_no_save_smoke/intraday_larger_eligible_anchor_no_save_smoke_report.json",
+        ".local_research_outputs/aetfq3_lab/intraday_larger_eligible_anchor_no_save_repeatability_check/intraday_larger_eligible_anchor_no_save_repeatability_report.json"
       ],
-      "blocker": "No-save smoke is complete but human review is required; metrics are not effectiveness evidence and no automatic promotion is allowed.",
-      "next_trigger": "Human review, optional larger eligible-anchor data collection, or optional no-save repeatability check.",
-      "allowed_next_action": "Review-only follow-up within Lab boundary.",
+      "ignored_reports": [
+        ".local_research_outputs/aetfq3_lab/intraday_larger_eligible_anchor_readiness/readiness_decision.json",
+        ".local_research_outputs/aetfq3_lab/intraday_larger_eligible_anchor_readiness/class_balance_precheck.json",
+        ".local_research_outputs/aetfq3_lab/intraday_larger_eligible_anchor_no_save_smoke/intraday_larger_eligible_anchor_no_save_smoke_report.json",
+        ".local_research_outputs/aetfq3_lab/intraday_larger_eligible_anchor_no_save_repeatability_check/intraday_larger_eligible_anchor_no_save_repeatability_report.json"
+      ],
+      "blocker": "Larger no-save smoke and repeatability are complete, but logistic regression collapsed to majority-class behavior; model-signal review is required. Metrics are not effectiveness evidence and no automatic promotion is allowed.",
+      "next_trigger": "Human review of majority-class collapse, feature/label diagnostic design, or optional no-save diagnostic smoke with explicit task card.",
+      "allowed_next_action": "Review-only diagnostic follow-up within Lab boundary.",
       "forbidden_action": "Stable promotion, QMT, OrderIntent, advisory package, formal training, model deployment, checkpoint/model save, or automatic promotion.",
       "target": "three_day_positive_label",
       "models_run": [
@@ -126,14 +151,52 @@
         "dummy_stratified",
         "logistic_regression"
       ],
-      "effective_readiness_decision": "NO_SAVE_SUPERVISED_SMOKE_COMPLETED_REVIEW_REQUIRED",
+      "effective_readiness_decision": "LARGER_NO_SAVE_REPEATABILITY_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED",
+      "larger_data_summary": {
+        "readiness_decision": "LARGER_ELIGIBLE_ANCHOR_DATA_COLLECTION_PASSED_READINESS_REVIEW_REQUIRED",
+        "anchors": 37,
+        "etf_count": 8,
+        "rows": 14208,
+        "label_0": 5351,
+        "label_1": 8857,
+        "positive_rate": 0.6233811936936937,
+        "train_rows": 9600,
+        "valid_rows": 4608,
+        "train_label_distribution": {
+          "0": 2821,
+          "1": 6779
+        },
+        "valid_label_distribution": {
+          "0": 2530,
+          "1": 2078
+        }
+      },
+      "larger_no_save_smoke_status": "LARGER_ELIGIBLE_ANCHOR_NO_SAVE_SUPERVISED_SMOKE_COMPLETED_REVIEW_REQUIRED",
+      "larger_repeatability_status": "LARGER_ELIGIBLE_ANCHOR_NO_SAVE_REPEATABILITY_COMPLETED_REVIEW_REQUIRED",
+      "repeatability_seeds": [
+        7,
+        13,
+        42,
+        101,
+        2026
+      ],
+      "model_signal_review_required": true,
+      "model_signal_review_flag": "MODEL_SIGNAL_REVIEW_REQUIRED_MAJORITY_CLASS_COLLAPSE_OBSERVED",
+      "majority_class_collapse_observed": true,
+      "logistic_matches_dummy_most_frequent": true,
+      "logistic_valid_prediction_distribution": {
+        "0": 0,
+        "1": 4608
+      },
       "metrics_are_effectiveness_evidence": false,
       "review_required": true,
       "stable_promotion_ready": false,
       "qmt_ready": false,
       "order_intent_ready": false,
       "model_training_ready": false,
+      "formal_training_ready": false,
       "label_generation_ready": false,
+      "automatic_promotion_ready": false,
       "training_allowed": false,
       "stable_allowed": false,
       "qmt_allowed": false,
@@ -187,8 +250,11 @@
     },
     {
       "line": "F_public",
-      "blocker": "F public no-save supervised smoke completed: human review is required; metrics are not effectiveness evidence and no automatic promotion is allowed.",
-      "status": "NO_SAVE_SUPERVISED_SMOKE_COMPLETED_REVIEW_REQUIRED",
+      "blocker": "F public larger no-save repeatability completed: model-signal review is required because logistic regression matched the majority-class dummy across all repeatability seeds; metrics are not effectiveness evidence and no automatic promotion is allowed.",
+      "status": "LARGER_NO_SAVE_REPEATABILITY_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED",
+      "model_signal_review_required": true,
+      "majority_class_collapse_observed": true,
+      "logistic_matches_dummy_most_frequent": true,
       "metrics_are_effectiveness_evidence": false,
       "stable_promotion_ready": false
     },
@@ -207,7 +273,11 @@
     "smoke_reconstructed_public_validation_is_trading_advice": false,
     "smoke_reconstructed_public_validation_proves_model_effectiveness": false,
     "no_save_supervised_smoke_metrics_are_effectiveness_evidence": false,
-    "no_save_supervised_smoke_allows_automatic_promotion": false
+    "no_save_supervised_smoke_allows_automatic_promotion": false,
+    "larger_repeatability_metrics_are_effectiveness_evidence": false,
+    "larger_repeatability_allows_automatic_promotion": false,
+    "majority_class_collapse_is_stable_promotion_signal": false,
+    "majority_class_collapse_requires_human_review": true
   },
   "next_triggers": [
     {
@@ -217,6 +287,10 @@
     {
       "id": "F_PUBLIC_FUTURE_WINDOW_COVERAGE",
       "condition": "F public daily OHLCV covers required future-window dates"
+    },
+    {
+      "id": "F_PUBLIC_MODEL_SIGNAL_REVIEW",
+      "condition": "Human review of majority-class collapse and feature/label diagnostic design"
     },
     {
       "id": "F_REAL_PROVIDER_OR_EXPORT",
@@ -253,9 +327,15 @@
     "order_intent_ready": false,
     "label_generation_ready": false,
     "training_ready": false,
-    "f_public_supervised_smoke_status": "NO_SAVE_SUPERVISED_SMOKE_COMPLETED_REVIEW_REQUIRED",
+    "automatic_promotion_ready": false,
+    "f_public_status": "LARGER_NO_SAVE_REPEATABILITY_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED",
+    "f_public_larger_eligible_anchor_status": "LARGER_NO_SAVE_REPEATABILITY_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED",
+    "f_public_supervised_smoke_status": "LARGER_NO_SAVE_REPEATABILITY_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED",
+    "f_public_model_signal_review_required": true,
+    "f_public_majority_class_collapse_observed": true,
+    "f_public_logistic_matches_dummy_most_frequent": true,
     "metrics_are_effectiveness_evidence": false,
-    "automatic_promotion_ready": false
+    "formal_training_ready": false
   },
   "stable_allowed": false,
   "qmt_allowed": false,

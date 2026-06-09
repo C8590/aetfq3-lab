@@ -1,0 +1,158 @@
+{
+  "document_type": "aetfq3_intraday_larger_eligible_anchor_smoke_repeatability_closeout",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "phase": "F public intraday larger eligible-anchor no-save smoke + repeatability review closeout",
+  "status": "LARGER_NO_SAVE_REPEATABILITY_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED",
+  "larger_data_summary": {
+    "readiness_decision": "LARGER_ELIGIBLE_ANCHOR_DATA_COLLECTION_PASSED_READINESS_REVIEW_REQUIRED",
+    "anchors": 37,
+    "etf_count": 8,
+    "rows": 14208,
+    "label_0": 5351,
+    "label_1": 8857,
+    "positive_rate": 0.6233811936936937,
+    "split_policy": "anchor_date_70_30",
+    "train_rows": 9600,
+    "valid_rows": 4608,
+    "train_label_distribution": {
+      "0": 2821,
+      "1": 6779
+    },
+    "valid_label_distribution": {
+      "0": 2530,
+      "1": 2078
+    },
+    "data_source": "AKShare public minute / public daily OHLCV",
+    "uses_stable_bundle": false
+  },
+  "smoke_summary": {
+    "readiness_decision": "LARGER_ELIGIBLE_ANCHOR_NO_SAVE_SUPERVISED_SMOKE_COMPLETED_REVIEW_REQUIRED",
+    "smoke_scope": "lab_only_no_save",
+    "target": "three_day_positive_label",
+    "models_run": [
+      "dummy_most_frequent",
+      "dummy_stratified",
+      "logistic_regression"
+    ],
+    "metrics_generated": true,
+    "metrics_are_effectiveness_evidence": false,
+    "model_saved": false,
+    "checkpoint_saved": false,
+    "gpu_used": false,
+    "torchrun_used": false,
+    "qmt_used": false,
+    "order_intent_generated": false,
+    "stable_affected": false
+  },
+  "repeatability_summary": {
+    "readiness_decision": "LARGER_ELIGIBLE_ANCHOR_NO_SAVE_REPEATABILITY_COMPLETED_REVIEW_REQUIRED",
+    "smoke_scope": "lab_only_no_save_repeatability",
+    "seeds": [
+      7,
+      13,
+      42,
+      101,
+      2026
+    ],
+    "models_run": [
+      "dummy_most_frequent",
+      "dummy_stratified",
+      "logistic_regression"
+    ],
+    "metric_variability_summary": {
+      "dummy_most_frequent": {
+        "accuracy_range": 0.0,
+        "balanced_accuracy_range": 0.0,
+        "precision_range": 0.0,
+        "recall_range": 0.0
+      },
+      "dummy_stratified": {
+        "accuracy_range": 0.014539930555555525,
+        "balanced_accuracy_range": 0.013971894532215923,
+        "precision_range": 0.009706566077459566,
+        "recall_range": 0.019730510105871013
+      },
+      "logistic_regression": {
+        "accuracy_range": 0.0,
+        "balanced_accuracy_range": 0.0,
+        "precision_range": 0.0,
+        "recall_range": 0.0
+      }
+    },
+    "model_saved": false,
+    "checkpoint_saved": false,
+    "gpu_used": false,
+    "torchrun_used": false,
+    "qmt_used": false,
+    "order_intent_generated": false,
+    "stable_affected": false,
+    "metrics_are_effectiveness_evidence": false
+  },
+  "majority_class_collapse_review": {
+    "model_signal_review_required": true,
+    "model_signal_review_flag": "MODEL_SIGNAL_REVIEW_REQUIRED_MAJORITY_CLASS_COLLAPSE_OBSERVED",
+    "majority_class_collapse_observed": true,
+    "logistic_matches_dummy_most_frequent": true,
+    "logistic_valid_prediction_distribution": {
+      "0": 0,
+      "1": 4608
+    },
+    "is_p0_blocker": false,
+    "human_review_required": true,
+    "do_not_interpret_as_effective_model": true,
+    "metrics_are_effectiveness_evidence": false,
+    "stable_evidence": false,
+    "trading_advice": false
+  },
+  "boundary": {
+    "access_mode": "READ_ONLY",
+    "final_action_change_allowed": false,
+    "contains_live_order": false,
+    "contains_secret": false,
+    "requires_human_review": true,
+    "promotion_gate_required": true,
+    "stable_allowed": false,
+    "qmt_allowed": false,
+    "order_intent_allowed": false,
+    "advisory_allowed": false,
+    "formal_training_allowed": false,
+    "model_deployment_allowed": false,
+    "model_save_allowed": false,
+    "checkpoint_allowed": false,
+    "gpu_allowed": false,
+    "torchrun_allowed": false,
+    "automatic_promotion_allowed": false,
+    "not_trading_advice": true,
+    "metrics_are_effectiveness_evidence": false
+  },
+  "final_review_status": {
+    "f_public_larger_eligible_anchor_status": "LARGER_NO_SAVE_REPEATABILITY_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED",
+    "stable_promotion_ready": false,
+    "formal_training_ready": false,
+    "qmt_ready": false,
+    "order_intent_ready": false,
+    "automatic_promotion_ready": false,
+    "metrics_are_effectiveness_evidence": false
+  },
+  "next_allowed_actions": [
+    "human review of majority-class collapse",
+    "feature/label diagnostic design",
+    "optional no-save diagnostic smoke with explicit task card"
+  ],
+  "not_allowed_next_actions": [
+    "Stable promotion",
+    "formal training",
+    "QMT",
+    "OrderIntent",
+    "model deployment"
+  ],
+  "model_signal_review_required": true,
+  "majority_class_collapse_observed": true,
+  "logistic_matches_dummy_most_frequent": true,
+  "metrics_are_effectiveness_evidence": false,
+  "stable_promotion_ready": false,
+  "formal_training_ready": false,
+  "qmt_ready": false,
+  "order_intent_ready": false,
+  "automatic_promotion_ready": false
+}
