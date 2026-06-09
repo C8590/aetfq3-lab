@@ -68,10 +68,34 @@
       "status": "repeatability tooling completed"
     },
     {
+      "commit": "c449bd8",
+      "short_commit": "c449bd8",
+      "work": "F public intraday majority-class collapse diagnostic",
+      "status": "majority-class collapse diagnostic completed"
+    },
+    {
+      "commit": "0f096df812b4b672127d26a1be5fd345a6dd4e90",
+      "short_commit": "0f096df",
+      "work": "F public intraday group-level sample dry-run",
+      "status": "GROUP_LEVEL_SAMPLE_DRY_RUN_PASSED_CLASS_DIVERSE_REVIEW_REQUIRED"
+    },
+    {
+      "commit": "0a6a8b6a9504e5bf544b546faec498e4404944b9",
+      "short_commit": "0a6a8b6",
+      "work": "F public intraday group-level supervised smoke readiness precheck",
+      "status": "GROUP_LEVEL_SUPERVISED_SMOKE_READINESS_PASSED_WITH_LABEL_INCONSISTENCY_REVIEW_REQUIRED"
+    },
+    {
+      "commit": "d1b2ab622bbbe9c68d927cbf0fff6f3ff485182a",
+      "short_commit": "d1b2ab6",
+      "work": "F public intraday group-level no-save diagnostic smoke",
+      "status": "GROUP_LEVEL_NO_SAVE_DIAGNOSTIC_SMOKE_COMPLETED_WITH_P1_LABEL_INCONSISTENCY_REVIEW_REQUIRED"
+    },
+    {
       "commit": "this_closeout_commit",
       "short_commit": "this_closeout_commit",
-      "work": "F public intraday larger eligible-anchor no-save smoke + repeatability closeout / ledger update",
-      "status": "LARGER_NO_SAVE_REPEATABILITY_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED"
+      "work": "F public intraday group-level diagnostic smoke model-signal review closeout / ledger update",
+      "status": "GROUP_LEVEL_DIAGNOSTIC_SMOKE_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED_NO_FORMAL_EVIDENCE"
     }
   ],
   "current_state": {
@@ -107,8 +131,8 @@
       "trading_advice": false
     },
     "F_public": {
-      "status": "F_PUBLIC_STATUS=LARGER_NO_SAVE_REPEATABILITY_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED",
-      "summary": "Public 5m OHLCV export, larger eligible-anchor data collection, three_day_positive_label dry-run, class-balance precheck, supervised smoke readiness precheck, larger no-save supervised smoke, and larger no-save repeatability check are complete; model-signal review is required because logistic regression matched the majority-class dummy.",
+      "status": "F_PUBLIC_STATUS=GROUP_LEVEL_DIAGNOSTIC_SMOKE_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED_NO_FORMAL_EVIDENCE",
+      "summary": "Public 5m OHLCV export, larger eligible-anchor diagnostics, majority-class collapse diagnostic, group-level sample dry-run, group-level readiness precheck, and group-level no-save diagnostic smoke are complete. Ordinary logistic still collapsed to the majority-class dummy; balanced/scaled probe reduced collapse but balanced accuracy remained below 0.5, so there is no formal model evidence.",
       "evidence_docs": [
         "docs/research/aetfq3_intraday_public_no_label_tensor_validation.md",
         "docs/research/aetfq3_intraday_public_no_label_tensor_validation.json",
@@ -131,27 +155,40 @@
         "docs/research/aetfq3_intraday_supervised_no_save_repeatability_check.json",
         "docs/research/aetfq3_intraday_larger_eligible_anchor_smoke_repeatability_closeout.md",
         "docs/research/aetfq3_intraday_larger_eligible_anchor_smoke_repeatability_closeout.json",
+        "docs/research/aetfq3_intraday_group_level_sample_dryrun.md",
+        "docs/research/aetfq3_intraday_group_level_sample_dryrun.json",
+        "docs/research/aetfq3_intraday_group_level_supervised_smoke_readiness_precheck.md",
+        "docs/research/aetfq3_intraday_group_level_supervised_smoke_readiness_precheck.json",
+        "docs/research/aetfq3_intraday_group_level_no_save_diagnostic_smoke.md",
+        "docs/research/aetfq3_intraday_group_level_no_save_diagnostic_smoke.json",
+        "docs/research/aetfq3_intraday_group_level_model_signal_review_closeout.md",
+        "docs/research/aetfq3_intraday_group_level_model_signal_review_closeout.json",
         ".local_research_outputs/aetfq3_lab/intraday_larger_eligible_anchor_readiness/readiness_decision.json",
         ".local_research_outputs/aetfq3_lab/intraday_larger_eligible_anchor_no_save_smoke/intraday_larger_eligible_anchor_no_save_smoke_report.json",
-        ".local_research_outputs/aetfq3_lab/intraday_larger_eligible_anchor_no_save_repeatability_check/intraday_larger_eligible_anchor_no_save_repeatability_report.json"
+        ".local_research_outputs/aetfq3_lab/intraday_larger_eligible_anchor_no_save_repeatability_check/intraday_larger_eligible_anchor_no_save_repeatability_report.json",
+        ".local_research_outputs/aetfq3_lab/intraday_group_level_no_save_diagnostic_smoke/intraday_group_level_no_save_diagnostic_smoke_report.json",
+        ".local_research_outputs/aetfq3_lab/intraday_group_level_no_save_diagnostic_smoke/readiness_decision.json"
       ],
       "ignored_reports": [
         ".local_research_outputs/aetfq3_lab/intraday_larger_eligible_anchor_readiness/readiness_decision.json",
         ".local_research_outputs/aetfq3_lab/intraday_larger_eligible_anchor_readiness/class_balance_precheck.json",
         ".local_research_outputs/aetfq3_lab/intraday_larger_eligible_anchor_no_save_smoke/intraday_larger_eligible_anchor_no_save_smoke_report.json",
-        ".local_research_outputs/aetfq3_lab/intraday_larger_eligible_anchor_no_save_repeatability_check/intraday_larger_eligible_anchor_no_save_repeatability_report.json"
+        ".local_research_outputs/aetfq3_lab/intraday_larger_eligible_anchor_no_save_repeatability_check/intraday_larger_eligible_anchor_no_save_repeatability_report.json",
+        ".local_research_outputs/aetfq3_lab/intraday_group_level_no_save_diagnostic_smoke/intraday_group_level_no_save_diagnostic_smoke_report.json",
+        ".local_research_outputs/aetfq3_lab/intraday_group_level_no_save_diagnostic_smoke/readiness_decision.json"
       ],
-      "blocker": "Larger no-save smoke and repeatability are complete, but logistic regression collapsed to majority-class behavior; model-signal review is required. Metrics are not effectiveness evidence and no automatic promotion is allowed.",
-      "next_trigger": "Human review of majority-class collapse, feature/label diagnostic design, or optional no-save diagnostic smoke with explicit task card.",
+      "blocker": "Group-level no-save diagnostic smoke is complete, but ordinary logistic still matched the majority-class dummy. Balanced/scaled probe reduced collapse, but balanced accuracy remained below 0.5 and no formal model evidence exists. P1 label inconsistency review remains required.",
+      "next_trigger": "Human review of label inconsistency, past-only feature expansion design, group-level feature diagnostic design, or optional no-save diagnostic smoke with separate task card.",
       "allowed_next_action": "Review-only diagnostic follow-up within Lab boundary.",
       "forbidden_action": "Stable promotion, QMT, OrderIntent, advisory package, formal training, model deployment, checkpoint/model save, or automatic promotion.",
       "target": "three_day_positive_label",
       "models_run": [
         "dummy_most_frequent",
         "dummy_stratified",
-        "logistic_regression"
+        "logistic_regression",
+        "logistic_regression_balanced_scaled"
       ],
-      "effective_readiness_decision": "LARGER_NO_SAVE_REPEATABILITY_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED",
+      "effective_readiness_decision": "GROUP_LEVEL_DIAGNOSTIC_SMOKE_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED_NO_FORMAL_EVIDENCE",
       "larger_data_summary": {
         "readiness_decision": "LARGER_ELIGIBLE_ANCHOR_DATA_COLLECTION_PASSED_READINESS_REVIEW_REQUIRED",
         "anchors": 37,
@@ -181,12 +218,38 @@
         2026
       ],
       "model_signal_review_required": true,
-      "model_signal_review_flag": "MODEL_SIGNAL_REVIEW_REQUIRED_MAJORITY_CLASS_COLLAPSE_OBSERVED",
+      "model_signal_review_flag": "GROUP_LEVEL_DIAGNOSTIC_SMOKE_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED_NO_FORMAL_EVIDENCE",
       "majority_class_collapse_observed": true,
+      "ordinary_logistic_collapsed": true,
       "logistic_matches_dummy_most_frequent": true,
       "logistic_valid_prediction_distribution": {
         "0": 0,
-        "1": 4608
+        "1": 96
+      },
+      "balanced_scaled_reduces_collapse": true,
+      "balanced_scaled_prediction_distribution": {
+        "0": 50,
+        "1": 46
+      },
+      "balanced_scaled_balanced_accuracy": 0.464967,
+      "formal_model_evidence": false,
+      "group_level_sample_summary": {
+        "group_count": 296,
+        "anchors": 37,
+        "etf_count": 8,
+        "train_group_count": 200,
+        "valid_group_count": 96,
+        "train_label_distribution": {
+          "0": 60,
+          "1": 140
+        },
+        "valid_label_distribution": {
+          "0": 55,
+          "1": 41
+        },
+        "group_label_policy": "anchor_close_last_bar",
+        "intraday_live_decision_ready": false,
+        "p1_warning": "P1_GROUP_LABEL_INCONSISTENCY_REVIEW_REQUIRED"
       },
       "metrics_are_effectiveness_evidence": false,
       "review_required": true,
@@ -250,11 +313,13 @@
     },
     {
       "line": "F_public",
-      "blocker": "F public larger no-save repeatability completed: model-signal review is required because logistic regression matched the majority-class dummy across all repeatability seeds; metrics are not effectiveness evidence and no automatic promotion is allowed.",
-      "status": "LARGER_NO_SAVE_REPEATABILITY_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED",
+      "blocker": "F public group-level diagnostic smoke completed: ordinary logistic still matched the majority-class dummy, balanced/scaled probe reduced collapse, balanced accuracy remained below 0.5, and no formal model evidence exists. P1 label inconsistency review remains required.",
+      "status": "GROUP_LEVEL_DIAGNOSTIC_SMOKE_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED_NO_FORMAL_EVIDENCE",
       "model_signal_review_required": true,
       "majority_class_collapse_observed": true,
       "logistic_matches_dummy_most_frequent": true,
+      "balanced_scaled_reduces_collapse": true,
+      "formal_model_evidence": false,
       "metrics_are_effectiveness_evidence": false,
       "stable_promotion_ready": false
     },
@@ -277,7 +342,11 @@
     "larger_repeatability_metrics_are_effectiveness_evidence": false,
     "larger_repeatability_allows_automatic_promotion": false,
     "majority_class_collapse_is_stable_promotion_signal": false,
-    "majority_class_collapse_requires_human_review": true
+    "majority_class_collapse_requires_human_review": true,
+    "group_level_balanced_scaled_reduces_collapse_is_formal_model_evidence": false,
+    "group_level_diagnostic_smoke_allows_stable_promotion": false,
+    "group_level_diagnostic_smoke_allows_formal_training": false,
+    "group_level_diagnostic_smoke_metrics_are_effectiveness_evidence": false
   },
   "next_triggers": [
     {
@@ -290,7 +359,7 @@
     },
     {
       "id": "F_PUBLIC_MODEL_SIGNAL_REVIEW",
-      "condition": "Human review of majority-class collapse and feature/label diagnostic design"
+      "condition": "Human review of label inconsistency, past-only feature expansion design, group-level feature diagnostic design, or optional no-save diagnostic smoke with separate task card"
     },
     {
       "id": "F_REAL_PROVIDER_OR_EXPORT",
@@ -328,12 +397,15 @@
     "label_generation_ready": false,
     "training_ready": false,
     "automatic_promotion_ready": false,
-    "f_public_status": "LARGER_NO_SAVE_REPEATABILITY_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED",
+    "f_public_status": "GROUP_LEVEL_DIAGNOSTIC_SMOKE_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED_NO_FORMAL_EVIDENCE",
     "f_public_larger_eligible_anchor_status": "LARGER_NO_SAVE_REPEATABILITY_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED",
+    "f_public_group_level_model_signal_status": "GROUP_LEVEL_DIAGNOSTIC_SMOKE_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED_NO_FORMAL_EVIDENCE",
     "f_public_supervised_smoke_status": "LARGER_NO_SAVE_REPEATABILITY_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED",
     "f_public_model_signal_review_required": true,
     "f_public_majority_class_collapse_observed": true,
     "f_public_logistic_matches_dummy_most_frequent": true,
+    "f_public_balanced_scaled_reduces_collapse": true,
+    "f_public_formal_model_evidence": false,
     "metrics_are_effectiveness_evidence": false,
     "formal_training_ready": false
   },

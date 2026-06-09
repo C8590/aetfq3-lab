@@ -1,0 +1,148 @@
+{
+  "document_type": "aetfq3_intraday_group_level_model_signal_review_closeout",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "phase": "F public intraday group-level diagnostic smoke model-signal review closeout",
+  "status": "GROUP_LEVEL_DIAGNOSTIC_SMOKE_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED_NO_FORMAL_EVIDENCE",
+  "human_review_decision": "HUMAN_REVIEW_DECISION_AFTER_GROUP_LEVEL_SMOKE=APPROVE_MODEL_SIGNAL_REVIEW_CLOSEOUT_ONLY",
+  "completed_chain": [
+    "majority-class collapse diagnostic",
+    "group-level sample dry-run",
+    "group-level readiness precheck",
+    "group-level no-save diagnostic smoke"
+  ],
+  "group_level_sample_summary": {
+    "group_count": 296,
+    "anchors": 37,
+    "etf_count": 8,
+    "group_label_policy": "anchor_close_last_bar",
+    "intraday_live_decision_ready": false,
+    "p1_warning": "P1_GROUP_LABEL_INCONSISTENCY_REVIEW_REQUIRED",
+    "uses_stable_bundle": false
+  },
+  "diagnostic_smoke_summary": {
+    "readiness_decision": "GROUP_LEVEL_NO_SAVE_DIAGNOSTIC_SMOKE_COMPLETED_WITH_P1_LABEL_INCONSISTENCY_REVIEW_REQUIRED",
+    "smoke_scope": "lab_only_group_level_no_save_diagnostic",
+    "target": "three_day_positive_label",
+    "models_run": [
+      "dummy_most_frequent",
+      "dummy_stratified",
+      "logistic_regression",
+      "logistic_regression_balanced_scaled"
+    ],
+    "train_group_count": 200,
+    "valid_group_count": 96,
+    "train_label_distribution": {
+      "0": 60,
+      "1": 140
+    },
+    "valid_label_distribution": {
+      "0": 55,
+      "1": 41
+    },
+    "metrics": {
+      "dummy_most_frequent": {
+        "accuracy": 0.427083,
+        "balanced_accuracy": 0.5
+      },
+      "dummy_stratified": {
+        "accuracy": 0.447917,
+        "balanced_accuracy": 0.474723
+      },
+      "logistic_regression": {
+        "accuracy": 0.427083,
+        "balanced_accuracy": 0.5
+      },
+      "logistic_regression_balanced_scaled": {
+        "accuracy": 0.46875,
+        "balanced_accuracy": 0.464967
+      }
+    },
+    "model_saved": false,
+    "checkpoint_saved": false,
+    "gpu_used": false,
+    "torchrun_used": false,
+    "qmt_used": false,
+    "order_intent_generated": false,
+    "stable_affected": false,
+    "metrics_are_effectiveness_evidence": false
+  },
+  "collapse_review": {
+    "ordinary_logistic_collapsed": true,
+    "ordinary_logistic_prediction_distribution": {
+      "0": 0,
+      "1": 96
+    },
+    "logistic_matches_dummy_most_frequent": true,
+    "balanced_scaled_prediction_distribution": {
+      "0": 50,
+      "1": 46
+    },
+    "balanced_scaled_reduces_collapse": true,
+    "balanced_scaled_balanced_accuracy": 0.464967,
+    "balanced_scaled_proves_model_signal": false,
+    "balanced_accuracy_below_half": true,
+    "formal_model_evidence": false,
+    "metrics_are_effectiveness_evidence": false,
+    "flags": [
+      "GROUP_LEVEL_LOGISTIC_MATCHES_DUMMY_MOST_FREQUENT",
+      "GROUP_LEVEL_BALANCED_SCALED_PROBE_REDUCES_COLLAPSE"
+    ]
+  },
+  "p1_warnings": [
+    "P1_GROUP_LABEL_INCONSISTENCY_REVIEW_REQUIRED"
+  ],
+  "boundary": {
+    "access_mode": "READ_ONLY",
+    "final_action_change_allowed": false,
+    "contains_live_order": false,
+    "contains_secret": false,
+    "requires_human_review": true,
+    "promotion_gate_required": true,
+    "stable_allowed": false,
+    "qmt_allowed": false,
+    "order_intent_allowed": false,
+    "advisory_allowed": false,
+    "formal_training_allowed": false,
+    "model_deployment_allowed": false,
+    "model_save_allowed": false,
+    "checkpoint_allowed": false,
+    "gpu_allowed": false,
+    "torchrun_allowed": false,
+    "automatic_promotion_allowed": false,
+    "not_trading_advice": true,
+    "metrics_are_effectiveness_evidence": false
+  },
+  "final_review_status": {
+    "f_public_group_level_model_signal_status": "GROUP_LEVEL_DIAGNOSTIC_SMOKE_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED_NO_FORMAL_EVIDENCE",
+    "stable_promotion_ready": false,
+    "formal_training_ready": false,
+    "qmt_ready": false,
+    "order_intent_ready": false,
+    "automatic_promotion_ready": false,
+    "metrics_are_effectiveness_evidence": false,
+    "formal_model_evidence": false
+  },
+  "next_allowed_actions": [
+    "human review of label inconsistency",
+    "past-only feature expansion design",
+    "group-level feature diagnostic design",
+    "optional no-save diagnostic smoke with separate task card"
+  ],
+  "not_allowed_next_actions": [
+    "Stable promotion",
+    "formal training",
+    "QMT",
+    "OrderIntent",
+    "model deployment"
+  ],
+  "ordinary_logistic_collapsed": true,
+  "logistic_matches_dummy_most_frequent": true,
+  "balanced_scaled_reduces_collapse": true,
+  "formal_model_evidence": false,
+  "metrics_are_effectiveness_evidence": false,
+  "stable_promotion_ready": false,
+  "formal_training_ready": false,
+  "qmt_ready": false,
+  "order_intent_ready": false,
+  "automatic_promotion_ready": false
+}
