@@ -1,0 +1,116 @@
+{
+  "document_type": "aetfq3_intraday_supervised_no_save_smoke",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "phase": "F public intraday eligible-anchor no-save supervised smoke",
+  "smoke_type": "lab_only_no_save_supervised_smoke",
+  "input_sample_type": "eligible_anchor_expanded_three_day_label_dryrun_intraday_5m_samples",
+  "target": "three_day_positive_label",
+  "allowed_models": [
+    "dummy_most_frequent",
+    "dummy_stratified",
+    "logistic_regression"
+  ],
+  "forbidden_models_or_runtimes": [
+    "LightGBM",
+    "CatBoost",
+    "XGBoost",
+    "PyTorch",
+    "GPU",
+    "torchrun"
+  ],
+  "required_gates": [
+    "readiness report is SUPERVISED_SMOKE_READINESS_PASSED_REVIEW_REQUIRED",
+    "manifest leakage checker passed",
+    "training_allowed=false",
+    "supervised_training_allowed=false",
+    "stable_effect_allowed=false",
+    "contains_order_intent=false",
+    "contains_live_order=false",
+    "contains_secret=false",
+    "feature_columns come from manifest",
+    "target is three_day_positive_label",
+    "outcome/label/future fields not in features",
+    "time-based split from readiness report",
+    "no forbidden model artifact in out-dir"
+  ],
+  "readiness_decisions": [
+    "NO_SAVE_SUPERVISED_SMOKE_COMPLETED_REVIEW_REQUIRED",
+    "BLOCKED_READINESS_NOT_PASSED",
+    "BLOCKED_MANIFEST_LEAKAGE_P0",
+    "BLOCKED_BOUNDARY_FLAG",
+    "BLOCKED_MODEL_ARTIFACT_CREATED",
+    "BLOCKED_SMOKE_RUNTIME_ERROR"
+  ],
+  "report_contract": {
+    "report_type": "intraday_supervised_no_save_smoke",
+    "smoke_scope": "lab_only_no_save",
+    "required_fields": [
+      "target",
+      "models_run",
+      "train_anchor_dates",
+      "valid_anchor_dates",
+      "train_rows",
+      "valid_rows",
+      "train_label_distribution",
+      "valid_label_distribution",
+      "metrics",
+      "model_saved",
+      "checkpoint_saved",
+      "gpu_used",
+      "torchrun_used",
+      "qmt_used",
+      "order_intent_generated",
+      "stable_affected",
+      "not_trading_advice",
+      "metrics_are_effectiveness_evidence"
+    ]
+  },
+  "artifact_policy": {
+    "model_saved": false,
+    "checkpoint_saved": false,
+    "forbidden_extensions": [
+      ".pkl",
+      ".joblib",
+      ".pt",
+      ".pth",
+      ".ckpt",
+      ".onnx"
+    ]
+  },
+  "boundary": {
+    "access_mode": "READ_ONLY",
+    "final_action_change_allowed": false,
+    "contains_live_order": false,
+    "contains_secret": false,
+    "requires_human_review": true,
+    "promotion_gate_required": true,
+    "formal_training": false,
+    "hyperparameter_tuning": false,
+    "model_training_allowed": false,
+    "model_save_allowed": false,
+    "checkpoint_allowed": false,
+    "gpu_allowed": false,
+    "torchrun_allowed": false,
+    "qmt_allowed": false,
+    "order_intent_allowed": false,
+    "stable_allowed": false,
+    "write_output_allowed": false,
+    "write_stable_runtime_output_allowed": false,
+    "create_lab_advisory_allowed": false,
+    "not_trading_advice": true,
+    "metrics_are_effectiveness_evidence": false
+  },
+  "next_steps": [
+    "Completed smoke may enter human review only.",
+    "Do not treat smoke metrics as model effectiveness, trading advice, or Stable evidence.",
+    "Do not automatically promote to Stable.",
+    "Do not save models or checkpoints.",
+    "Do not connect QMT or generate OrderIntent."
+  ],
+  "model_training_allowed": false,
+  "stable_allowed": false,
+  "qmt_allowed": false,
+  "order_intent_allowed": false,
+  "checkpoint_allowed": false,
+  "advisory_package_generated": false
+}
