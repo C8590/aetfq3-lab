@@ -1,0 +1,228 @@
+{
+  "document_type": "aetfq3_lab_post_q3_addendum_current_state_ledger",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "phase": "post-Q3 Lab current state ledger",
+  "ledger_type": "post_q3_addendum_current_state",
+  "purpose": "Record Lab work completed after Q3 phase closeout and reconcile current E/A/F/Stable state without replacing the Q3 closeout.",
+  "baseline_q3_closeout_commit": "04b5049f5a2c7b878e8423370a21736127d9ff3d",
+  "post_q3_commits": [
+    {
+      "commit": "c08f5f917806b11cb27f1b1f5705f11eaf0e8afd",
+      "short_commit": "c08f5f9",
+      "work": "F public intraday no-label tensor validation",
+      "status": "passed"
+    },
+    {
+      "commit": "039f158b95076bcd7cb6d7b74e66eb47723c990e",
+      "short_commit": "039f158",
+      "work": "F intraday label/outcome design",
+      "status": "design completed"
+    },
+    {
+      "commit": "1664daaeeacd7f0239a06737340874c18ef0a7ee",
+      "short_commit": "1664daa",
+      "work": "F intraday label manifest leakage checker",
+      "status": "checker completed"
+    },
+    {
+      "commit": "2d1cfe348147cad7b4b568286316b494433e720a",
+      "short_commit": "2d1cfe3",
+      "work": "F intraday label generation intake orchestrator",
+      "status": "completed",
+      "initial_status": "BLOCKED_MISSING_FUTURE_WINDOW_SOURCE"
+    },
+    {
+      "commit": "3130b1cca7d79d78e81c04d0282b63739e28b023",
+      "short_commit": "3130b1c",
+      "work": "F intraday future-window coverage gate fix",
+      "status": "coverage gate fixed and regression validated"
+    },
+    {
+      "commit": "a6e721f8c36d5dfbb6147d126b2e9bbb39ffa2d6",
+      "short_commit": "a6e721f",
+      "work": "F public intraday label generation pause closeout",
+      "status": "PAUSED_BLOCKED_INSUFFICIENT_FUTURE_WINDOW_DATA"
+    }
+  ],
+  "current_state": {
+    "E": {
+      "status": "E_STATUS=LAB_ONLY_SMOKE_REPLAY_COMPLETED",
+      "summary": "E sector internal ranking smoke/replay chain completed.",
+      "evidence_docs": [
+        "docs/research/aetfq3_lab_q3_phase_closeout.md",
+        "docs/research/aetfq3_lab_q3_phase_closeout.json"
+      ],
+      "blocker": "No Lab-only blocker; not Stable evidence.",
+      "next_trigger": "New explicit Lab-only E research task.",
+      "allowed_next_action": "Lab-only read-only smoke/replay review or documentation.",
+      "forbidden_action": "Treating smoke/replay as trading advice, model validity proof, or Stable promotion evidence.",
+      "stable_evidence": false,
+      "trading_advice": false,
+      "stable_promotion": false
+    },
+    "A": {
+      "status": "A_STATUS=READY_RECONSTRUCTED_ONLY",
+      "summary": "A reconstructed v2 no-save smoke completed.",
+      "evidence_docs": [
+        "docs/research/aetfq3_lab_q3_phase_closeout.md",
+        "docs/research/aetfq3_lab_q3_phase_closeout.json"
+      ],
+      "blocker": "True historical V2/ML_SIM complete input is still missing.",
+      "next_trigger": "A true historical V2/ML_SIM complete package appears.",
+      "allowed_next_action": "Intake-only true historical validation planning after complete input appears.",
+      "forbidden_action": "Treating reconstructed A as true historical, true ML_SIM, Stable evidence, or trading advice.",
+      "reconstructed_is_true_historical": false,
+      "true_ml_sim_available": false,
+      "stable_evidence": false,
+      "trading_advice": false
+    },
+    "F_public": {
+      "status": "F_PUBLIC_STATUS=NO_LABEL_TENSOR_AND_GATE_COMPLETED_LABEL_PAUSED",
+      "summary": "Public 5m OHLCV export, no-label tensor validation, label/outcome design, manifest leakage checker, label generation intake orchestrator, coverage gate fix, and coverage gate regression are complete; label generation is paused.",
+      "evidence_docs": [
+        "docs/research/aetfq3_intraday_public_no_label_tensor_validation.md",
+        "docs/research/aetfq3_intraday_public_no_label_tensor_validation.json",
+        "docs/research/aetfq3_intraday_label_outcome_design.md",
+        "docs/research/aetfq3_intraday_label_outcome_design.json",
+        "docs/research/aetfq3_intraday_label_leakage_checklist.json",
+        "docs/research/aetfq3_intraday_label_manifest_leakage_checker.md",
+        "docs/research/aetfq3_intraday_label_manifest_leakage_checker.json",
+        "docs/research/aetfq3_intraday_label_generation_intake_orchestrator.md",
+        "docs/research/aetfq3_intraday_label_generation_intake_orchestrator.json",
+        "docs/research/aetfq3_intraday_label_generation_pause_closeout.md",
+        "docs/research/aetfq3_intraday_label_generation_pause_closeout.json"
+      ],
+      "blocker": "Missing public future-window daily OHLCV dates 2026-06-09, 2026-06-10, and 2026-06-11.",
+      "next_trigger": "F public daily OHLCV covers required future-window dates and coverage gate passes.",
+      "allowed_next_action": "Apply for label generation dry-run after coverage gate passes.",
+      "forbidden_action": "Generating labels, training, connecting QMT, generating OrderIntent, or entering Stable before coverage gate passes.",
+      "required_missing_dates": [
+        "2026-06-09",
+        "2026-06-10",
+        "2026-06-11"
+      ],
+      "effective_readiness_decision": "BLOCKED_INSUFFICIENT_FUTURE_WINDOW_DATA",
+      "label_generation_ready": false,
+      "stable_evidence": false
+    },
+    "F_real_qmt": {
+      "status": "F_REAL_QMT_STATUS=BLOCKED_NO_SAFE_REAL_PROVIDER_OR_COMPLIANT_EXPORT",
+      "summary": "No QMT connection, no account/position/order/trade access, and no real provider accepted yet.",
+      "evidence_docs": [
+        "docs/research/aetfq3_lab_q3_phase_closeout.md",
+        "docs/research/aetfq3_lab_q3_phase_closeout.json"
+      ],
+      "blocker": "Missing safe real provider or compliant export.",
+      "next_trigger": "F safe real provider / compliant export appears.",
+      "allowed_next_action": "Static review and intake-only provider validation.",
+      "forbidden_action": "Connecting QMT, reading account/position/order/trade data, generating OrderIntent, or placing orders.",
+      "qmt_connection": false,
+      "account_position_order_trade_access": false,
+      "real_provider_accepted": false
+    },
+    "Stable": {
+      "status": "STABLE_ALLOWED=false",
+      "evidence_docs": [
+        "docs/research/aetfq3_lab_q3_phase_closeout.md",
+        "docs/research/aetfq3_lab_q3_phase_closeout.json",
+        "docs/research/aetfq3_intraday_label_generation_pause_closeout.md",
+        "docs/research/aetfq3_intraday_label_generation_pause_closeout.json"
+      ],
+      "blocker": "No promotion-ready true input package or approved promotion gate.",
+      "next_trigger": "Formal promotion gate with true inputs and human review.",
+      "allowed_next_action": "None from this ledger.",
+      "forbidden_action": "Stable runtime/output write, QMT, OrderIntent, advisory package, model training, checkpoint, or strategy parameter change.",
+      "stable_allowed": false,
+      "qmt_allowed": false,
+      "order_intent_allowed": false,
+      "advisory_allowed": false,
+      "training_allowed": false,
+      "checkpoint_allowed": false,
+      "modify_final_buy_action_allowed": false,
+      "modify_target_weight_allowed": false,
+      "modify_buy_probe_thresholds_allowed": false
+    }
+  },
+  "blockers": [
+    {
+      "line": "A",
+      "blocker": "A true historical blocked: missing true historical V2/ML_SIM complete input.",
+      "reconstructed_is_true_historical": false,
+      "true_ml_sim_available": false
+    },
+    {
+      "line": "F_public",
+      "blocker": "F public label generation paused: missing 2026-06-09 through 2026-06-11 future-window daily OHLCV.",
+      "missing_dates": [
+        "2026-06-09",
+        "2026-06-10",
+        "2026-06-11"
+      ]
+    },
+    {
+      "line": "F_real_qmt",
+      "blocker": "F real/QMT blocked: missing safe real provider or compliant export.",
+      "qmt_connection": false
+    }
+  ],
+  "gate_semantics": {
+    "raw_presence_ready_is_effective_readiness": false,
+    "coverage_gate_is_formal_label_generation_gate": true,
+    "coverage_insufficient_blocks_label_generation_dry_run": true,
+    "reconstructed_a_equals_true_historical": false,
+    "public_data_validation_equals_stable_evidence": false,
+    "smoke_reconstructed_public_validation_is_trading_advice": false,
+    "smoke_reconstructed_public_validation_proves_model_effectiveness": false
+  },
+  "next_triggers": [
+    {
+      "id": "A_TRUE_HISTORICAL_INPUT",
+      "condition": "A true historical V2/ML_SIM complete package appears"
+    },
+    {
+      "id": "F_PUBLIC_FUTURE_WINDOW_COVERAGE",
+      "condition": "F public daily OHLCV covers required future-window dates"
+    },
+    {
+      "id": "F_REAL_PROVIDER_OR_EXPORT",
+      "condition": "F safe real provider / compliant export appears"
+    }
+  ],
+  "boundary": {
+    "access_mode": "READ_ONLY",
+    "final_action_change_allowed": false,
+    "contains_live_order": false,
+    "contains_secret": false,
+    "requires_human_review": true,
+    "promotion_gate_required": true,
+    "stable_allowed": false,
+    "qmt_allowed": false,
+    "order_intent_allowed": false,
+    "advisory_allowed": false,
+    "write_output_allowed": false,
+    "write_stable_runtime_output_allowed": false,
+    "create_lab_advisory_allowed": false,
+    "model_training_allowed": false,
+    "torchrun_allowed": false,
+    "checkpoint_allowed": false,
+    "strategy_parameter_change_allowed": false,
+    "modify_final_buy_action_allowed": false,
+    "modify_target_weight_allowed": false,
+    "modify_buy_probe_thresholds_allowed": false,
+    "trading_advice": false
+  },
+  "final_decision": {
+    "lab_post_q3_status": "PAUSED_WAITING_FOR_TRUE_INPUTS",
+    "stable_promotion_ready": false,
+    "qmt_ready": false,
+    "order_intent_ready": false,
+    "label_generation_ready": false,
+    "training_ready": false
+  },
+  "stable_allowed": false,
+  "qmt_allowed": false,
+  "order_intent_allowed": false,
+  "advisory_allowed": false,
+  "training_allowed": false,
+  "checkpoint_allowed": false
+}
