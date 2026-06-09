@@ -36,6 +36,26 @@
 - `cancel_buy_label`: 基于当前 bar 之后窗口内是否触发不利 outcome，标记是否取消候选买入。
 - `three_day_positive_label`: 基于 T+3 或等价未来窗口收益是否为正，标记三日正收益 outcome。
 
+### `three_day_positive_label` dry-run 公式
+
+本公式只用于 Lab-only eligible-anchor label dry-run，不改变既有 `future_return_3d` 计算口径，不构成真实 label 文件生成授权，不构成 supervised training 授权，不构成 Stable 信号，不代表买入建议。
+
+```text
+three_day_positive_label =
+  1 if future_return_3d > 0
+  0 if future_return_3d <= 0
+  null if future_return_3d is null or outcome_status_3d != available
+```
+
+约束：
+
+- `three_day_positive_label` 只能从 `future_return_3d` 派生。
+- `three_day_positive_label` 不能进入 `feature_columns`。
+- 缺 future window 时 `three_day_positive_label` 必须为 null。
+- `three_day_positive_label` 不能作为 Stable 信号。
+- `three_day_positive_label` 不代表买入建议。
+- `three_day_positive_label` 不授权 supervised training。
+
 ## Outcomes
 
 以下字段只能作为 label 生成依据、target、outcome 或离线审计字段，永远不能进入 `feature_columns`：

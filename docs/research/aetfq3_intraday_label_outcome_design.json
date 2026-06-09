@@ -36,9 +36,29 @@
       "name": "three_day_positive_label",
       "type": "binary_label",
       "feature_allowed": false,
-      "generation_rule": "derived from future three-day or equivalent future-window outcome"
+      "generation_rule": "derived only from future_return_3d for Lab-only dry-run when outcome_status_3d=available",
+      "dry_run_formula": {
+        "one_when": "future_return_3d > 0",
+        "zero_when": "future_return_3d <= 0",
+        "null_when": "future_return_3d is null or outcome_status_3d != available"
+      },
+      "dry_run_only": true,
+      "stable_signal_allowed": false,
+      "trading_advice": false,
+      "supervised_training_authorized": false
     }
   ],
+  "three_day_positive_label_dry_run_formula": {
+    "formula": "1 if future_return_3d > 0; 0 if future_return_3d <= 0; null if future_return_3d is null or outcome_status_3d != available",
+    "derived_only_from": "future_return_3d",
+    "does_not_change_future_return_3d_definition": true,
+    "feature_allowed": false,
+    "dry_run_label": true,
+    "stable_signal_allowed": false,
+    "buy_advice": false,
+    "supervised_training_authorized": false,
+    "missing_future_window_value": null
+  },
   "outcomes": [
     {"name": "future_return_1d", "type": "numeric_outcome", "feature_allowed": false},
     {"name": "future_return_3d", "type": "numeric_outcome", "feature_allowed": false},

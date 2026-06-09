@@ -18,6 +18,17 @@
     "cancel_buy_label",
     "three_day_positive_label"
   ],
+  "label_derivation_rules": {
+    "three_day_positive_label": {
+      "dry_run_only": true,
+      "derived_only_from": "future_return_3d",
+      "formula": "1 if future_return_3d > 0; 0 if future_return_3d <= 0; null if future_return_3d is null or outcome_status_3d != available",
+      "feature_allowed": false,
+      "stable_signal_allowed": false,
+      "trading_advice": false,
+      "supervised_training_authorized": false
+    }
+  },
   "outcome_columns": [
     "future_return_1d",
     "future_return_3d",
@@ -52,6 +63,12 @@
       "severity": "P0",
       "description": "A label is generated when the required future window is unavailable.",
       "block_when": "label_status is not insufficient_future_window for rows with missing horizon data"
+    },
+    {
+      "id": "three_day_positive_label_invalid_derivation",
+      "severity": "P0",
+      "description": "three_day_positive_label is generated from anything other than future_return_3d, or is generated when future_return_3d is null / outcome_status_3d is not available.",
+      "block_when": "three_day_positive_label source is not future_return_3d, or outcome_status_3d != available and label is non-null"
     },
     {
       "id": "synthetic_label_marked_as_real",
