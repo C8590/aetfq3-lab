@@ -1,0 +1,61 @@
+{
+  "document_type": "aetfq3_intraday_group_label_inconsistency_diagnostic",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "phase": "F public intraday group-level label inconsistency diagnostic / policy review",
+  "status": "LAB_ONLY_DIAGNOSTIC_DEFINED",
+  "report_type": "intraday_group_label_inconsistency_diagnostic",
+  "purpose": "Diagnose bar-level label inconsistency inside group-level samples and review anchor_close_last_bar as an end-of-anchor-day diagnostic policy.",
+  "diagnostic_only": true,
+  "group_key": [
+    "trade_date",
+    "etf_code"
+  ],
+  "group_label_policy": "anchor_close_last_bar",
+  "intraday_live_decision_ready": false,
+  "inconsistency_explanation": "Group-internal label inconsistency can arise because bar-level future_return_3d uses each 5m close as the outcome denominator; anchor_close_last_bar selects the final bar label for end-of-anchor-day diagnostics.",
+  "inconsistency_drivers": [
+    "BAR_LEVEL_OUTCOME_DENOMINATOR_VARIATION",
+    "THRESHOLD_NEAR_ZERO_LABEL_FLIP",
+    "DATA_QUALITY_SUSPECT",
+    "GROUP_POLICY_EXPECTED_DIAGNOSTIC_BEHAVIOR"
+  ],
+  "policy_review_decisions": [
+    "GROUP_LABEL_POLICY_ANCHOR_CLOSE_LAST_BAR_ACCEPTED_FOR_END_OF_DAY_DIAGNOSTIC",
+    "GROUP_LABEL_POLICY_REVIEW_REQUIRED_THRESHOLD_FLIPS_HIGH",
+    "GROUP_LABEL_POLICY_BLOCKED_DATA_QUALITY_SUSPECT",
+    "GROUP_LABEL_POLICY_NOT_INTRADAY_LIVE_READY"
+  ],
+  "preferred_policy_decision_when_clean": "GROUP_LABEL_POLICY_ANCHOR_CLOSE_LAST_BAR_ACCEPTED_FOR_END_OF_DAY_DIAGNOSTIC",
+  "output_contract": {
+    "allowed_output_dir": ".local_research_outputs/aetfq3_lab/intraday_group_label_inconsistency_diagnostic/",
+    "files": [
+      "intraday_group_label_inconsistency_report.md",
+      "intraday_group_label_inconsistency_report.json",
+      "policy_review_decision.json"
+    ],
+    "tracked_output_allowed": false
+  },
+  "boundary": {
+    "model_training_allowed": false,
+    "no_save_smoke_allowed": false,
+    "hyperparameter_tuning_allowed": false,
+    "torchrun_allowed": false,
+    "gpu_allowed": false,
+    "model_save_allowed": false,
+    "checkpoint_allowed": false,
+    "qmt_allowed": false,
+    "order_intent_allowed": false,
+    "stable_allowed": false,
+    "write_output_allowed": false,
+    "write_stable_runtime_output_allowed": false,
+    "create_lab_advisory_allowed": false,
+    "stable_promotion_ready": false,
+    "formal_training_ready": false,
+    "metrics_are_effectiveness_evidence": false,
+    "not_trading_advice": true
+  },
+  "stable_bundle_source": false,
+  "future_function": "No new labels are generated. The diagnostic reads existing bar-level and group-level dry-run label outputs.",
+  "stable_recommendation": "Do not promote to Stable. Use only for Lab label-policy review.",
+  "direct_stable_submit_allowed": false
+}
