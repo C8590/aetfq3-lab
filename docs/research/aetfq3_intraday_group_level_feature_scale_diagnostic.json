@@ -1,0 +1,120 @@
+{
+  "document_type": "aetfq3_intraday_group_level_feature_scale_diagnostic",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "phase": "F public intraday group-level feature scale diagnostic / transform design",
+  "status": "LAB_ONLY_DIAGNOSTIC_DEFINED",
+  "report_type": "intraday_group_level_feature_scale_diagnostic",
+  "purpose": "Diagnose feature scale risk in group-level past-only feature expansion dry-run outputs and define a diagnostic-only train-only transform policy.",
+  "diagnostic_only": true,
+  "not_training": true,
+  "group_key": [
+    "trade_date",
+    "etf_code"
+  ],
+  "input_contract": {
+    "feature_columns_source": "manifest.feature_columns",
+    "feature_columns_must_exclude": [
+      "future columns",
+      "outcome columns",
+      "label columns"
+    ],
+    "split_source": "readiness report train/valid split, or reproduced anchor_date_70_30 when dates are absent",
+    "allowed_inputs": [
+      ".local_research_outputs/aetfq3_lab/intraday_group_level_past_only_feature_expansion_dryrun/intraday_group_level_past_only_feature_samples.csv",
+      ".local_research_outputs/aetfq3_lab/intraday_group_level_past_only_feature_expansion_dryrun/intraday_group_level_past_only_feature_manifest.json",
+      ".local_research_outputs/aetfq3_lab/intraday_group_level_past_only_feature_expansion_dryrun/supervised_smoke_readiness_report.json"
+    ]
+  },
+  "per_feature_statistics": [
+    "train_min",
+    "train_max",
+    "train_mean",
+    "train_std",
+    "valid_min",
+    "valid_max",
+    "valid_mean",
+    "valid_std",
+    "missing_count",
+    "inf_count",
+    "zero_variance",
+    "absolute_max",
+    "scale_order",
+    "train_vs_valid_standardized_mean_difference"
+  ],
+  "global_statistics": [
+    "cross_feature_std_ratio",
+    "cross_feature_absolute_max_ratio",
+    "features_requiring_log1p_transform",
+    "features_requiring_train_only_standardization",
+    "features_requiring_clipping_winsorization_review"
+  ],
+  "diagnostic_flags": [
+    "FEATURE_SCALE_RISK_CONFIRMED",
+    "LOG1P_TRANSFORM_RECOMMENDED",
+    "TRAIN_ONLY_STANDARDIZATION_RECOMMENDED",
+    "CLIPPING_REVIEW_RECOMMENDED",
+    "ZERO_VARIANCE_FEATURE_FOUND",
+    "TRAIN_VALID_FEATURE_SHIFT_OBSERVED",
+    "NO_FEATURE_SCALE_P0",
+    "NO_FORMAL_MODEL_EVIDENCE"
+  ],
+  "decisions": [
+    "FEATURE_SCALE_DIAGNOSTIC_COMPLETED_TRANSFORM_POLICY_RECOMMENDED",
+    "FEATURE_SCALE_DIAGNOSTIC_COMPLETED_NO_P0_REVIEW_REQUIRED",
+    "BLOCKED_MANIFEST_LEAKAGE_P0",
+    "BLOCKED_BOUNDARY_FLAG",
+    "BLOCKED_DIAGNOSTIC_RUNTIME_ERROR"
+  ],
+  "transform_policy": {
+    "policy_scope": "diagnostic_only",
+    "train_only_fit_required": true,
+    "save_scaler": false,
+    "model_training_allowed": false,
+    "stable_allowed": false,
+    "recommended_transform_groups": {
+      "log1p_recommended": "raw volume / amount features and extreme spike ratios",
+      "standardize_recommended": "continuous numeric features; train fit only, valid transform only",
+      "clip_winsorize_review": "extreme outlier features; train quantiles only; no clipping performed in this task",
+      "no_transform_or_bounded": "ratio / rank / return features, still eligible for standardization"
+    }
+  },
+  "output_contract": {
+    "allowed_output_dir": ".local_research_outputs/aetfq3_lab/intraday_group_level_feature_scale_diagnostic/",
+    "files": [
+      "intraday_group_level_feature_scale_diagnostic_report.md",
+      "intraday_group_level_feature_scale_diagnostic_report.json",
+      "transform_policy_recommendation.json"
+    ],
+    "tracked_output_allowed": false
+  },
+  "boundary": {
+    "access_mode": "READ_ONLY",
+    "final_action_change_allowed": false,
+    "contains_live_order": false,
+    "contains_secret": false,
+    "requires_human_review": true,
+    "promotion_gate_required": true,
+    "no_save_smoke_allowed": false,
+    "model_training_allowed": false,
+    "hyperparameter_tuning_allowed": false,
+    "torchrun_allowed": false,
+    "gpu_allowed": false,
+    "model_save_allowed": false,
+    "scaler_save_allowed": false,
+    "checkpoint_allowed": false,
+    "qmt_allowed": false,
+    "order_intent_allowed": false,
+    "stable_allowed": false,
+    "write_output_allowed": false,
+    "write_stable_runtime_output_allowed": false,
+    "create_lab_advisory_allowed": false,
+    "automatic_promotion_ready": false,
+    "metrics_are_effectiveness_evidence": false,
+    "not_trading_advice": true
+  },
+  "stable_bundle_source": false,
+  "future_function": "No new labels or outcomes are generated. The diagnostic reads existing past-only feature samples and existing readiness metadata.",
+  "next_allowed_action_if_passed": "Request transform-aware no-save diagnostic smoke only.",
+  "stable_recommendation": "Do not promote to Stable directly. Use only as Lab transform policy evidence for a future no-save diagnostic smoke task.",
+  "direct_stable_submit_allowed": false
+}
