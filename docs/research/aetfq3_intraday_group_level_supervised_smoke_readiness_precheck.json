@@ -1,0 +1,119 @@
+{
+  "document_type": "aetfq3_intraday_group_level_supervised_smoke_readiness_precheck",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "phase": "F public intraday group-level supervised smoke readiness precheck",
+  "report_type": "intraday_group_level_supervised_smoke_readiness_precheck",
+  "purpose": "check whether group-level samples meet minimum conditions for a later no-save diagnostic smoke request",
+  "diagnostic_only": true,
+  "readiness_precheck_only": true,
+  "group_level_sample": true,
+  "group_label_policy": "anchor_close_last_bar",
+  "intraday_live_decision_ready": false,
+  "formal_training_allowed": false,
+  "no_save_supervised_smoke_run_allowed_in_this_task": false,
+  "hyperparameter_tuning_allowed": false,
+  "model_save_allowed": false,
+  "checkpoint_allowed": false,
+  "gpu_allowed": false,
+  "torchrun_allowed": false,
+  "qmt_allowed": false,
+  "order_intent_allowed": false,
+  "stable_allowed": false,
+  "advisory_package_allowed": false,
+  "not_trading_advice": true,
+  "metrics_are_effectiveness_evidence": false,
+  "input_contract": {
+    "samples": ".local_research_outputs/aetfq3_lab/intraday_group_level_sample_dryrun/intraday_group_level_samples.csv",
+    "manifest": ".local_research_outputs/aetfq3_lab/intraday_group_level_sample_dryrun/intraday_group_level_manifest.json",
+    "group_report": ".local_research_outputs/aetfq3_lab/intraday_group_level_sample_dryrun/intraday_group_level_report.json"
+  },
+  "output_contract": {
+    "allowed_output_dir": ".local_research_outputs/aetfq3_lab/intraday_group_level_supervised_smoke_readiness_precheck/",
+    "files": [
+      "intraday_group_level_supervised_smoke_readiness_report.md",
+      "intraday_group_level_supervised_smoke_readiness_report.json",
+      "readiness_decision.json"
+    ],
+    "tracked_output_allowed": false
+  },
+  "minimum_conditions": {
+    "group_count_min": 200,
+    "anchor_count_min": 20,
+    "etf_count_min": 3,
+    "class_count": 2,
+    "min_class_count_min": 50,
+    "label_null_count": 0,
+    "split_policy_attempts": [
+      "anchor_date_70_30",
+      "anchor_date_60_40"
+    ],
+    "train_valid_both_classes_required": true
+  },
+  "required_manifest_checks": {
+    "manifest_leakage_checker_passed": true,
+    "group_level_sample": true,
+    "group_key_allowed": [
+      [
+        "trade_date",
+        "etf_code"
+      ],
+      [
+        "anchor_date",
+        "etf_code"
+      ]
+    ],
+    "group_label_policy": "anchor_close_last_bar",
+    "intraday_live_decision_ready": false,
+    "target": "three_day_positive_label",
+    "target_not_in_feature_columns": true,
+    "outcomes_not_in_feature_columns": [
+      "future_return_1d",
+      "future_return_3d",
+      "max_drawdown_3d"
+    ],
+    "future_or_label_pattern_features_forbidden": true
+  },
+  "boundary_false_fields": [
+    "training_allowed",
+    "supervised_training_allowed",
+    "stable_effect_allowed",
+    "contains_order_intent",
+    "contains_live_order",
+    "contains_secret"
+  ],
+  "inconsistent_label_review": {
+    "record_inconsistent_label_group_count": true,
+    "record_inconsistent_label_group_rate": true,
+    "p1_warning": "P1_GROUP_LABEL_INCONSISTENCY_REVIEW_REQUIRED",
+    "p0_blocker": false
+  },
+  "readiness_decisions": [
+    "GROUP_LEVEL_SUPERVISED_SMOKE_READINESS_PASSED_REVIEW_REQUIRED",
+    "GROUP_LEVEL_SUPERVISED_SMOKE_READINESS_PASSED_WITH_LABEL_INCONSISTENCY_REVIEW_REQUIRED",
+    "BLOCKED_GROUP_LEVEL_SINGLE_CLASS_LABEL",
+    "BLOCKED_GROUP_LEVEL_INSUFFICIENT_GROUPS",
+    "BLOCKED_GROUP_LEVEL_SPLIT_NOT_CLASS_DIVERSE",
+    "BLOCKED_MANIFEST_LEAKAGE_P0",
+    "BLOCKED_BOUNDARY_FLAG"
+  ],
+  "mandatory_false_fields": {
+    "training_allowed": false,
+    "stable_allowed": false,
+    "qmt_allowed": false,
+    "order_intent_allowed": false,
+    "automatic_promotion_ready": false,
+    "metrics_are_effectiveness_evidence": false
+  },
+  "allowed_next_steps": [
+    "group-level no-save diagnostic smoke request"
+  ],
+  "forbidden_next_steps": [
+    "formal training",
+    "automatic promotion",
+    "Stable promotion",
+    "QMT",
+    "OrderIntent",
+    "advisory package",
+    "trading conclusion"
+  ]
+}
