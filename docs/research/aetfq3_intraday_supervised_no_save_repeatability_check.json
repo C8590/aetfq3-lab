@@ -1,0 +1,50 @@
+{
+  "document_type": "aetfq3_intraday_supervised_no_save_repeatability_check",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "scope": "Lab-only no-save supervised smoke repeatability check",
+  "is_formal_training": false,
+  "expands_sample": false,
+  "hyperparameter_tuning_allowed": false,
+  "model_save_allowed": false,
+  "checkpoint_save_allowed": false,
+  "gpu_allowed": false,
+  "torchrun_allowed": false,
+  "qmt_allowed": false,
+  "order_intent_allowed": false,
+  "stable_effect_allowed": false,
+  "advisory_package_allowed": false,
+  "target": "three_day_positive_label",
+  "models_allowed": [
+    "dummy_most_frequent",
+    "dummy_stratified",
+    "logistic_regression"
+  ],
+  "models_forbidden": [
+    "lightgbm",
+    "catboost",
+    "xgboost",
+    "pytorch"
+  ],
+  "seeds": [
+    7,
+    13,
+    42,
+    101,
+    2026
+  ],
+  "metrics_use": "engineering_repeatability_observation_only",
+  "metrics_are_effectiveness_evidence": false,
+  "not_trading_advice": true,
+  "automatic_promotion_ready": false,
+  "success_decision": "NO_SAVE_SUPERVISED_SMOKE_REPEATABILITY_COMPLETED_REVIEW_REQUIRED",
+  "allowed_next_steps_after_success": [
+    "human_review",
+    "separate_larger_eligible_anchor_data_collection_application"
+  ],
+  "forbidden_next_steps_after_success": [
+    "stable_promotion",
+    "formal_training",
+    "automatic_trading",
+    "order_intent_generation"
+  ]
+}
