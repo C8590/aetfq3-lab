@@ -1,0 +1,104 @@
+{
+  "document_type": "aetfq3_intraday_label_generation_pause_closeout",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "phase": "F public intraday label generation pause closeout",
+  "status": "PAUSED_BLOCKED_INSUFFICIENT_FUTURE_WINDOW_DATA",
+  "completed_steps": [
+    "public 5m OHLCV export",
+    "no-label tensor validation",
+    "label/outcome design",
+    "manifest leakage checker",
+    "label generation intake orchestrator",
+    "coverage gate fix",
+    "coverage gate regression"
+  ],
+  "current_blocker": {
+    "decision": "BLOCKED_INSUFFICIENT_FUTURE_WINDOW_DATA",
+    "reason": "public future-window daily OHLCV does not cover every required future date for every required ETF",
+    "p0_blockers": [
+      "future-window coverage missing required dates for one or more ETFs"
+    ]
+  },
+  "required_future_dates": [
+    "2026-06-09",
+    "2026-06-10",
+    "2026-06-11"
+  ],
+  "available_future_window_dates": [
+    "2026-06-04",
+    "2026-06-05",
+    "2026-06-08"
+  ],
+  "missing_future_dates_by_etf": {
+    "159915": [
+      "2026-06-09",
+      "2026-06-10",
+      "2026-06-11"
+    ],
+    "510050": [
+      "2026-06-09",
+      "2026-06-10",
+      "2026-06-11"
+    ],
+    "510300": [
+      "2026-06-09",
+      "2026-06-10",
+      "2026-06-11"
+    ]
+  },
+  "effective_readiness_decision": "BLOCKED_INSUFFICIENT_FUTURE_WINDOW_DATA",
+  "raw_presence_decision_warning": {
+    "raw_presence_decision": "READY_FOR_LABEL_GENERATION_DRY_RUN",
+    "warning": "raw presence READY only means source/hash/source-note exist; effective readiness must use the formal coverage gate"
+  },
+  "gate_semantics": {
+    "presence_gate_meaning": "future-window source/hash/source-note presence only",
+    "coverage_gate_is_formal_gate": true,
+    "coverage_insufficient_blocks_label_generation_dry_run": true,
+    "ready_must_not_override_coverage_blocker": true
+  },
+  "boundary": {
+    "access_mode": "READ_ONLY",
+    "final_action_change_allowed": false,
+    "contains_live_order": false,
+    "contains_secret": false,
+    "requires_human_review": true,
+    "promotion_gate_required": true,
+    "no_qmt": true,
+    "no_order_intent": true,
+    "no_stable": true,
+    "no_output": true,
+    "no_lab_advisory": true,
+    "no_training": true,
+    "no_torchrun": true,
+    "no_checkpoint": true,
+    "no_model_save": true,
+    "not_trading_advice": true
+  },
+  "evidence_sources": [
+    "docs/research/aetfq3_intraday_public_no_label_tensor_validation.md",
+    "docs/research/aetfq3_intraday_public_no_label_tensor_validation.json",
+    "docs/research/aetfq3_intraday_label_outcome_design.md",
+    "docs/research/aetfq3_intraday_label_outcome_design.json",
+    "docs/research/aetfq3_intraday_label_leakage_checklist.json",
+    "docs/research/aetfq3_intraday_label_manifest_leakage_checker.md",
+    "docs/research/aetfq3_intraday_label_manifest_leakage_checker.json",
+    "docs/research/aetfq3_intraday_label_generation_intake_orchestrator.md",
+    "docs/research/aetfq3_intraday_label_generation_intake_orchestrator.json",
+    ".local_research_outputs/aetfq3_lab/intraday_label_generation_intake_gate_regression/coverage_gate_regression_report.json",
+    ".local_research_outputs/aetfq3_lab/intraday_label_generation_intake_final_retry/readiness_decision.json"
+  ],
+  "next_trigger": {
+    "required_condition": "public daily OHLCV covers every required ETF through 2026-06-11 and coverage gate passes",
+    "allowed_next_task": "label generation dry-run",
+    "requires_human_review": true,
+    "promotion_gate_required": true
+  },
+  "stable_allowed": false,
+  "qmt_allowed": false,
+  "order_intent_allowed": false,
+  "label_generation_allowed": false,
+  "model_training_allowed": false,
+  "checkpoint_allowed": false,
+  "advisory_package_generated": false
+}
