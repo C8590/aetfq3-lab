@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import sys
 from datetime import datetime, timezone
@@ -15,9 +16,11 @@ if str(REPO_ROOT) not in sys.path:
 from tools.lab.intraday_label_manifest_leakage_checker import check_manifest as check_label_manifest
 
 
-ALLOWED_OUTPUT_ROOT = Path(".local_research_outputs/aetfq3_lab/intraday_label_generation_intake")
+ALLOWED_OUTPUT_BASE = Path(".local_research_outputs/aetfq3_lab")
+ALLOWED_OUTPUT_DIR_PREFIX = "intraday_label_generation_intake"
 READY_FOR_LABEL_GENERATION_DRY_RUN = "READY_FOR_LABEL_GENERATION_DRY_RUN"
 BLOCKED_MISSING_FUTURE_WINDOW_SOURCE = "BLOCKED_MISSING_FUTURE_WINDOW_SOURCE"
+BLOCKED_INSUFFICIENT_FUTURE_WINDOW_DATA = "BLOCKED_INSUFFICIENT_FUTURE_WINDOW_DATA"
 BLOCKED_MANIFEST_P0 = "BLOCKED_MANIFEST_P0"
 BLOCKED_HASH_OR_SOURCE_NOTE = "BLOCKED_HASH_OR_SOURCE_NOTE"
 BLOCKED_BOUNDARY_VIOLATION = "BLOCKED_BOUNDARY_VIOLATION"
@@ -62,11 +65,21 @@ def resolve_repo_path(raw_path: str | None, repo_root: Path = REPO_ROOT) -> Path
 
 def resolve_output_dir(out_dir: Path, repo_root: Path = REPO_ROOT) -> Path:
     resolved = (repo_root / out_dir if not out_dir.is_absolute() else out_dir).resolve()
-    allowed = (repo_root / ALLOWED_OUTPUT_ROOT).resolve()
+    repo_root = repo_root.resolve()
+    allowed_base = (repo_root / ALLOWED_OUTPUT_BASE).resolve()
     try:
-        resolved.relative_to(allowed)
+        resolved.relative_to(repo_root)
     except ValueError as exc:
-        raise IntakeOrchestratorError(f"out-dir must be under {ALLOWED_OUTPUT_ROOT}") from exc
+        raise IntakeOrchestratorError("out-dir must stay inside repository root") from exc
+    try:
+        relative_to_base = resolved.relative_to(allowed_base)
+    except ValueError as exc:
+        raise IntakeOrchestratorError(f"out-dir must be under {ALLOWED_OUTPUT_BASE}") from exc
+    first_part = relative_to_base.parts[0] if relative_to_base.parts else ""
+    if not first_part.startswith(ALLOWED_OUTPUT_DIR_PREFIX):
+        raise IntakeOrchestratorError(
+            f"out-dir must be under {ALLOWED_OUTPUT_BASE}/{ALLOWED_OUTPUT_DIR_PREFIX}*"
+        )
     return resolved
 
 
@@ -99,7 +112,17 @@ def orchestrate_intake(manifest_path: Path, out_dir: Path, repo_root: Path = REP
         hash_source_passed=hash_source_check["passed"],
         tensor_report_passed=tensor_report_check["passed"],
         data_quality_passed=data_quality_check["passed"],
-        future_window_passed=future_window_check["passed"],
+        future_window_presence_passed=future_window_check["presence_gate_passed"],
+        future_window_coverage_passed=future_window_check["coverage_gate_passed"],
+    )
+    raw_presence_decision = decide_readiness(
+        manifest_check_passed=manifest_check.ok,
+        boundary_passed=boundary_check["passed"],
+        hash_source_passed=hash_source_check["passed"],
+        tensor_report_passed=tensor_report_check["passed"],
+        data_quality_passed=data_quality_check["passed"],
+        future_window_presence_passed=future_window_check["presence_gate_passed"],
+        future_window_coverage_passed=True,
     )
     report = {
         "report_type": "intraday_label_generation_intake",
@@ -107,6 +130,12 @@ def orchestrate_intake(manifest_path: Path, out_dir: Path, repo_root: Path = REP
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
         "manifest_path": str(manifest_path),
         "readiness_decision": readiness_decision,
+        "raw_presence_decision": raw_presence_decision,
+        "effective_readiness_decision": readiness_decision,
+        "presence_gate_passed": future_window_check["presence_gate_passed"],
+        "coverage_gate_passed": future_window_check["coverage_gate_passed"],
+        "coverage_sufficient": future_window_check["coverage_sufficient"],
+        "missing_future_dates_by_etf": future_window_check["missing_future_dates_by_etf"],
         "lab_only": True,
         "intake_only": True,
         "label_generation_performed": False,
@@ -140,7 +169,8 @@ def decide_readiness(
     hash_source_passed: bool,
     tensor_report_passed: bool,
     data_quality_passed: bool,
-    future_window_passed: bool,
+    future_window_presence_passed: bool,
+    future_window_coverage_passed: bool,
 ) -> str:
     if not boundary_passed:
         return BLOCKED_BOUNDARY_VIOLATION
@@ -150,8 +180,8 @@ def decide_readiness(
         return BLOCKED_HASH_OR_SOURCE_NOTE
     if not tensor_report_passed or not data_quality_passed:
         return BLOCKED_BOUNDARY_VIOLATION
-    if not future_window_passed:
-        return BLOCKED_MISSING_FUTURE_WINDOW_SOURCE
+    if not future_window_presence_passed or not future_window_coverage_passed:
+        return BLOCKED_INSUFFICIENT_FUTURE_WINDOW_DATA
     return READY_FOR_LABEL_GENERATION_DRY_RUN
 
 
@@ -312,8 +342,10 @@ def run_future_window_readiness_check(manifest: dict[str, Any], repo_root: Path)
     source_note_path = resolve_repo_path(str(manifest.get("future_window_source_note_path", "")), repo_root)
     hash_path = resolve_repo_path(str(manifest.get("future_window_hash_path", "")), repo_root)
 
-    if source_kind not in {"human_exported_future_window", "public_future_window"}:
-        p0_blockers.append("future_window_source_kind must be human_exported_future_window or public_future_window")
+    if source_kind not in {"human_exported_future_window", "public_future_window", "public_market_data_export"}:
+        p0_blockers.append(
+            "future_window_source_kind must be human_exported_future_window, public_future_window, or public_market_data_export"
+        )
     for field_name, path in (
         ("future_window_source_path", source_path),
         ("future_window_source_note_path", source_note_path),
@@ -333,15 +365,134 @@ def run_future_window_readiness_check(manifest: dict[str, Any], repo_root: Path)
     if manifest.get("readiness_only") is not True:
         p1_warnings.append("readiness_only should be true for intake-only orchestration")
 
+    presence_gate_passed = not p0_blockers
+    coverage_check = run_future_window_coverage_audit(manifest, source_path, repo_root) if presence_gate_passed else {
+        "coverage_gate_passed": False,
+        "coverage_sufficient": False,
+        "required_etf_codes": [],
+        "required_future_dates": [],
+        "required_coverage_end": manifest.get("future_window_required_coverage_end"),
+        "missing_future_dates_by_etf": {},
+        "coverage_p0_blockers": ["future-window presence gate failed; coverage audit not runnable"],
+    }
+    p0_blockers.extend(coverage_check["coverage_p0_blockers"])
+
     return {
         "passed": not p0_blockers,
+        "presence_gate_passed": presence_gate_passed,
+        "coverage_gate_passed": coverage_check["coverage_gate_passed"],
+        "coverage_sufficient": coverage_check["coverage_sufficient"],
         "future_window_source_kind": source_kind,
         "future_window_source_path": str(source_path) if source_path else None,
         "future_window_source_note_path": str(source_note_path) if source_note_path else None,
         "future_window_hash_path": str(hash_path) if hash_path else None,
+        "required_etf_codes": coverage_check["required_etf_codes"],
+        "required_future_dates": coverage_check["required_future_dates"],
+        "required_coverage_end": coverage_check["required_coverage_end"],
+        "missing_future_dates_by_etf": coverage_check["missing_future_dates_by_etf"],
         "p0_blockers": p0_blockers,
         "p1_warnings": p1_warnings,
     }
+
+
+def run_future_window_coverage_audit(
+    manifest: dict[str, Any],
+    source_path: Path | None,
+    repo_root: Path,
+) -> dict[str, Any]:
+    p0_blockers: list[str] = []
+    required_dates = string_list(manifest.get("future_window_required_dates"))
+    required_coverage_end = manifest.get("future_window_required_coverage_end")
+    if required_coverage_end and str(required_coverage_end) not in required_dates:
+        required_dates.append(str(required_coverage_end))
+    required_dates = sorted(set(required_dates))
+    if not required_dates:
+        p0_blockers.append("future_window_required_dates or future_window_required_coverage_end must be provided")
+
+    required_etf_codes = resolve_required_etf_codes(manifest, repo_root, source_path)
+    if not required_etf_codes:
+        p0_blockers.append("required ETF codes cannot be resolved from manifest or public 5m export")
+
+    observed_by_etf: dict[str, set[str]] = {}
+    missing_future_dates_by_etf: dict[str, list[str]] = {}
+    source_columns: list[str] = []
+    if source_path is None or not source_path.exists():
+        p0_blockers.append("future_window_source_path missing or does not exist")
+    else:
+        try:
+            with source_path.open("r", encoding="utf-8-sig", newline="") as f:
+                reader = csv.DictReader(f)
+                source_columns = list(reader.fieldnames or [])
+                missing_columns = [column for column in ("trade_date", "etf_code") if column not in source_columns]
+                if missing_columns:
+                    p0_blockers.append("future-window daily source missing required columns: " + ", ".join(missing_columns))
+                else:
+                    for row in reader:
+                        etf_code = str(row.get("etf_code", "")).strip()
+                        trade_date = str(row.get("trade_date", "")).strip()
+                        if etf_code and trade_date:
+                            observed_by_etf.setdefault(etf_code, set()).add(trade_date)
+        except OSError as exc:
+            p0_blockers.append(f"future-window daily source cannot be read: {exc}")
+
+    for etf_code in required_etf_codes:
+        observed_dates = observed_by_etf.get(etf_code, set())
+        missing = [trade_date for trade_date in required_dates if trade_date not in observed_dates]
+        if missing:
+            missing_future_dates_by_etf[etf_code] = missing
+
+    if missing_future_dates_by_etf:
+        p0_blockers.append("future-window coverage missing required dates for one or more ETFs")
+
+    manifest_coverage_flag = manifest.get("future_window_coverage_sufficient")
+    if manifest_coverage_flag is True and missing_future_dates_by_etf:
+        p0_blockers.append("future_window_coverage_sufficient=true conflicts with coverage audit")
+
+    coverage_gate_passed = not p0_blockers
+    return {
+        "coverage_gate_passed": coverage_gate_passed,
+        "coverage_sufficient": coverage_gate_passed,
+        "required_etf_codes": required_etf_codes,
+        "required_future_dates": required_dates,
+        "required_coverage_end": str(required_coverage_end) if required_coverage_end else None,
+        "source_columns": source_columns,
+        "missing_future_dates_by_etf": missing_future_dates_by_etf,
+        "coverage_p0_blockers": p0_blockers,
+    }
+
+
+def resolve_required_etf_codes(manifest: dict[str, Any], repo_root: Path, source_path: Path | None) -> list[str]:
+    for field_name in ("future_window_required_etf_codes", "required_etf_codes", "etf_codes"):
+        values = string_list(manifest.get(field_name))
+        if values:
+            return sorted(set(values))
+
+    public_artifact_dir = resolve_repo_path(str(manifest.get("public_artifact_dir", "")), repo_root)
+    public_5m_path = public_artifact_dir / "intraday_5m_export.csv" if public_artifact_dir else None
+    values = read_etf_codes_from_csv(public_5m_path) if public_5m_path and public_5m_path.exists() else []
+    if values:
+        return values
+
+    return read_etf_codes_from_csv(source_path) if source_path and source_path.exists() else []
+
+
+def read_etf_codes_from_csv(path: Path | None) -> list[str]:
+    if path is None:
+        return []
+    try:
+        with path.open("r", encoding="utf-8-sig", newline="") as f:
+            reader = csv.DictReader(f)
+            if "etf_code" not in (reader.fieldnames or []):
+                return []
+            return sorted({str(row.get("etf_code", "")).strip() for row in reader if str(row.get("etf_code", "")).strip()})
+    except OSError:
+        return []
+
+
+def string_list(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [str(item).strip() for item in value if str(item).strip()]
 
 
 def write_reports(report: dict[str, Any], out_dir: Path) -> None:
@@ -352,7 +503,13 @@ def write_reports(report: dict[str, Any], out_dir: Path) -> None:
     )
     decision = {
         "readiness_decision": report["readiness_decision"],
+        "raw_presence_decision": report["raw_presence_decision"],
+        "effective_readiness_decision": report["effective_readiness_decision"],
         "status": report["status"],
+        "presence_gate_passed": report["presence_gate_passed"],
+        "coverage_gate_passed": report["coverage_gate_passed"],
+        "coverage_sufficient": report["coverage_sufficient"],
+        "missing_future_dates_by_etf": report["missing_future_dates_by_etf"],
         "label_generation_performed": False,
         "model_training_allowed": False,
         "qmt_allowed": False,
@@ -372,11 +529,16 @@ def write_reports(report: dict[str, Any], out_dir: Path) -> None:
         "",
         f"- status: {report['status']}",
         f"- readiness_decision: {report['readiness_decision']}",
+        f"- raw_presence_decision: {report['raw_presence_decision']}",
+        f"- effective_readiness_decision: {report['effective_readiness_decision']}",
         f"- manifest_leakage_status: {report['manifest_leakage_check']['status']}",
         f"- hash_source_note_passed: {str(report['hash_source_note_check']['passed']).lower()}",
         f"- no_label_tensor_report_passed: {str(report['no_label_tensor_report_check']['passed']).lower()}",
         f"- data_quality_report_passed: {str(report['data_quality_report_check']['passed']).lower()}",
-        f"- future_window_ready: {str(report['future_window_readiness_check']['passed']).lower()}",
+        f"- future_window_presence_gate_passed: {str(report['presence_gate_passed']).lower()}",
+        f"- future_window_coverage_gate_passed: {str(report['coverage_gate_passed']).lower()}",
+        f"- coverage_sufficient: {str(report['coverage_sufficient']).lower()}",
+        f"- missing_future_dates_by_etf: {json.dumps(report['missing_future_dates_by_etf'], ensure_ascii=False, sort_keys=True)}",
         "- boundary: intake-only; no label generation, training, QMT, OrderIntent, Stable, output/, lab_advisory, checkpoint, or trading advice.",
     ]
     (out_dir / "intraday_label_generation_intake_report.md").write_text("\n".join(md) + "\n", encoding="utf-8")

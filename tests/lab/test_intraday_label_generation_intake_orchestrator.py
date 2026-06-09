@@ -6,15 +6,20 @@ from pathlib import Path
 from tools.lab.intraday_label_generation_intake_orchestrator import (
     BLOCKED_BOUNDARY_VIOLATION,
     BLOCKED_HASH_OR_SOURCE_NOTE,
+    BLOCKED_INSUFFICIENT_FUTURE_WINDOW_DATA,
     BLOCKED_MANIFEST_P0,
-    BLOCKED_MISSING_FUTURE_WINDOW_SOURCE,
+    IntakeOrchestratorError,
     orchestrate_intake,
 )
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 VALID_MANIFEST = REPO_ROOT / "tests/fixtures/aetfq3_lab/mock_intraday_label_generation_intake_manifest.json"
+SUFFICIENT_FUTURE_WINDOW = REPO_ROOT / "tests/fixtures/aetfq3_lab/mock_intraday_future_window_daily_sufficient.csv"
+INSUFFICIENT_FUTURE_WINDOW = REPO_ROOT / "tests/fixtures/aetfq3_lab/mock_intraday_future_window_daily_insufficient.csv"
 OUT_ROOT = Path(".local_research_outputs/aetfq3_lab/intraday_label_generation_intake/pytest")
+REQUIRED_ETFS = ["159915", "510050", "510300"]
+REQUIRED_DATES = ["2026-06-09", "2026-06-10", "2026-06-11"]
 
 
 def write_manifest(tmp_path: Path, overrides: dict[str, object]) -> Path:
@@ -25,6 +30,26 @@ def write_manifest(tmp_path: Path, overrides: dict[str, object]) -> Path:
     return path
 
 
+def write_future_window_manifest(tmp_path: Path, source_path: Path, coverage_sufficient: bool) -> Path:
+    source_note = tmp_path / "future_source_note.md"
+    source_note.write_text("fixture source note\n", encoding="utf-8")
+    hash_file = tmp_path / "SHA256SUMS.txt"
+    hash_file.write_text("fixture-hash  future_window_daily_ohlcv.csv\n", encoding="utf-8")
+    return write_manifest(
+        tmp_path,
+        {
+            "future_window_source_kind": "public_future_window",
+            "future_window_source_path": str(source_path),
+            "future_window_source_note_path": str(source_note),
+            "future_window_hash_path": str(hash_file),
+            "future_window_required_etf_codes": REQUIRED_ETFS,
+            "future_window_required_dates": REQUIRED_DATES,
+            "future_window_required_coverage_end": "2026-06-11",
+            "future_window_coverage_sufficient": coverage_sufficient,
+        },
+    )
+
+
 def run_manifest(path: Path, name: str) -> dict[str, object]:
     return orchestrate_intake(path, OUT_ROOT / name)
 
@@ -32,13 +57,75 @@ def run_manifest(path: Path, name: str) -> dict[str, object]:
 def test_valid_intake_manifest_blocks_on_missing_future_window_source() -> None:
     report = run_manifest(VALID_MANIFEST, "valid_missing_future_window")
 
-    assert report["readiness_decision"] == BLOCKED_MISSING_FUTURE_WINDOW_SOURCE
+    assert report["readiness_decision"] == BLOCKED_INSUFFICIENT_FUTURE_WINDOW_DATA
     assert report["manifest_leakage_check"]["status"] == "passed"
     assert report["hash_source_note_check"]["passed"] is True
     assert report["no_label_tensor_report_check"]["passed"] is True
     assert report["data_quality_report_check"]["passed"] is True
     assert report["future_window_readiness_check"]["passed"] is False
+    assert report["presence_gate_passed"] is False
+    assert report["coverage_gate_passed"] is False
     assert report["label_generation_performed"] is False
+
+
+def test_sufficient_future_window_returns_ready(tmp_path: Path) -> None:
+    path = write_future_window_manifest(tmp_path, SUFFICIENT_FUTURE_WINDOW, True)
+
+    report = run_manifest(path, "sufficient_future_window")
+
+    assert report["readiness_decision"] == "READY_FOR_LABEL_GENERATION_DRY_RUN"
+    assert report["raw_presence_decision"] == "READY_FOR_LABEL_GENERATION_DRY_RUN"
+    assert report["effective_readiness_decision"] == "READY_FOR_LABEL_GENERATION_DRY_RUN"
+    assert report["presence_gate_passed"] is True
+    assert report["coverage_gate_passed"] is True
+    assert report["coverage_sufficient"] is True
+    assert report["missing_future_dates_by_etf"] == {}
+
+
+def test_insufficient_future_window_blocks_and_lists_missing_dates(tmp_path: Path) -> None:
+    path = write_future_window_manifest(tmp_path, INSUFFICIENT_FUTURE_WINDOW, False)
+
+    report = run_manifest(path, "insufficient_future_window")
+
+    assert report["readiness_decision"] == BLOCKED_INSUFFICIENT_FUTURE_WINDOW_DATA
+    assert report["raw_presence_decision"] == "READY_FOR_LABEL_GENERATION_DRY_RUN"
+    assert report["effective_readiness_decision"] == BLOCKED_INSUFFICIENT_FUTURE_WINDOW_DATA
+    assert report["presence_gate_passed"] is True
+    assert report["coverage_gate_passed"] is False
+    assert report["coverage_sufficient"] is False
+    assert report["missing_future_dates_by_etf"] == {code: REQUIRED_DATES for code in REQUIRED_ETFS}
+
+
+def test_retry_and_final_retry_out_dirs_are_allowed(tmp_path: Path) -> None:
+    path = write_future_window_manifest(tmp_path, SUFFICIENT_FUTURE_WINDOW, True)
+
+    retry_report = orchestrate_intake(
+        path,
+        Path(".local_research_outputs/aetfq3_lab/intraday_label_generation_intake_retry/pytest"),
+    )
+    final_retry_report = orchestrate_intake(
+        path,
+        Path(".local_research_outputs/aetfq3_lab/intraday_label_generation_intake_final_retry/pytest"),
+    )
+
+    assert retry_report["readiness_decision"] == "READY_FOR_LABEL_GENERATION_DRY_RUN"
+    assert final_retry_report["readiness_decision"] == "READY_FOR_LABEL_GENERATION_DRY_RUN"
+
+
+def test_rejects_non_lab_output_dirs(tmp_path: Path) -> None:
+    path = write_future_window_manifest(tmp_path, SUFFICIENT_FUTURE_WINDOW, True)
+
+    for out_dir in (
+        Path("output/intraday_label_generation_intake"),
+        Path("Stable/runtime/intraday_label_generation_intake"),
+        tmp_path / "outside_repo",
+    ):
+        try:
+            orchestrate_intake(path, out_dir)
+        except IntakeOrchestratorError:
+            pass
+        else:
+            raise AssertionError(f"out_dir should have been rejected: {out_dir}")
 
 
 def test_bad_feature_overlap_blocks_manifest_p0(tmp_path: Path) -> None:

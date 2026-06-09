@@ -9,12 +9,14 @@
     "hash/source note presence check",
     "public no-label tensor report check",
     "data quality report check",
-    "future-window readiness fields check",
+    "future-window source presence check",
+    "future-window coverage audit",
     "boundary check",
     "readiness decision"
   ],
   "readiness_decisions": [
     "READY_FOR_LABEL_GENERATION_DRY_RUN",
+    "BLOCKED_INSUFFICIENT_FUTURE_WINDOW_DATA",
     "BLOCKED_MISSING_FUTURE_WINDOW_SOURCE",
     "BLOCKED_MANIFEST_P0",
     "BLOCKED_HASH_OR_SOURCE_NOTE",
@@ -23,13 +25,44 @@
   "ignored_outputs": [
     ".local_research_outputs/aetfq3_lab/intraday_label_generation_intake/intraday_label_generation_intake_report.md",
     ".local_research_outputs/aetfq3_lab/intraday_label_generation_intake/intraday_label_generation_intake_report.json",
-    ".local_research_outputs/aetfq3_lab/intraday_label_generation_intake/readiness_decision.json"
+    ".local_research_outputs/aetfq3_lab/intraday_label_generation_intake/readiness_decision.json",
+    ".local_research_outputs/aetfq3_lab/intraday_label_generation_intake*/intraday_label_generation_intake_report.md",
+    ".local_research_outputs/aetfq3_lab/intraday_label_generation_intake*/intraday_label_generation_intake_report.json",
+    ".local_research_outputs/aetfq3_lab/intraday_label_generation_intake*/readiness_decision.json"
   ],
+  "out_dir_policy": {
+    "allowed_prefix": ".local_research_outputs/aetfq3_lab/intraday_label_generation_intake*",
+    "blocks_output_dir": true,
+    "blocks_stable_paths": true,
+    "blocks_repo_external_paths": true,
+    "blocks_non_lab_local_research_subtrees": true
+  },
+  "coverage_gate": {
+    "is_formal_gate": true,
+    "required_source_columns": [
+      "trade_date",
+      "etf_code"
+    ],
+    "required_manifest_fields": [
+      "future_window_source_path",
+      "future_window_required_coverage_end",
+      "future_window_required_dates",
+      "future_window_coverage_sufficient"
+    ],
+    "missing_required_future_dates_decision": "BLOCKED_INSUFFICIENT_FUTURE_WINDOW_DATA",
+    "raw_presence_ready_is_not_effective_readiness": true
+  },
   "report_contract": {
     "report_type": "intraday_label_generation_intake",
     "required_fields": [
       "status",
       "readiness_decision",
+      "raw_presence_decision",
+      "effective_readiness_decision",
+      "presence_gate_passed",
+      "coverage_gate_passed",
+      "coverage_sufficient",
+      "missing_future_dates_by_etf",
       "manifest_leakage_check",
       "hash_source_note_check",
       "no_label_tensor_report_check",
