@@ -42,6 +42,24 @@
       "short_commit": "a6e721f",
       "work": "F public intraday label generation pause closeout",
       "status": "PAUSED_BLOCKED_INSUFFICIENT_FUTURE_WINDOW_DATA"
+    },
+    {
+      "commit": "5f544d2",
+      "short_commit": "5f544d2",
+      "work": "F public intraday three_day_positive_label formula / eligible-anchor label dry-run",
+      "status": "three_day_positive_label dry-run completed"
+    },
+    {
+      "commit": "91eea9a1a4372ef69d2d1de261027a70919dca3d",
+      "short_commit": "91eea9a",
+      "work": "F public intraday supervised smoke readiness precheck",
+      "status": "SUPERVISED_SMOKE_READINESS_PASSED_REVIEW_REQUIRED"
+    },
+    {
+      "commit": "c6323f698fda69f9aa5d010a1b07d9d41480db8a",
+      "short_commit": "c6323f6",
+      "work": "F public intraday supervised no-save smoke",
+      "status": "NO_SAVE_SUPERVISED_SMOKE_COMPLETED_REVIEW_REQUIRED"
     }
   ],
   "current_state": {
@@ -77,8 +95,8 @@
       "trading_advice": false
     },
     "F_public": {
-      "status": "F_PUBLIC_STATUS=NO_LABEL_TENSOR_AND_GATE_COMPLETED_LABEL_PAUSED",
-      "summary": "Public 5m OHLCV export, no-label tensor validation, label/outcome design, manifest leakage checker, label generation intake orchestrator, coverage gate fix, and coverage gate regression are complete; label generation is paused.",
+      "status": "F_PUBLIC_STATUS=NO_SAVE_SUPERVISED_SMOKE_COMPLETED_REVIEW_REQUIRED",
+      "summary": "Public 5m OHLCV export, eligible-anchor expansion, three_day_positive_label dry-run, class-diverse precheck, supervised smoke readiness precheck, and no-save supervised smoke are complete; human review is required.",
       "evidence_docs": [
         "docs/research/aetfq3_intraday_public_no_label_tensor_validation.md",
         "docs/research/aetfq3_intraday_public_no_label_tensor_validation.json",
@@ -90,19 +108,36 @@
         "docs/research/aetfq3_intraday_label_generation_intake_orchestrator.md",
         "docs/research/aetfq3_intraday_label_generation_intake_orchestrator.json",
         "docs/research/aetfq3_intraday_label_generation_pause_closeout.md",
-        "docs/research/aetfq3_intraday_label_generation_pause_closeout.json"
+        "docs/research/aetfq3_intraday_label_generation_pause_closeout.json",
+        "docs/research/aetfq3_intraday_supervised_smoke_readiness_precheck.md",
+        "docs/research/aetfq3_intraday_supervised_smoke_readiness_precheck.json",
+        "docs/research/aetfq3_intraday_supervised_no_save_smoke.md",
+        "docs/research/aetfq3_intraday_supervised_no_save_smoke.json",
+        "docs/research/aetfq3_intraday_supervised_no_save_smoke_review_closeout.md",
+        "docs/research/aetfq3_intraday_supervised_no_save_smoke_review_closeout.json"
       ],
-      "blocker": "Missing public future-window daily OHLCV dates 2026-06-09, 2026-06-10, and 2026-06-11.",
-      "next_trigger": "F public daily OHLCV covers required future-window dates and coverage gate passes.",
-      "allowed_next_action": "Apply for label generation dry-run after coverage gate passes.",
-      "forbidden_action": "Generating labels, training, connecting QMT, generating OrderIntent, or entering Stable before coverage gate passes.",
-      "required_missing_dates": [
-        "2026-06-09",
-        "2026-06-10",
-        "2026-06-11"
+      "blocker": "No-save smoke is complete but human review is required; metrics are not effectiveness evidence and no automatic promotion is allowed.",
+      "next_trigger": "Human review, optional larger eligible-anchor data collection, or optional no-save repeatability check.",
+      "allowed_next_action": "Review-only follow-up within Lab boundary.",
+      "forbidden_action": "Stable promotion, QMT, OrderIntent, advisory package, formal training, model deployment, checkpoint/model save, or automatic promotion.",
+      "target": "three_day_positive_label",
+      "models_run": [
+        "dummy_most_frequent",
+        "dummy_stratified",
+        "logistic_regression"
       ],
-      "effective_readiness_decision": "BLOCKED_INSUFFICIENT_FUTURE_WINDOW_DATA",
+      "effective_readiness_decision": "NO_SAVE_SUPERVISED_SMOKE_COMPLETED_REVIEW_REQUIRED",
+      "metrics_are_effectiveness_evidence": false,
+      "review_required": true,
+      "stable_promotion_ready": false,
+      "qmt_ready": false,
+      "order_intent_ready": false,
+      "model_training_ready": false,
       "label_generation_ready": false,
+      "training_allowed": false,
+      "stable_allowed": false,
+      "qmt_allowed": false,
+      "order_intent_allowed": false,
       "stable_evidence": false
     },
     "F_real_qmt": {
@@ -152,12 +187,10 @@
     },
     {
       "line": "F_public",
-      "blocker": "F public label generation paused: missing 2026-06-09 through 2026-06-11 future-window daily OHLCV.",
-      "missing_dates": [
-        "2026-06-09",
-        "2026-06-10",
-        "2026-06-11"
-      ]
+      "blocker": "F public no-save supervised smoke completed: human review is required; metrics are not effectiveness evidence and no automatic promotion is allowed.",
+      "status": "NO_SAVE_SUPERVISED_SMOKE_COMPLETED_REVIEW_REQUIRED",
+      "metrics_are_effectiveness_evidence": false,
+      "stable_promotion_ready": false
     },
     {
       "line": "F_real_qmt",
@@ -172,7 +205,9 @@
     "reconstructed_a_equals_true_historical": false,
     "public_data_validation_equals_stable_evidence": false,
     "smoke_reconstructed_public_validation_is_trading_advice": false,
-    "smoke_reconstructed_public_validation_proves_model_effectiveness": false
+    "smoke_reconstructed_public_validation_proves_model_effectiveness": false,
+    "no_save_supervised_smoke_metrics_are_effectiveness_evidence": false,
+    "no_save_supervised_smoke_allows_automatic_promotion": false
   },
   "next_triggers": [
     {
@@ -217,7 +252,10 @@
     "qmt_ready": false,
     "order_intent_ready": false,
     "label_generation_ready": false,
-    "training_ready": false
+    "training_ready": false,
+    "f_public_supervised_smoke_status": "NO_SAVE_SUPERVISED_SMOKE_COMPLETED_REVIEW_REQUIRED",
+    "metrics_are_effectiveness_evidence": false,
+    "automatic_promotion_ready": false
   },
   "stable_allowed": false,
   "qmt_allowed": false,

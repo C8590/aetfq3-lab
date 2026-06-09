@@ -1,0 +1,97 @@
+{
+  "document_type": "aetfq3_intraday_supervised_no_save_smoke_review_closeout",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "phase": "F public intraday no-save supervised smoke review closeout",
+  "status": "NO_SAVE_SUPERVISED_SMOKE_COMPLETED_REVIEW_REQUIRED",
+  "target": "three_day_positive_label",
+  "models_run": [
+    "dummy_most_frequent",
+    "dummy_stratified",
+    "logistic_regression"
+  ],
+  "completed_chain": [
+    "public 5m OHLCV",
+    "eligible-anchor expansion",
+    "three_day_positive_label dry-run",
+    "class-diverse precheck",
+    "supervised smoke readiness precheck",
+    "no-save supervised smoke"
+  ],
+  "split": {
+    "train_anchor_dates": [
+      "2026-05-25",
+      "2026-05-26",
+      "2026-05-27",
+      "2026-05-28",
+      "2026-05-29"
+    ],
+    "valid_anchor_dates": [
+      "2026-06-01",
+      "2026-06-02",
+      "2026-06-03"
+    ],
+    "train_rows": 720,
+    "valid_rows": 432,
+    "train_label_distribution": {
+      "0": 357,
+      "1": 363
+    },
+    "valid_label_distribution": {
+      "0": 338,
+      "1": 94
+    }
+  },
+  "metrics_generated": true,
+  "metrics_are_effectiveness_evidence": false,
+  "review_required": true,
+  "stable_promotion_ready": false,
+  "qmt_ready": false,
+  "order_intent_ready": false,
+  "model_training_ready": false,
+  "model_saved": false,
+  "checkpoint_saved": false,
+  "gpu_used": false,
+  "torchrun_used": false,
+  "qmt_used": false,
+  "order_intent_generated": false,
+  "stable_affected": false,
+  "boundary": {
+    "access_mode": "READ_ONLY",
+    "final_action_change_allowed": false,
+    "contains_live_order": false,
+    "contains_secret": false,
+    "requires_human_review": true,
+    "promotion_gate_required": true,
+    "stable_allowed": false,
+    "qmt_allowed": false,
+    "order_intent_allowed": false,
+    "advisory_allowed": false,
+    "formal_training_allowed": false,
+    "model_deployment_allowed": false,
+    "model_save_allowed": false,
+    "checkpoint_allowed": false,
+    "gpu_allowed": false,
+    "torchrun_allowed": false,
+    "automatic_promotion_allowed": false,
+    "not_trading_advice": true,
+    "metrics_are_effectiveness_evidence": false
+  },
+  "next_allowed_actions": [
+    "human review",
+    "optional larger eligible-anchor data collection",
+    "optional no-save repeatability check",
+    "no Stable promotion unless separate promotion gate and manual approval exist"
+  ],
+  "evidence_sources": [
+    "docs/research/aetfq3_intraday_supervised_no_save_smoke.md",
+    "docs/research/aetfq3_intraday_supervised_no_save_smoke.json",
+    ".local_research_outputs/aetfq3_lab/intraday_supervised_no_save_smoke/intraday_supervised_no_save_smoke_report.json",
+    ".local_research_outputs/aetfq3_lab/intraday_supervised_no_save_smoke/readiness_decision.json"
+  ],
+  "stable_allowed": false,
+  "qmt_allowed": false,
+  "order_intent_allowed": false,
+  "advisory_allowed": false,
+  "model_training_allowed": false,
+  "checkpoint_allowed": false
+}

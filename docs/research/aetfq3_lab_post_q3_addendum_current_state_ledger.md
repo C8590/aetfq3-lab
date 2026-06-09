@@ -25,6 +25,9 @@ The Q3 closeout decision remains unchanged: no Stable promotion, no QMT, no Orde
 - `2d1cfe3` label intake orchestrator: completed with initial `BLOCKED_MISSING_FUTURE_WINDOW_SOURCE`.
 - `3130b1c` coverage gate fix: fixed and regression validated.
 - `a6e721f` label pause closeout: `PAUSED_BLOCKED_INSUFFICIENT_FUTURE_WINDOW_DATA`.
+- `5f544d2` `three_day_positive_label` formula / eligible-anchor label dry-run: completed.
+- `91eea9a` supervised smoke readiness precheck: `SUPERVISED_SMOKE_READINESS_PASSED_REVIEW_REQUIRED`.
+- `c6323f6` supervised no-save smoke: `NO_SAVE_SUPERVISED_SMOKE_COMPLETED_REVIEW_REQUIRED`.
 
 ## Current State Ledger
 
@@ -32,14 +35,14 @@ The Q3 closeout decision remains unchanged: no Stable promotion, no QMT, no Orde
 | --- | --- | --- | --- | --- | --- | --- |
 | E | `E_STATUS=LAB_ONLY_SMOKE_REPLAY_COMPLETED` | Q3 closeout; sector internal ranking smoke/replay summaries referenced there | None for Lab-only engineering replay; not Stable evidence | New Lab-only E research task with explicit boundary | Lab-only read-only replay or documentation | Treating smoke/replay as trading advice or Stable promotion evidence |
 | A | `A_STATUS=READY_RECONSTRUCTED_ONLY` | Q3 closeout; reconstructed v2 no-save smoke docs referenced there | True historical V2/ML_SIM still missing; reconstructed is not true historical and not true ML_SIM | True historical V2/ML_SIM complete package appears | Intake-only historical validation planning | Treating reconstructed A as true historical, ML_SIM proof, Stable evidence, or trading advice |
-| F-public | `F_PUBLIC_STATUS=NO_LABEL_TENSOR_AND_GATE_COMPLETED_LABEL_PAUSED` | `aetfq3_intraday_public_no_label_tensor_validation.*`; `aetfq3_intraday_label_outcome_design.*`; `aetfq3_intraday_label_manifest_leakage_checker.*`; `aetfq3_intraday_label_generation_intake_orchestrator.*`; `aetfq3_intraday_label_generation_pause_closeout.*` | Missing future-window daily OHLCV dates `2026-06-09`, `2026-06-10`, `2026-06-11` | Public daily OHLCV covers every required ETF through `2026-06-11` and coverage gate passes | Apply for label generation dry-run task | Generating labels before coverage passes; training; QMT; OrderIntent; Stable use |
+| F-public | `F_PUBLIC_STATUS=NO_SAVE_SUPERVISED_SMOKE_COMPLETED_REVIEW_REQUIRED` | `aetfq3_intraday_public_no_label_tensor_validation.*`; `aetfq3_intraday_label_outcome_design.*`; `aetfq3_intraday_label_manifest_leakage_checker.*`; `aetfq3_intraday_label_generation_intake_orchestrator.*`; `aetfq3_intraday_label_generation_pause_closeout.*`; `aetfq3_intraday_supervised_smoke_readiness_precheck.*`; `aetfq3_intraday_supervised_no_save_smoke.*`; `aetfq3_intraday_supervised_no_save_smoke_review_closeout.*` | No-save smoke is complete but review is required; metrics are not effectiveness evidence and no automatic promotion is allowed | Human review, optional larger eligible-anchor data collection, or optional no-save repeatability check | Review-only follow-up within Lab boundary | Stable promotion, QMT, OrderIntent, advisory, formal training, model deployment, checkpoint/model save |
 | F-real/QMT | `F_REAL_QMT_STATUS=BLOCKED_NO_SAFE_REAL_PROVIDER_OR_COMPLIANT_EXPORT` | Q3 closeout and provider blocker docs referenced there | No safe real provider or compliant export; no QMT connection; no account/position/order/trade access | Safe real provider or compliant export appears | Static review / intake-only provider validation | Connecting QMT, reading account data, placing orders, or generating OrderIntent |
 | Stable | `STABLE_ALLOWED=false`; `QMT_ALLOWED=false`; `ORDER_INTENT_ALLOWED=false`; `ADVISORY_ALLOWED=false`; `TRAINING_ALLOWED=false`; `CHECKPOINT_ALLOWED=false` | Q3 closeout and post-Q3 closeout docs | No promotion-ready evidence | Formal promotion gate with true inputs and human review | None in this ledger | Any Stable runtime/output write, parameter change, `final_buy_action`, `target_weight`, BUY / PROBE threshold change, QMT, OrderIntent, advisory package |
 
 ## Blockers
 
 - A true historical blocked: missing true historical V2/ML_SIM complete input.
-- F public label generation paused: missing `2026-06-09` through `2026-06-11` future-window daily OHLCV for required ETFs.
+- F public no-save supervised smoke completed: human review is required; metrics are not effectiveness evidence and no automatic promotion is allowed.
 - F real/QMT blocked: missing safe real provider or compliant export.
 
 ## Gate Semantics
@@ -50,6 +53,7 @@ The Q3 closeout decision remains unchanged: no Stable promotion, no QMT, no Orde
 - reconstructed A does not equal true historical.
 - public-data validation does not equal Stable evidence.
 - smoke, reconstructed, and public-data validation outputs are not trading advice and do not prove model effectiveness.
+- no-save supervised smoke metrics are not effectiveness evidence and do not authorize automatic promotion.
 
 ## Boundary
 
@@ -75,6 +79,8 @@ Only three trigger classes may reopen work:
 2. F public daily OHLCV covers required future-window dates.
 3. F safe real provider / compliant export appears.
 
+For the completed F-public no-save smoke, only review follow-ups are allowed: human review, optional larger eligible-anchor data collection, or optional no-save repeatability check. Stable promotion remains forbidden unless a separate promotion gate and manual approval exist.
+
 ## Final Decision
 
 - `LAB_POST_Q3_STATUS=PAUSED_WAITING_FOR_TRUE_INPUTS`
@@ -83,4 +89,4 @@ Only three trigger classes may reopen work:
 - `ORDER_INTENT_READY=false`
 - `LABEL_GENERATION_READY=false`
 - `TRAINING_READY=false`
-
+- `F_PUBLIC_SUPERVISED_SMOKE_STATUS=NO_SAVE_SUPERVISED_SMOKE_COMPLETED_REVIEW_REQUIRED`
