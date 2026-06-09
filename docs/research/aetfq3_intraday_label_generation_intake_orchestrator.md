@@ -55,6 +55,8 @@
 
 只有 manifest leakage checker、hash/source-note、no-label tensor report、data quality report、future-window presence、future-window coverage 和边界检查全部通过，才允许 `READY_FOR_LABEL_GENERATION_DRY_RUN`。
 
+若多个 gate 同时失败，effective readiness 按以下优先级输出：`BLOCKED_MANIFEST_P0`、`BLOCKED_HASH_OR_SOURCE_NOTE`、`BLOCKED_INSUFFICIENT_FUTURE_WINDOW_DATA`、`BLOCKED_BOUNDARY_VIOLATION`。
+
 当前 fixture 因缺少 future-window source，预期 decision 为 `BLOCKED_INSUFFICIENT_FUTURE_WINDOW_DATA`。这不是错误；它说明当前仍未具备真实 label generation dry-run 的 future window 输入。
 
 若 presence gate 返回 READY，但 coverage audit 发现缺少 required dates，例如 `2026-06-09`、`2026-06-10`、`2026-06-11`，effective readiness 必须保持 `BLOCKED_INSUFFICIENT_FUTURE_WINDOW_DATA`，不得让 raw presence READY 覆盖 coverage blocker。

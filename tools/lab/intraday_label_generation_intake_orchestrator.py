@@ -172,8 +172,6 @@ def decide_readiness(
     future_window_presence_passed: bool,
     future_window_coverage_passed: bool,
 ) -> str:
-    if not boundary_passed:
-        return BLOCKED_BOUNDARY_VIOLATION
     if not manifest_check_passed:
         return BLOCKED_MANIFEST_P0
     if not hash_source_passed:
@@ -182,6 +180,8 @@ def decide_readiness(
         return BLOCKED_BOUNDARY_VIOLATION
     if not future_window_presence_passed or not future_window_coverage_passed:
         return BLOCKED_INSUFFICIENT_FUTURE_WINDOW_DATA
+    if not boundary_passed:
+        return BLOCKED_BOUNDARY_VIOLATION
     return READY_FOR_LABEL_GENERATION_DRY_RUN
 
 

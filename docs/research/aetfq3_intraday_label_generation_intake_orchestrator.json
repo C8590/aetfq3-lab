@@ -22,6 +22,12 @@
     "BLOCKED_HASH_OR_SOURCE_NOTE",
     "BLOCKED_BOUNDARY_VIOLATION"
   ],
+  "readiness_decision_priority": [
+    "BLOCKED_MANIFEST_P0",
+    "BLOCKED_HASH_OR_SOURCE_NOTE",
+    "BLOCKED_INSUFFICIENT_FUTURE_WINDOW_DATA",
+    "BLOCKED_BOUNDARY_VIOLATION"
+  ],
   "ignored_outputs": [
     ".local_research_outputs/aetfq3_lab/intraday_label_generation_intake/intraday_label_generation_intake_report.md",
     ".local_research_outputs/aetfq3_lab/intraday_label_generation_intake/intraday_label_generation_intake_report.json",

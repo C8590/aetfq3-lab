@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 
 from tools.lab.intraday_label_generation_intake_orchestrator import (
-    BLOCKED_BOUNDARY_VIOLATION,
     BLOCKED_HASH_OR_SOURCE_NOTE,
     BLOCKED_INSUFFICIENT_FUTURE_WINDOW_DATA,
     BLOCKED_MANIFEST_P0,
@@ -157,20 +156,28 @@ def test_missing_source_note_blocks_hash_or_source_note(tmp_path: Path) -> None:
 
 
 def test_supervised_training_allowed_true_blocks_boundary(tmp_path: Path) -> None:
-    path = write_manifest(tmp_path, {"supervised_training_allowed": True})
+    path = write_future_window_manifest(tmp_path, SUFFICIENT_FUTURE_WINDOW, True)
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["supervised_training_allowed"] = True
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
     report = run_manifest(path, "supervised_training_allowed")
 
-    assert report["readiness_decision"] == BLOCKED_BOUNDARY_VIOLATION
+    assert report["readiness_decision"] != "READY_FOR_LABEL_GENERATION_DRY_RUN"
+    assert report["boundary_check"]["passed"] is False
     assert any("supervised_training_allowed must be false" in item for item in report["p0_blockers"])
 
 
 def test_contains_order_intent_true_blocks_boundary(tmp_path: Path) -> None:
-    path = write_manifest(tmp_path, {"contains_order_intent": True})
+    path = write_future_window_manifest(tmp_path, SUFFICIENT_FUTURE_WINDOW, True)
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["contains_order_intent"] = True
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
     report = run_manifest(path, "contains_order_intent")
 
-    assert report["readiness_decision"] == BLOCKED_BOUNDARY_VIOLATION
+    assert report["readiness_decision"] != "READY_FOR_LABEL_GENERATION_DRY_RUN"
+    assert report["boundary_check"]["passed"] is False
     assert any("contains_order_intent must be false" in item for item in report["p0_blockers"])
 
 
