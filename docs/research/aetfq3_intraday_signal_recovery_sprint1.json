@@ -1,0 +1,105 @@
+{
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "document_type": "aetfq3_intraday_signal_recovery_sprint1",
+  "task_type": "F public intraday signal recovery sprint 1",
+  "scope": "Lab-only signal recovery diagnostic",
+  "status": "implemented_review_required",
+  "input_sources": {
+    "samples": ".local_research_outputs/aetfq3_lab/intraday_group_level_past_only_feature_expansion_dryrun/intraday_group_level_past_only_feature_samples.csv",
+    "manifest": ".local_research_outputs/aetfq3_lab/intraday_group_level_past_only_feature_expansion_dryrun/intraday_group_level_past_only_feature_manifest.json",
+    "transform_policy": ".local_research_outputs/aetfq3_lab/intraday_group_level_feature_scale_diagnostic/transform_policy_recommendation.json",
+    "transform_aware_smoke": ".local_research_outputs/aetfq3_lab/intraday_group_level_transform_aware_no_save_smoke/intraday_group_level_transform_aware_no_save_smoke_report.json",
+    "public_daily_source": ".local_artifact_backup/aetfq3_lab_sources/intraday_5m_public_larger_eligible_anchor_collection/future_window_daily_ohlcv.csv"
+  },
+  "allowed_output_dir": ".local_research_outputs/aetfq3_lab/intraday_signal_recovery_sprint1/",
+  "allowed_outputs": [
+    "signal_recovery_sprint1_feature_samples.csv",
+    "signal_recovery_sprint1_manifest.json",
+    "signal_recovery_sprint1_label_policy_report.json",
+    "signal_recovery_sprint1_feature_recovery_report.json",
+    "signal_recovery_sprint1_diagnostic_smoke_report.json",
+    "signal_recovery_sprint1_decision.json",
+    "signal_recovery_sprint1_summary.md",
+    "signal_recovery_sprint1_label_policy_report.md",
+    "signal_recovery_sprint1_feature_recovery_report.md",
+    "signal_recovery_sprint1_diagnostic_smoke_report.md"
+  ],
+  "label_policy_variants": [
+    "three_day_positive_label",
+    "label_ret3d_gt_0bp",
+    "label_ret3d_gt_20bp",
+    "label_ret3d_gt_50bp",
+    "label_ret3d_gt_100bp",
+    "label_safe_positive_3d",
+    "label_neutral_band_20bp",
+    "label_neutral_band_50bp"
+  ],
+  "past_daily_features": [
+    "prev_1d_return",
+    "prev_3d_return",
+    "prev_5d_return",
+    "prev_10d_return",
+    "prev_5d_volatility",
+    "prev_10d_volatility",
+    "prev_5d_volume_zscore",
+    "prev_close_to_5d_ma",
+    "prev_close_to_10d_ma"
+  ],
+  "feature_set_variants": [
+    "base_39_features",
+    "base_39_plus_past_daily",
+    "base_39_plus_scale_transform_policy",
+    "base_39_plus_past_daily_plus_scale_transform_policy"
+  ],
+  "no_save_model_suite": [
+    "dummy_most_frequent",
+    "dummy_stratified",
+    "logistic_balanced_scaled",
+    "logistic_log1p_scaled_balanced",
+    "random_forest_shallow_no_save",
+    "hist_gradient_boosting_no_save"
+  ],
+  "optional_no_save_models": [
+    "lightgbm_no_save",
+    "xgboost_no_save",
+    "catboost_no_save"
+  ],
+  "candidate_gate": {
+    "candidate_label": "DIAGNOSTIC_SIGNAL_CANDIDATE",
+    "requirements": [
+      "no collapse",
+      "balanced_accuracy >= dummy_most_frequent + 0.03",
+      "ROC-AUC >= 0.53",
+      "PR-AUC >= prevalence + 0.03",
+      "valid prediction contains both classes",
+      "no leakage",
+      "no artifact"
+    ],
+    "formal_model_evidence": false,
+    "trading_signal": false
+  },
+  "boundary": {
+    "access_mode": "READ_ONLY",
+    "final_action_change_allowed": false,
+    "contains_live_order": false,
+    "contains_secret": false,
+    "requires_human_review": true,
+    "promotion_gate_required": true,
+    "formal_model_evidence": false,
+    "stable_promotion_ready": false,
+    "formal_training_ready": false,
+    "qmt_ready": false,
+    "order_intent_ready": false,
+    "automatic_promotion_ready": false,
+    "not_trading_advice": true
+  },
+  "stable_boundary": {
+    "modify_stable": false,
+    "write_output_dir": false,
+    "write_stable_runtime_or_output": false,
+    "create_lab_advisory": false,
+    "generate_order_intent": false,
+    "connect_qmt": false,
+    "automatic_promotion": false
+  }
+}
