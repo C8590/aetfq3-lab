@@ -1,0 +1,178 @@
+{
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "document_type": "aetfq3_intraday_signal_recovery_sprint3_robust_candidate_review",
+  "task_type": "F public intraday signal recovery sprint3 robust candidate family deep review",
+  "status": "implemented_review_required",
+  "scope": "Lab-only review of existing Sprint2 ignored robust diagnostic candidate families",
+  "sprint2_reference": {
+    "commit": "eada0a8",
+    "decision": "SIGNAL_RECOVERY_SPRINT2_ROBUST_DIAGNOSTIC_CANDIDATE_FOUND_REVIEW_REQUIRED",
+    "total_sprint1_combinations": 288,
+    "sprint1_candidates": 98,
+    "selected_families": 12,
+    "robust_diagnostic_candidate_families": 10,
+    "formal_model_evidence": false,
+    "stable_promotion_ready": false
+  },
+  "input_sources": {
+    "candidate_family_summary_csv": ".local_research_outputs\\aetfq3_lab\\intraday_signal_recovery_sprint2_candidate_audit\\signal_recovery_sprint2_candidate_family_summary.csv",
+    "candidate_audit_report_json": ".local_research_outputs\\aetfq3_lab\\intraday_signal_recovery_sprint2_candidate_audit\\signal_recovery_sprint2_candidate_audit_report.json",
+    "robustness_report_json": ".local_research_outputs\\aetfq3_lab\\intraday_signal_recovery_sprint2_candidate_audit\\signal_recovery_sprint2_robustness_report.json",
+    "sprint2_decision_json": ".local_research_outputs\\aetfq3_lab\\intraday_signal_recovery_sprint2_candidate_audit\\signal_recovery_sprint2_decision.json",
+    "sprint1_diagnostic_smoke_report_json": ".local_research_outputs/aetfq3_lab/intraday_signal_recovery_sprint1/signal_recovery_sprint1_diagnostic_smoke_report.json",
+    "sprint2_docs_json": "docs/research/aetfq3_intraday_signal_recovery_sprint2_candidate_audit.json"
+  },
+  "allowed_output_dir": ".local_research_outputs\\aetfq3_lab\\intraday_signal_recovery_sprint3_robust_candidate_review/",
+  "allowed_outputs": [
+    "robust_candidate_family_review_table.csv",
+    "robust_candidate_family_review_report.md",
+    "robust_candidate_family_review_report.json",
+    "robust_candidate_shortlist.json",
+    "sprint3_review_decision.json"
+  ],
+  "reviewed_robust_family_count": 10,
+  "label_policy_review": {
+    "counts": {
+      "label_ret3d_gt_100bp": 4,
+      "label_safe_positive_3d": 2,
+      "label_ret3d_gt_50bp": 2,
+      "label_ret3d_gt_20bp": 2
+    },
+    "concentration_detected": false,
+    "p1_flag": null,
+    "note": "Robust candidates are spread across return-threshold and safe-positive labels; original three_day_positive_label and neutral-band labels are not in the robust set."
+  },
+  "model_family_review": {
+    "counts": {
+      "logistic_balanced_scaled_variants": 10
+    },
+    "concentration_detected": true,
+    "p1_flag": "P1_MODEL_FAMILY_CONCENTRATION_REVIEW_REQUIRED",
+    "note": "All robust candidates are logistic balanced/scaled variants; tree/boosting families did not survive as robust families in Sprint2."
+  },
+  "walk_forward_review": {
+    "all_robust_families_have_walk_forward_available": true,
+    "families_with_mixed_walk_forward_folds": [
+      "label_ret3d_gt_100bp|base_39_plus_scale_transform_policy|logistic_balanced_scaled_variants|scale_transform_policy",
+      "label_ret3d_gt_100bp|base_39_features|logistic_balanced_scaled_variants|no_scale_transform_policy",
+      "label_safe_positive_3d|base_39_features|logistic_balanced_scaled_variants|no_scale_transform_policy",
+      "label_safe_positive_3d|base_39_plus_scale_transform_policy|logistic_balanced_scaled_variants|scale_transform_policy",
+      "label_ret3d_gt_50bp|base_39_plus_scale_transform_policy|logistic_balanced_scaled_variants|scale_transform_policy",
+      "label_ret3d_gt_20bp|base_39_features|logistic_balanced_scaled_variants|no_scale_transform_policy",
+      "label_ret3d_gt_20bp|base_39_plus_scale_transform_policy|logistic_balanced_scaled_variants|scale_transform_policy",
+      "label_ret3d_gt_100bp|base_39_plus_past_daily|logistic_balanced_scaled_variants|no_scale_transform_policy",
+      "label_ret3d_gt_100bp|base_39_plus_past_daily_plus_scale_transform_policy|logistic_balanced_scaled_variants|scale_transform_policy",
+      "label_ret3d_gt_50bp|base_39_features|logistic_balanced_scaled_variants|no_scale_transform_policy"
+    ],
+    "note": "Every robust family has walk-forward folds available, but several folds have weak or negative dummy-margin/ROC/PR-margin behavior; this remains review-only evidence."
+  },
+  "economic_plausibility_review": {
+    "allowed_language": [
+      "plausible diagnostic signal hypothesis",
+      "weakly plausible",
+      "unclear",
+      "likely artifact"
+    ],
+    "not_trading_advice": true,
+    "summary": "Sprint3 interprets robust families as diagnostic hypotheses only. It does not state that any candidate can trade."
+  },
+  "robust_candidate_shortlist": [
+    {
+      "family_id": "label_ret3d_gt_100bp|base_39_plus_scale_transform_policy|logistic_balanced_scaled_variants|scale_transform_policy",
+      "label_policy": "label_ret3d_gt_100bp",
+      "feature_set": "base_39_plus_scale_transform_policy",
+      "model_family": "logistic_balanced_scaled_variants",
+      "transform_policy": "scale_transform_policy",
+      "why_shortlisted": "available_splits=5, walk_forward_folds=3, no_collapse_rate=1.0, PR-AUC margin positive in 5 splits, dummy margin positive in 4 splits; plausible diagnostic signal hypothesis",
+      "remaining_risks": [
+        "P1_GROUP_LABEL_INCONSISTENCY_REVIEW_REQUIRED",
+        "P1_EXTREME_FEATURE_SCALE_REVIEW_REQUIRED",
+        "P1_TRAIN_VALID_FEATURE_SHIFT_REVIEW_REQUIRED",
+        "NO_FORMAL_MODEL_EVIDENCE",
+        "P1_MODEL_FAMILY_CONCENTRATION_REVIEW_REQUIRED",
+        "P1_WALK_FORWARD_FOLD_WEAKNESS_REVIEW_REQUIRED"
+      ],
+      "next_allowed_action": "human review and out-of-period no-save validation design only; no formal training, no Stable promotion, no QMT, no OrderIntent",
+      "formal_model_evidence": false,
+      "stable_promotion_ready": false
+    },
+    {
+      "family_id": "label_ret3d_gt_100bp|base_39_plus_past_daily_plus_scale_transform_policy|logistic_balanced_scaled_variants|scale_transform_policy",
+      "label_policy": "label_ret3d_gt_100bp",
+      "feature_set": "base_39_plus_past_daily_plus_scale_transform_policy",
+      "model_family": "logistic_balanced_scaled_variants",
+      "transform_policy": "scale_transform_policy",
+      "why_shortlisted": "available_splits=5, walk_forward_folds=3, no_collapse_rate=1.0, PR-AUC margin positive in 5 splits, dummy margin positive in 4 splits; plausible diagnostic signal hypothesis",
+      "remaining_risks": [
+        "P1_GROUP_LABEL_INCONSISTENCY_REVIEW_REQUIRED",
+        "P1_EXTREME_FEATURE_SCALE_REVIEW_REQUIRED",
+        "P1_TRAIN_VALID_FEATURE_SHIFT_REVIEW_REQUIRED",
+        "NO_FORMAL_MODEL_EVIDENCE",
+        "P1_MODEL_FAMILY_CONCENTRATION_REVIEW_REQUIRED",
+        "P1_WALK_FORWARD_FOLD_WEAKNESS_REVIEW_REQUIRED",
+        "P1_CANDIDATE_ISOLATED_TO_ONE_MODEL_FAMILY_REVIEW_REQUIRED"
+      ],
+      "next_allowed_action": "human review and out-of-period no-save validation design only; no formal training, no Stable promotion, no QMT, no OrderIntent",
+      "formal_model_evidence": false,
+      "stable_promotion_ready": false
+    },
+    {
+      "family_id": "label_safe_positive_3d|base_39_plus_scale_transform_policy|logistic_balanced_scaled_variants|scale_transform_policy",
+      "label_policy": "label_safe_positive_3d",
+      "feature_set": "base_39_plus_scale_transform_policy",
+      "model_family": "logistic_balanced_scaled_variants",
+      "transform_policy": "scale_transform_policy",
+      "why_shortlisted": "available_splits=5, walk_forward_folds=3, no_collapse_rate=1.0, PR-AUC margin positive in 4 splits, dummy margin positive in 4 splits; weakly plausible",
+      "remaining_risks": [
+        "P1_GROUP_LABEL_INCONSISTENCY_REVIEW_REQUIRED",
+        "P1_EXTREME_FEATURE_SCALE_REVIEW_REQUIRED",
+        "P1_TRAIN_VALID_FEATURE_SHIFT_REVIEW_REQUIRED",
+        "NO_FORMAL_MODEL_EVIDENCE",
+        "P1_MODEL_FAMILY_CONCENTRATION_REVIEW_REQUIRED",
+        "P1_WALK_FORWARD_FOLD_WEAKNESS_REVIEW_REQUIRED"
+      ],
+      "next_allowed_action": "human review and out-of-period no-save validation design only; no formal training, no Stable promotion, no QMT, no OrderIntent",
+      "formal_model_evidence": false,
+      "stable_promotion_ready": false
+    }
+  ],
+  "sprint3_decision": "SPRINT3_ROBUST_CANDIDATE_SHORTLIST_READY_FOR_HUMAN_REVIEW",
+  "p0_blockers": [],
+  "p1_warnings": [
+    "P1_GROUP_LABEL_INCONSISTENCY_REVIEW_REQUIRED",
+    "P1_EXTREME_FEATURE_SCALE_REVIEW_REQUIRED",
+    "P1_TRAIN_VALID_FEATURE_SHIFT_REVIEW_REQUIRED",
+    "NO_FORMAL_MODEL_EVIDENCE",
+    "P1_MODEL_FAMILY_CONCENTRATION_REVIEW_REQUIRED",
+    "P1_WALK_FORWARD_FOLD_WEAKNESS_REVIEW_REQUIRED",
+    "P1_CANDIDATE_ISOLATED_TO_ONE_MODEL_FAMILY_REVIEW_REQUIRED"
+  ],
+  "p2_recommendations": [
+    "Human-review the shortlist before designing any out-of-period no-save validation.",
+    "Prioritize diversity away from the single logistic model family before any formal evidence claim.",
+    "Keep Sprint3 metrics out of Stable and out of trading/advisory decisions."
+  ],
+  "access_mode": "READ_ONLY",
+  "final_action_change_allowed": false,
+  "contains_live_order": false,
+  "contains_secret": false,
+  "requires_human_review": true,
+  "promotion_gate_required": true,
+  "formal_model_evidence": false,
+  "stable_promotion_ready": false,
+  "formal_training_ready": false,
+  "qmt_ready": false,
+  "order_intent_ready": false,
+  "automatic_promotion_ready": false,
+  "metrics_are_effectiveness_evidence": false,
+  "model_training_allowed": false,
+  "stable_allowed": false,
+  "qmt_allowed": false,
+  "order_intent_allowed": false,
+  "model_saved": false,
+  "scaler_saved": false,
+  "checkpoint_saved": false,
+  "gpu_used": false,
+  "torchrun_used": false,
+  "not_trading_advice": true
+}
