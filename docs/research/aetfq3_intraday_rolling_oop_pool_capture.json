@@ -1,0 +1,99 @@
+{
+  "document_type": "aetfq3_intraday_rolling_oop_pool_capture",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "phase": "F public intraday signal recovery sprint4j",
+  "tool": "tools/lab/intraday_rolling_oop_pool_capture.py",
+  "purpose": "Repeatable Lab-only runner for appending public Sina rolling 5m ETF bars into an ignored strict OOP readiness pool.",
+  "input_sources": {
+    "minute_source": "AKShare stock_zh_a_minute / Sina rolling 5m visible window",
+    "daily_source": "data.downloader.download_etf_history() public daily OHLCV",
+    "stable_bundle_used": false,
+    "qmt_used": false,
+    "secret_used": false,
+    "paid_vendor_used": false
+  },
+  "default_outputs": {
+    "artifact_dir": ".local_artifact_backup/aetfq3_lab_sources/intraday_signal_recovery_rolling_oop_pool",
+    "report_dir": ".local_research_outputs/aetfq3_lab/intraday_signal_recovery_rolling_oop_pool_readiness",
+    "pool_files": [
+      "rolling_oop_5m_pool.csv",
+      "rolling_oop_daily_ohlcv_pool.csv",
+      "source_note.md",
+      "SHA256SUMS.txt",
+      "POOL_MANIFEST.json",
+      "POOL_INVENTORY.csv"
+    ],
+    "report_files": [
+      "rolling_oop_capture_report.md",
+      "rolling_oop_capture_report.json",
+      "rolling_oop_anchor_readiness.json",
+      "rolling_oop_readiness_decision.json"
+    ]
+  },
+  "append_only_contract": {
+    "minute_key": [
+      "etf_code",
+      "datetime"
+    ],
+    "daily_key": [
+      "etf_code",
+      "trade_date"
+    ],
+    "deduplicate_identical_keys": true,
+    "overwrite_existing_rows": false,
+    "conflict_policy": "record conflict and keep existing row"
+  },
+  "strict_oop_rule": {
+    "sprint_anchor_start": "2026-04-09",
+    "sprint_anchor_end": "2026-06-03",
+    "anchor_must_be_outside_overlap_range": true,
+    "complete_5m_bars_required": 48,
+    "requires_t1_daily": true,
+    "requires_t3_daily": true,
+    "no_stable_bundle": true,
+    "no_qmt": true
+  },
+  "readiness_decisions": [
+    "ROLLING_OOP_POOL_READY_FOR_FIXED_SHORTLIST_VALIDATION",
+    "ROLLING_OOP_POOL_LIMITED_ACCUMULATING",
+    "ROLLING_OOP_POOL_NO_ELIGIBLE_ANCHORS_YET",
+    "ROLLING_OOP_POOL_BLOCKED_DATA_QUALITY",
+    "ROLLING_OOP_POOL_BLOCKED_SOURCE_UNAVAILABLE"
+  ],
+  "threshold_defaults": {
+    "eligible_oop_anchors": 10,
+    "etf_count": 5,
+    "group_count": 50
+  },
+  "boundary": {
+    "access_mode": "READ_ONLY",
+    "final_action_change_allowed": false,
+    "contains_live_order": false,
+    "contains_secret": false,
+    "requires_human_review": true,
+    "promotion_gate_required": true,
+    "formal_model_evidence": false,
+    "stable_promotion_ready": false,
+    "formal_training_ready": false,
+    "qmt_ready": false,
+    "order_intent_ready": false,
+    "automatic_promotion_ready": false,
+    "metrics_are_effectiveness_evidence": false,
+    "model_training_allowed": false,
+    "stable_allowed": false,
+    "qmt_allowed": false,
+    "order_intent_allowed": false,
+    "model_saved": false,
+    "scaler_saved": false,
+    "checkpoint_saved": false,
+    "gpu_used": false,
+    "torchrun_used": false,
+    "qmt_used": false,
+    "order_intent_generated": false,
+    "stable_affected": false,
+    "not_trading_advice": true
+  },
+  "not_advisory_package": true,
+  "not_trading_advice": true,
+  "stable_promotion_allowed": false
+}
