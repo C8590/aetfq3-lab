@@ -1,0 +1,133 @@
+{
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "document_type": "aetfq3_intraday_signal_recovery_sprint2_candidate_audit",
+  "task_type": "F public intraday signal recovery sprint2",
+  "scope": "Lab-only candidate audit and no-save robustness diagnostic",
+  "status": "implemented_review_required",
+  "sprint1_reference": {
+    "commit": "e66d257",
+    "decision": "SIGNAL_RECOVERY_SPRINT1_DIAGNOSTIC_CANDIDATE_FOUND_REVIEW_REQUIRED",
+    "total_combinations": 288,
+    "non_dummy_diagnostic_candidates": 98,
+    "formal_model_evidence": false,
+    "stable_promotion_ready": false
+  },
+  "input_sources": {
+    "samples": ".local_research_outputs/aetfq3_lab/intraday_signal_recovery_sprint1/signal_recovery_sprint1_feature_samples.csv",
+    "manifest": ".local_research_outputs/aetfq3_lab/intraday_signal_recovery_sprint1/signal_recovery_sprint1_manifest.json",
+    "label_policy_report": ".local_research_outputs/aetfq3_lab/intraday_signal_recovery_sprint1/signal_recovery_sprint1_label_policy_report.json",
+    "feature_recovery_report": ".local_research_outputs/aetfq3_lab/intraday_signal_recovery_sprint1/signal_recovery_sprint1_feature_recovery_report.json",
+    "diagnostic_smoke_report": ".local_research_outputs/aetfq3_lab/intraday_signal_recovery_sprint1/signal_recovery_sprint1_diagnostic_smoke_report.json",
+    "decision": ".local_research_outputs/aetfq3_lab/intraday_signal_recovery_sprint1/signal_recovery_sprint1_decision.json"
+  },
+  "allowed_output_dir": ".local_research_outputs/aetfq3_lab/intraday_signal_recovery_sprint2_candidate_audit/",
+  "allowed_outputs": [
+    "signal_recovery_sprint2_candidate_family_summary.csv",
+    "signal_recovery_sprint2_candidate_audit_report.md",
+    "signal_recovery_sprint2_candidate_audit_report.json",
+    "signal_recovery_sprint2_robustness_report.md",
+    "signal_recovery_sprint2_robustness_report.json",
+    "signal_recovery_sprint2_decision.json"
+  ],
+  "candidate_family_definition": "label_policy + feature_set + model_family + transform_policy",
+  "candidate_audit_dimensions": [
+    "label_policy",
+    "feature_set",
+    "model",
+    "transform_policy",
+    "train_valid_split",
+    "row_count",
+    "null_count",
+    "class_balance",
+    "prevalence",
+    "balanced_accuracy",
+    "roc_auc",
+    "pr_auc",
+    "pr_auc_minus_prevalence",
+    "prediction_distribution",
+    "collapse_flag",
+    "improvement_vs_dummy_most_frequent",
+    "improvement_vs_dummy_stratified"
+  ],
+  "family_selection": {
+    "max_families": 12,
+    "requirements": [
+      "no collapse",
+      "balanced_accuracy >= dummy_most_frequent + 0.03",
+      "ROC-AUC >= 0.53",
+      "PR-AUC >= prevalence + 0.03",
+      "valid prediction contains both classes",
+      "no leakage",
+      "no artifacts",
+      "candidate not based only on tiny neutral-band sample"
+    ],
+    "sort_priority": [
+      "PR-AUC margin over prevalence",
+      "balanced_accuracy margin over dummy",
+      "ROC-AUC",
+      "sample size",
+      "cross-label-policy diversity"
+    ]
+  },
+  "robustness_validation": {
+    "split_policy": "time_based_only",
+    "random_split_allowed": false,
+    "splits": [
+      "anchor_date_70_30",
+      "anchor_date_60_40",
+      "walk_forward_3fold_contiguous_anchor"
+    ],
+    "seeds": [
+      7,
+      13,
+      42,
+      101,
+      2026
+    ],
+    "model_save_allowed": false,
+    "scaler_save_allowed": false,
+    "checkpoint_save_allowed": false,
+    "gpu_allowed": false,
+    "torchrun_allowed": false,
+    "hyperparameter_search_allowed": false
+  },
+  "robustness_gate": {
+    "robust_label": "ROBUST_DIAGNOSTIC_SIGNAL_CANDIDATE_REVIEW_REQUIRED",
+    "weak_label": "CANDIDATE_WEAK_OR_SPLIT_UNSTABLE",
+    "requirements": [
+      "at least 2 available time splits",
+      "no collapse in all available splits",
+      "balanced_accuracy >= dummy_most_frequent + 0.03 in at least 2 splits",
+      "ROC-AUC >= 0.53 in at least 2 splits",
+      "PR-AUC >= prevalence + 0.03 in at least 2 splits",
+      "no model/scaler artifacts",
+      "no leakage"
+    ],
+    "formal_model_evidence": false
+  },
+  "boundary": {
+    "access_mode": "READ_ONLY",
+    "final_action_change_allowed": false,
+    "contains_live_order": false,
+    "contains_secret": false,
+    "requires_human_review": true,
+    "promotion_gate_required": true,
+    "formal_model_evidence": false,
+    "stable_promotion_ready": false,
+    "formal_training_ready": false,
+    "qmt_ready": false,
+    "order_intent_ready": false,
+    "automatic_promotion_ready": false,
+    "metrics_are_effectiveness_evidence": false,
+    "not_trading_advice": true
+  },
+  "stable_boundary": {
+    "modify_stable": false,
+    "write_output_dir": false,
+    "write_stable_runtime_or_output": false,
+    "create_lab_advisory": false,
+    "generate_order_intent": false,
+    "connect_qmt": false,
+    "automatic_promotion": false
+  }
+}
