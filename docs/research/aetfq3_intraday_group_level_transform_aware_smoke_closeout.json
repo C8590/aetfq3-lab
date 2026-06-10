@@ -1,0 +1,126 @@
+{
+  "document_type": "aetfq3_intraday_group_level_transform_aware_smoke_closeout",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "phase": "F public intraday group-level transform-aware diagnostic smoke closeout / ledger update",
+  "status": "TRANSFORM_AWARE_DIAGNOSTIC_SMOKE_COMPLETED_REVIEW_REQUIRED_NO_FORMAL_EVIDENCE",
+  "human_review_decision": "HUMAN_REVIEW_DECISION_AFTER_TRANSFORM_AWARE_SMOKE=APPROVE_CLOSEOUT_AND_LEDGER_UPDATE_ONLY",
+  "data_source": "AKShare public minute / public daily OHLCV",
+  "stable_bundle_source": false,
+  "transform_policy_summary": {
+    "source_commit": "6d5464a4be919fd89c82ba543a7b46b58c86e043",
+    "decision": "FEATURE_SCALE_DIAGNOSTIC_COMPLETED_TRANSFORM_POLICY_RECOMMENDED",
+    "feature_count": 39,
+    "log1p_amount_volume_features": true,
+    "train_only_standard_scaler": true,
+    "save_scaler": false,
+    "save_model": false,
+    "clip_winsorization_applied": false,
+    "clip_winsorization_review_only": true
+  },
+  "smoke_summary": {
+    "source_commit": "8f4c528a4048fa5ed305a1b2ad087d98a13316d8",
+    "readiness_decision": "TRANSFORM_AWARE_NO_SAVE_DIAGNOSTIC_SMOKE_COMPLETED_REVIEW_REQUIRED",
+    "target": "three_day_positive_label",
+    "feature_count": 39,
+    "group_count": 296,
+    "split_policy": "anchor_date_70_30",
+    "train_group_count": 200,
+    "valid_group_count": 96,
+    "train_label_distribution": {
+      "0": 60,
+      "1": 140
+    },
+    "valid_label_distribution": {
+      "0": 55,
+      "1": 41
+    },
+    "models_run": [
+      "dummy_most_frequent",
+      "dummy_stratified",
+      "logistic_regression_raw",
+      "logistic_regression_balanced_scaled",
+      "logistic_regression_log1p_scaled_balanced"
+    ],
+    "balanced_accuracy": {
+      "dummy_most_frequent": 0.5,
+      "dummy_stratified": 0.474723,
+      "logistic_regression_raw": 0.5,
+      "logistic_regression_balanced_scaled": 0.617295,
+      "logistic_regression_log1p_scaled_balanced": 0.6051
+    }
+  },
+  "collapse_review": {
+    "raw_logistic_collapse_reproduced": true,
+    "raw_logistic_prediction_distribution": {
+      "0": 0,
+      "1": 96
+    },
+    "balanced_scaled_prediction_distribution": {
+      "0": 41,
+      "1": 55
+    },
+    "log1p_scaled_balanced_prediction_distribution": {
+      "0": 42,
+      "1": 54
+    },
+    "balanced_scaled_reduces_collapse": true,
+    "log1p_scaled_balanced_reduces_collapse": true,
+    "balanced_scaled_balanced_accuracy": 0.617295,
+    "log1p_scaled_balanced_balanced_accuracy": 0.6051,
+    "formal_model_evidence": false,
+    "metrics_are_effectiveness_evidence": false
+  },
+  "p1_warnings": [
+    "P1_GROUP_LABEL_INCONSISTENCY_REVIEW_REQUIRED",
+    "P1_EXTREME_FEATURE_SCALE_REVIEW_REQUIRED",
+    "P1_TRAIN_VALID_FEATURE_SHIFT_REVIEW_REQUIRED"
+  ],
+  "boundary": {
+    "stable_allowed": false,
+    "qmt_allowed": false,
+    "order_intent_allowed": false,
+    "advisory_allowed": false,
+    "formal_training_allowed": false,
+    "model_save_allowed": false,
+    "scaler_save_allowed": false,
+    "checkpoint_allowed": false,
+    "torchrun_allowed": false,
+    "gpu_allowed": false,
+    "automatic_promotion_ready": false,
+    "not_trading_advice": true,
+    "no_stable_runtime_output": true,
+    "no_output_write": true,
+    "no_lab_advisory": true
+  },
+  "final_review_status": {
+    "status": "F_PUBLIC_GROUP_LEVEL_TRANSFORM_AWARE_STATUS=TRANSFORM_AWARE_DIAGNOSTIC_SMOKE_COMPLETED_REVIEW_REQUIRED_NO_FORMAL_EVIDENCE",
+    "stable_promotion_ready": false,
+    "formal_training_ready": false,
+    "qmt_ready": false,
+    "order_intent_ready": false,
+    "automatic_promotion_ready": false,
+    "metrics_are_effectiveness_evidence": false
+  },
+  "next_allowed_actions": [
+    "human review of transform-aware diagnostic result",
+    "no-save repeatability check with transform-aware pipeline",
+    "past-daily context input recovery / dry-run design",
+    "feature/label diagnostic review"
+  ],
+  "next_forbidden_actions": [
+    "Stable promotion",
+    "formal training",
+    "QMT",
+    "OrderIntent",
+    "model deployment",
+    "advisory generation",
+    "automatic next-stage model experiment"
+  ],
+  "stable_promotion_ready": false,
+  "formal_training_ready": false,
+  "qmt_ready": false,
+  "order_intent_ready": false,
+  "automatic_promotion_ready": false,
+  "metrics_are_effectiveness_evidence": false,
+  "formal_model_evidence": false
+}
