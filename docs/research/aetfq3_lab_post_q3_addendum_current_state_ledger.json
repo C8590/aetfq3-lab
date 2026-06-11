@@ -106,8 +106,14 @@
     {
       "commit": "this_closeout_commit",
       "short_commit": "this_closeout_commit",
-      "work": "F public intraday group-level transform-aware diagnostic smoke closeout / ledger update",
-      "status": "TRANSFORM_AWARE_DIAGNOSTIC_SMOKE_COMPLETED_REVIEW_REQUIRED_NO_FORMAL_EVIDENCE"
+      "work": "F public intraday rolling OOP pool capture runner closeout / ledger update",
+      "status": "ROLLING_OOP_POOL_LIMITED_ACCUMULATING_FIXED_SHORTLIST_VALIDATION_BLOCKED"
+    },
+    {
+      "commit": "a5ae839",
+      "short_commit": "a5ae839",
+      "work": "F public intraday rolling OOP pool capture runner",
+      "status": "ROLLING_OOP_POOL_LIMITED_ACCUMULATING"
     }
   ],
   "current_state": {
@@ -143,8 +149,8 @@
       "trading_advice": false
     },
     "F_public": {
-      "status": "F_PUBLIC_STATUS=TRANSFORM_AWARE_DIAGNOSTIC_SMOKE_COMPLETED_REVIEW_REQUIRED_NO_FORMAL_EVIDENCE",
-      "summary": "Public 5m OHLCV export, group-level sample dry-run, readiness precheck, no-save diagnostic smoke, group label inconsistency diagnostic, past-only feature expansion dry-run, feature scale diagnostic, and transform-aware no-save diagnostic smoke are complete. Raw logistic collapse was reproduced; balanced/scaled and log1p/scaled/balanced probes reduced collapse, but no formal model evidence exists.",
+      "status": "F_PUBLIC_STATUS=ROLLING_OOP_POOL_LIMITED_ACCUMULATING_FIXED_SHORTLIST_VALIDATION_BLOCKED",
+      "summary": "Rolling OOP pool capture runner is complete. Current public pool has 15760 5m rows, 336 daily rows, coverage 2026-04-09 to 2026-06-10, 2 eligible strict OOP anchors, and group_count 16. Fixed-shortlist OOP validation is blocked until 10 anchors and 50 groups are accumulated. Previous transform-aware diagnostic smoke remains no formal model evidence.",
       "evidence_docs": [
         "docs/research/aetfq3_intraday_public_no_label_tensor_validation.md",
         "docs/research/aetfq3_intraday_public_no_label_tensor_validation.json",
@@ -189,7 +195,11 @@
         ".local_research_outputs/aetfq3_lab/intraday_group_level_feature_scale_diagnostic/intraday_group_level_feature_scale_diagnostic_report.json",
         ".local_research_outputs/aetfq3_lab/intraday_group_level_feature_scale_diagnostic/transform_policy_recommendation.json",
         ".local_research_outputs/aetfq3_lab/intraday_group_level_transform_aware_no_save_smoke/intraday_group_level_transform_aware_no_save_smoke_report.json",
-        ".local_research_outputs/aetfq3_lab/intraday_group_level_transform_aware_no_save_smoke/readiness_decision.json"
+        ".local_research_outputs/aetfq3_lab/intraday_group_level_transform_aware_no_save_smoke/readiness_decision.json",
+        "docs/research/aetfq3_intraday_rolling_oop_pool_capture.md",
+        "docs/research/aetfq3_intraday_rolling_oop_pool_capture.json",
+        "docs/research/aetfq3_intraday_rolling_oop_pool_capture_closeout.md",
+        "docs/research/aetfq3_intraday_rolling_oop_pool_capture_closeout.json"
       ],
       "ignored_reports": [
         ".local_research_outputs/aetfq3_lab/intraday_larger_eligible_anchor_readiness/readiness_decision.json",
@@ -201,12 +211,15 @@
         ".local_research_outputs/aetfq3_lab/intraday_group_level_feature_scale_diagnostic/intraday_group_level_feature_scale_diagnostic_report.json",
         ".local_research_outputs/aetfq3_lab/intraday_group_level_feature_scale_diagnostic/transform_policy_recommendation.json",
         ".local_research_outputs/aetfq3_lab/intraday_group_level_transform_aware_no_save_smoke/intraday_group_level_transform_aware_no_save_smoke_report.json",
-        ".local_research_outputs/aetfq3_lab/intraday_group_level_transform_aware_no_save_smoke/readiness_decision.json"
+        ".local_research_outputs/aetfq3_lab/intraday_group_level_transform_aware_no_save_smoke/readiness_decision.json",
+        ".local_research_outputs/aetfq3_lab/intraday_signal_recovery_rolling_oop_pool_readiness/rolling_oop_capture_report.json",
+        ".local_research_outputs/aetfq3_lab/intraday_signal_recovery_rolling_oop_pool_readiness/rolling_oop_readiness_decision.json",
+        ".local_research_outputs/aetfq3_lab/intraday_signal_recovery_rolling_oop_pool_readiness/rolling_oop_anchor_readiness.json"
       ],
-      "blocker": "Transform-aware no-save diagnostic smoke is complete, but no formal model evidence exists. Raw logistic collapse was reproduced, balanced/scaled and log1p/scaled/balanced probes reduced collapse, and P1 label inconsistency, extreme feature scale, and train/valid shift reviews remain required.",
-      "next_trigger": "Human review of transform-aware diagnostic result, no-save repeatability check with transform-aware pipeline, past-daily context input recovery / dry-run design, or feature/label diagnostic review.",
-      "allowed_next_action": "Review-only diagnostic follow-up within Lab boundary.",
-      "forbidden_action": "Stable promotion, QMT, OrderIntent, advisory package, formal training, model deployment, checkpoint/model/scaler save, automatic promotion, or automatic next-stage model experiment.",
+      "blocker": "Fixed-shortlist OOP validation is blocked because only 2 eligible strict OOP anchors and 16 groups are available; required thresholds are 10 anchors and 50 groups.",
+      "next_trigger": "Accumulated strict OOP anchors >= 10 and group_count >= 50.",
+      "allowed_next_action": "Periodic Lab-only rolling OOP capture. If threshold is reached, create a separate fixed-shortlist OOP no-save validation task after human review.",
+      "forbidden_action": "Stable promotion, QMT, OrderIntent, advisory package, formal training, model deployment, checkpoint/model/scaler save, automatic promotion, or fixed-shortlist OOP validation before threshold.",
       "target": "three_day_positive_label",
       "models_run": [
         "dummy_most_frequent",
@@ -215,7 +228,7 @@
         "logistic_regression_balanced_scaled",
         "logistic_regression_log1p_scaled_balanced"
       ],
-      "effective_readiness_decision": "TRANSFORM_AWARE_DIAGNOSTIC_SMOKE_COMPLETED_REVIEW_REQUIRED_NO_FORMAL_EVIDENCE",
+      "effective_readiness_decision": "ROLLING_OOP_POOL_LIMITED_ACCUMULATING_FIXED_SHORTLIST_VALIDATION_BLOCKED",
       "larger_data_summary": {
         "readiness_decision": "LARGER_ELIGIBLE_ANCHOR_DATA_COLLECTION_PASSED_READINESS_REVIEW_REQUIRED",
         "anchors": 37,
@@ -327,7 +340,32 @@
       "stable_allowed": false,
       "qmt_allowed": false,
       "order_intent_allowed": false,
-      "stable_evidence": false
+      "stable_evidence": false,
+      "rolling_oop_pool_summary": {
+        "runner_commit": "a5ae839",
+        "tool_path": "tools/lab/intraday_rolling_oop_pool_capture.py",
+        "tests_lab": "262 passed, 2 warnings",
+        "five_m_rows": 15760,
+        "daily_rows": 336,
+        "five_m_coverage_start": "2026-04-09",
+        "five_m_coverage_end": "2026-06-10",
+        "eligible_strict_oop_anchor_dates": [
+          "2026-06-04",
+          "2026-06-05"
+        ],
+        "eligible_oop_anchors": 2,
+        "required_oop_anchors": 10,
+        "etf_count": 8,
+        "required_etf_count": 5,
+        "group_count": 16,
+        "required_group_count": 50,
+        "readiness_decision": "ROLLING_OOP_POOL_LIMITED_ACCUMULATING",
+        "fixed_shortlist_oop_validation_ready": false,
+        "rolling_oop_capture_mechanism_ready": true,
+        "oop_validation_allowed_now": false
+      },
+      "fixed_shortlist_oop_validation_ready": false,
+      "rolling_oop_capture_mechanism_ready": true
     },
     "F_real_qmt": {
       "status": "F_REAL_QMT_STATUS=BLOCKED_NO_SAFE_REAL_PROVIDER_OR_COMPLIANT_EXPORT",
@@ -376,6 +414,18 @@
     },
     {
       "line": "F_public",
+      "blocker": "F public rolling OOP pool accumulating: fixed-shortlist OOP validation is blocked because only 2 eligible strict OOP anchors and 16 groups are available; required thresholds are 10 anchors and 50 groups.",
+      "status": "ROLLING_OOP_POOL_LIMITED_ACCUMULATING_FIXED_SHORTLIST_VALIDATION_BLOCKED",
+      "eligible_oop_anchors": 2,
+      "required_oop_anchors": 10,
+      "group_count": 16,
+      "required_group_count": 50,
+      "fixed_shortlist_oop_validation_ready": false,
+      "metrics_are_effectiveness_evidence": false,
+      "stable_promotion_ready": false
+    },
+    {
+      "line": "F_public",
       "blocker": "F public transform-aware diagnostic smoke completed: raw logistic collapse was reproduced, balanced/scaled and log1p/scaled/balanced probes reduced collapse, and no formal model evidence exists. P1 label inconsistency, extreme feature scale, and train/valid shift reviews remain required.",
       "status": "TRANSFORM_AWARE_DIAGNOSTIC_SMOKE_COMPLETED_REVIEW_REQUIRED_NO_FORMAL_EVIDENCE",
       "model_signal_review_required": true,
@@ -417,7 +467,14 @@
     "transform_aware_smoke_allows_qmt": false,
     "transform_aware_smoke_allows_order_intent": false,
     "transform_aware_smoke_allows_advisory": false,
-    "transform_aware_smoke_allows_automatic_promotion": false
+    "transform_aware_smoke_allows_automatic_promotion": false,
+    "rolling_oop_pool_readiness_is_model_effectiveness_evidence": false,
+    "rolling_oop_pool_readiness_allows_fixed_shortlist_validation_before_threshold": false,
+    "rolling_oop_pool_readiness_allows_stable_promotion": false,
+    "rolling_oop_pool_readiness_allows_qmt": false,
+    "rolling_oop_pool_readiness_allows_order_intent": false,
+    "rolling_oop_capture_runner_allows_periodic_capture": true,
+    "rolling_oop_fixed_shortlist_validation_requires_separate_task_after_threshold": true
   },
   "next_triggers": [
     {
@@ -425,8 +482,8 @@
       "condition": "A true historical V2/ML_SIM complete package appears"
     },
     {
-      "id": "F_PUBLIC_FUTURE_WINDOW_COVERAGE",
-      "condition": "F public daily OHLCV covers required future-window dates"
+      "id": "F_PUBLIC_ROLLING_OOP_POOL_THRESHOLD",
+      "condition": "F public rolling OOP pool accumulates strict OOP anchors >= 10 and group_count >= 50"
     },
     {
       "id": "F_PUBLIC_MODEL_SIGNAL_REVIEW",
@@ -468,7 +525,7 @@
     "label_generation_ready": false,
     "training_ready": false,
     "automatic_promotion_ready": false,
-    "f_public_status": "TRANSFORM_AWARE_DIAGNOSTIC_SMOKE_COMPLETED_REVIEW_REQUIRED_NO_FORMAL_EVIDENCE",
+    "f_public_status": "ROLLING_OOP_POOL_LIMITED_ACCUMULATING_FIXED_SHORTLIST_VALIDATION_BLOCKED",
     "f_public_larger_eligible_anchor_status": "LARGER_NO_SAVE_REPEATABILITY_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED",
     "f_public_group_level_model_signal_status": "GROUP_LEVEL_DIAGNOSTIC_SMOKE_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED_NO_FORMAL_EVIDENCE",
     "f_public_group_level_transform_aware_status": "TRANSFORM_AWARE_DIAGNOSTIC_SMOKE_COMPLETED_REVIEW_REQUIRED_NO_FORMAL_EVIDENCE",
@@ -480,7 +537,13 @@
     "f_public_log1p_scaled_balanced_reduces_collapse": true,
     "f_public_formal_model_evidence": false,
     "metrics_are_effectiveness_evidence": false,
-    "formal_training_ready": false
+    "formal_training_ready": false,
+    "f_public_rolling_oop_pool_status": "ROLLING_OOP_POOL_LIMITED_ACCUMULATING",
+    "f_public_fixed_shortlist_oop_validation_ready": false,
+    "f_public_rolling_oop_eligible_anchors": 2,
+    "f_public_rolling_oop_required_anchors": 10,
+    "f_public_rolling_oop_group_count": 16,
+    "f_public_rolling_oop_required_group_count": 50
   },
   "stable_allowed": false,
   "qmt_allowed": false,

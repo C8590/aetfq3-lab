@@ -1,0 +1,84 @@
+{
+  "phase": "F public intraday rolling OOP pool runner closeout / post-Q3 ledger update",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "status": "ROLLING_OOP_POOL_LIMITED_ACCUMULATING_FIXED_SHORTLIST_VALIDATION_BLOCKED",
+  "runner": {
+    "tool_path": "tools/lab/intraday_rolling_oop_pool_capture.py",
+    "commit": "a5ae839",
+    "tests": "tests/lab: 262 passed, 2 warnings",
+    "append_only_pool_behavior": true,
+    "conflict_detection": true,
+    "strict_oop_anchor_calculation": true,
+    "ignored_output_only": true
+  },
+  "current_pool_status": {
+    "five_m_rows": 15760,
+    "daily_rows": 336,
+    "five_m_coverage_start": "2026-04-09",
+    "five_m_coverage_end": "2026-06-10",
+    "eligible_strict_oop_anchor_dates": [
+      "2026-06-04",
+      "2026-06-05"
+    ],
+    "eligible_oop_anchors": 2,
+    "etf_count": 8,
+    "group_count": 16,
+    "readiness_decision": "ROLLING_OOP_POOL_LIMITED_ACCUMULATING",
+    "fixed_shortlist_oop_validation_ready": false
+  },
+  "thresholds": {
+    "required_oop_anchors": 10,
+    "required_etf_count": 5,
+    "required_group_count": 50
+  },
+  "current_blocker": {
+    "blocker": "Fixed-shortlist OOP validation is blocked until rolling strict OOP anchors and groups reach threshold.",
+    "eligible_oop_anchors": 2,
+    "required_oop_anchors": 10,
+    "group_count": 16,
+    "required_group_count": 50,
+    "fixed_shortlist_oop_validation_ready": false
+  },
+  "next_trigger": {
+    "condition": "accumulated strict OOP anchors >= 10 and group_count >= 50",
+    "next_operation": "Create a separate fixed-shortlist OOP no-save validation task after human review.",
+    "periodic_capture_allowed": true,
+    "oop_validation_allowed_now": false
+  },
+  "boundary": {
+    "access_mode": "READ_ONLY",
+    "final_action_change_allowed": false,
+    "contains_live_order": false,
+    "contains_secret": false,
+    "requires_human_review": true,
+    "promotion_gate_required": true,
+    "stable_allowed": false,
+    "qmt_allowed": false,
+    "order_intent_allowed": false,
+    "advisory_allowed": false,
+    "model_training_allowed": false,
+    "formal_training_ready": false,
+    "model_saved": false,
+    "scaler_saved": false,
+    "checkpoint_saved": false,
+    "torchrun_used": false,
+    "gpu_used": false,
+    "write_output_allowed": false,
+    "write_stable_runtime_output_allowed": false,
+    "create_lab_advisory_allowed": false,
+    "metrics_are_effectiveness_evidence": false,
+    "not_trading_advice": true
+  },
+  "final_review_status": {
+    "runner_complete": true,
+    "rolling_oop_capture_mechanism_ready": true,
+    "fixed_shortlist_oop_validation_ready": false,
+    "stable_promotion_ready": false,
+    "formal_training_ready": false,
+    "qmt_ready": false,
+    "order_intent_ready": false,
+    "automatic_promotion_ready": false,
+    "metrics_are_effectiveness_evidence": false,
+    "stable_evidence": false
+  }
+}
