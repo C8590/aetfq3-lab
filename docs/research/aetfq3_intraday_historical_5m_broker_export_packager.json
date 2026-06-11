@@ -1,0 +1,198 @@
+{
+  "document_type": "aetfq3_intraday_historical_5m_broker_export_packager",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "phase": "F intraday historical 5m broker-terminal export packager / manual inbox builder",
+  "tool": "tools/lab/intraday_historical_5m_broker_export_packager.py",
+  "purpose": "Package user-supplied legal broker-terminal historical ETF 5m OHLCV exports into the ignored manual intake inbox and optionally hand off to the manual intake validator.",
+  "default_raw_export_dir": ".local_artifact_backup/aetfq3_lab_sources/intraday_historical_5m_raw_exports",
+  "default_manual_inbox": ".local_artifact_backup/aetfq3_lab_sources/intraday_historical_5m_manual_inbox",
+  "default_out_dir": ".local_research_outputs/aetfq3_lab/intraday_historical_5m_broker_export_packager",
+  "manual_intake_validator": {
+    "tool": "tools/lab/intraday_historical_5m_manual_intake_validator.py",
+    "out_dir": ".local_research_outputs/aetfq3_lab/intraday_historical_5m_manual_intake",
+    "ready_decision": "MANUAL_HISTORICAL_5M_PACKAGE_READY_FOR_FIXED_SHORTLIST_OOP_VALIDATION",
+    "ready_meaning": "Only permits opening a separate fixed-shortlist OOP no-save validation task after human review."
+  },
+  "allowed_file_types": [
+    ".csv",
+    ".zip",
+    ".parquet when supported by the local environment"
+  ],
+  "target_etfs": [
+    "159915",
+    "510050",
+    "510300",
+    "510500",
+    "512100",
+    "588000",
+    "159949",
+    "512880"
+  ],
+  "field_mapping": {
+    "etf_code": [
+      "证券代码",
+      "代码",
+      "symbol",
+      "code",
+      "etf_code"
+    ],
+    "trade_date": [
+      "日期",
+      "交易日期",
+      "date",
+      "trade_date"
+    ],
+    "datetime": [
+      "时间",
+      "日期时间",
+      "datetime",
+      "time"
+    ],
+    "open": [
+      "开盘",
+      "open"
+    ],
+    "high": [
+      "最高",
+      "high"
+    ],
+    "low": [
+      "最低",
+      "low"
+    ],
+    "close": [
+      "收盘",
+      "close"
+    ],
+    "volume": [
+      "成交量",
+      "volume",
+      "vol"
+    ],
+    "amount": [
+      "成交额",
+      "amount",
+      "turnover"
+    ]
+  },
+  "standard_output_schema": {
+    "required": [
+      "trade_date",
+      "datetime",
+      "etf_code",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "optional": [
+      "amount",
+      "vwap"
+    ]
+  },
+  "forbidden_tokens": [
+    "account",
+    "账户",
+    "资金",
+    "balance",
+    "position",
+    "持仓",
+    "order",
+    "委托",
+    "trade",
+    "成交 except market fields 成交量/成交额",
+    "fill",
+    "password",
+    "token",
+    "secret",
+    "target_weight",
+    "final_buy_action",
+    "OrderIntent"
+  ],
+  "generated_manual_inbox_files": [
+    "historical_5m_manual_export.csv",
+    "source_note.md",
+    "MANIFEST.json",
+    "SHA256SUMS.txt"
+  ],
+  "generated_report_files": [
+    "broker_export_package_report.md",
+    "broker_export_package_report.json",
+    "broker_export_inventory.csv",
+    "broker_export_package_decision.json"
+  ],
+  "source_note_required_values": {
+    "source_type": "broker_terminal_manual_export",
+    "acquisition_mode": "user_manual_export",
+    "human_authorized": true,
+    "whether_account_related": false,
+    "whether_order_related": false,
+    "whether_contains_trades_or_fills": false,
+    "whether_contains_secret": false,
+    "whether_stable_bundle": false,
+    "frequency": "5m"
+  },
+  "manifest_required_values": {
+    "sample_type": "intraday_5m_historical_manual_export",
+    "frequency": "5m",
+    "source_kind": "broker_terminal_manual_export",
+    "acquisition_mode": "user_manual_export",
+    "training_allowed": false,
+    "stable_effect_allowed": false,
+    "contains_secret": false,
+    "contains_order_intent": false,
+    "contains_live_order": false,
+    "contains_account": false,
+    "contains_position": false,
+    "contains_order": false,
+    "contains_trade": false,
+    "qmt_related": false,
+    "qmt_mode": "not_qmt",
+    "allowed_for": [
+      "intake",
+      "schema_validation",
+      "oop_readiness"
+    ]
+  },
+  "possible_decisions": [
+    "BROKER_EXPORT_PACKAGE_READY_FOR_MANUAL_INTAKE_VALIDATOR",
+    "BROKER_EXPORT_PACKAGE_VALIDATOR_READY_FOR_FIXED_SHORTLIST_OOP_VALIDATION",
+    "BROKER_EXPORT_PACKAGE_BLOCKED_WAITING_FOR_RAW_EXPORT",
+    "BROKER_EXPORT_PACKAGE_BLOCKED_SCHEMA_UNMAPPABLE",
+    "BROKER_EXPORT_PACKAGE_BLOCKED_FORBIDDEN_FIELDS",
+    "BROKER_EXPORT_PACKAGE_BLOCKED_DATA_QUALITY",
+    "BROKER_EXPORT_PACKAGE_BLOCKED_VALIDATOR_NOT_READY"
+  ],
+  "boundary": {
+    "access_mode": "READ_ONLY",
+    "final_action_change_allowed": false,
+    "contains_live_order": false,
+    "contains_secret": false,
+    "requires_human_review": true,
+    "promotion_gate_required": true,
+    "broker_connection_allowed": false,
+    "login_allowed": false,
+    "qmt_allowed": false,
+    "xtdata_allowed": false,
+    "account_position_order_trade_fill_access_allowed": false,
+    "secret_read_allowed": false,
+    "full_disk_scan_allowed": false,
+    "stable_allowed": false,
+    "order_intent_allowed": false,
+    "advisory_allowed": false,
+    "label_generation_allowed": false,
+    "oop_validation_allowed": false,
+    "model_training_allowed": false,
+    "model_save_allowed": false,
+    "scaler_save_allowed": false,
+    "checkpoint_save_allowed": false,
+    "torchrun_allowed": false,
+    "gpu_allowed": false,
+    "automatic_promotion_ready": false,
+    "metrics_are_effectiveness_evidence": false,
+    "trading_advice": false
+  },
+  "stable_promotion_allowed": false,
+  "direct_stable_submission_allowed": false
+}
