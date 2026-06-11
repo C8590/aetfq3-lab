@@ -1,0 +1,106 @@
+{
+  "document_type": "aetfq3_intraday_historical_5m_manual_intake_contract",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "phase": "F public intraday historical 5m manual/export package intake contract",
+  "tool": "tools/lab/intraday_historical_5m_manual_intake_validator.py",
+  "purpose": "Define a Lab-only manual/export intake path for legally obtained historical ETF 5m OHLCV packages and compute fixed-shortlist OOP readiness only.",
+  "default_inbox": ".local_artifact_backup/aetfq3_lab_sources/intraday_historical_5m_manual_inbox",
+  "default_out_dir": ".local_research_outputs/aetfq3_lab/intraday_historical_5m_manual_intake",
+  "allowed_file_types": [
+    ".csv",
+    ".zip",
+    ".parquet",
+    "source_note.md",
+    "SHA256SUMS.txt",
+    "MANIFEST.json"
+  ],
+  "standard_fields": {
+    "required": [
+      "trade_date",
+      "datetime",
+      "etf_code",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "recommended": [
+      "amount",
+      "vwap"
+    ],
+    "amount_missing_policy": "allowed_and_recorded",
+    "vwap_missing_policy": "compute only when amount and volume are present and volume > 0; do not fabricate"
+  },
+  "source_note_required_fields": [
+    "source_name",
+    "source_type",
+    "export_method",
+    "exported_at",
+    "date_range",
+    "etf_universe",
+    "frequency=5m",
+    "whether_qmt_export",
+    "whether_account_related",
+    "whether_order_related",
+    "whether_contains_trades_or_fills",
+    "whether_contains_secret",
+    "whether_stable_bundle",
+    "human_authorized=true"
+  ],
+  "manifest_template": "docs/research/aetfq3_intraday_historical_5m_manual_manifest_template.json",
+  "forbidden_fields": [
+    "account",
+    "position",
+    "order",
+    "trade",
+    "fill",
+    "OrderIntent",
+    "target_weight",
+    "final_buy_action"
+  ],
+  "readiness_thresholds": {
+    "strict_oop_anchors": 10,
+    "etf_count": 5,
+    "group_count": 50
+  },
+  "possible_decisions": [
+    "MANUAL_HISTORICAL_5M_PACKAGE_READY_FOR_FIXED_SHORTLIST_OOP_VALIDATION",
+    "MANUAL_HISTORICAL_5M_PACKAGE_LIMITED_REVIEW_REQUIRED",
+    "MANUAL_HISTORICAL_5M_PACKAGE_NOT_FOUND_WAITING_FOR_INPUT",
+    "BLOCKED_MISSING_SOURCE_NOTE",
+    "BLOCKED_MISSING_HASH",
+    "BLOCKED_HASH_MISMATCH",
+    "BLOCKED_FORBIDDEN_FIELDS",
+    "BLOCKED_DATA_QUALITY",
+    "BLOCKED_INSUFFICIENT_OOP_ANCHORS",
+    "BLOCKED_UNAUTHORIZED_SOURCE"
+  ],
+  "boundary": {
+    "access_mode": "READ_ONLY",
+    "final_action_change_allowed": false,
+    "contains_live_order": false,
+    "contains_secret": false,
+    "requires_human_review": true,
+    "promotion_gate_required": true,
+    "formal_model_evidence": false,
+    "stable_promotion_ready": false,
+    "formal_training_ready": false,
+    "qmt_ready": false,
+    "order_intent_ready": false,
+    "automatic_promotion_ready": false,
+    "metrics_are_effectiveness_evidence": false,
+    "model_training_allowed": false,
+    "stable_allowed": false,
+    "qmt_allowed": false,
+    "order_intent_allowed": false,
+    "model_saved": false,
+    "scaler_saved": false,
+    "checkpoint_saved": false,
+    "gpu_used": false,
+    "torchrun_used": false,
+    "not_trading_advice": true
+  },
+  "ready_meaning": "Ready only means a separate fixed-shortlist OOP no-save validation task may be created after human review; this tool does not run validation.",
+  "stable_promotion_allowed": false
+}

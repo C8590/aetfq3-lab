@@ -1,0 +1,24 @@
+{
+  "sample_type": "intraday_5m_historical_manual_export",
+  "frequency": "5m",
+  "source_kind": "manual_export_fixture",
+  "source_note_path": "source_note.md",
+  "sha256_file": "SHA256SUMS.txt",
+  "training_allowed": false,
+  "stable_effect_allowed": false,
+  "contains_secret": false,
+  "contains_order_intent": false,
+  "contains_live_order": false,
+  "contains_account": false,
+  "contains_position": false,
+  "contains_order": false,
+  "contains_trade": false,
+  "qmt_related": false,
+  "qmt_mode": "not_qmt",
+  "human_authorized": true,
+  "allowed_for": [
+    "intake",
+    "schema_validation",
+    "oop_readiness"
+  ]
+}
