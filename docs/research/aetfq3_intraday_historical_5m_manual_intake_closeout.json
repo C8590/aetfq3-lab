@@ -1,0 +1,171 @@
+{
+  "document_type": "aetfq3_intraday_historical_5m_manual_intake_closeout",
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "phase": "F public intraday historical 5m manual intake closeout / post-Q3 ledger update",
+  "status": "MANUAL_EXPORT_HISTORICAL_5M_INTAKE_VALIDATOR_READY_WAITING_FOR_PACKAGE",
+  "purpose": "Close out the manual/export historical 5m intake validator as ready for future legal package intake; this is not package validation, fixed-shortlist OOP validation, label generation, model training, model evidence, trading advice, or Stable promotion.",
+  "validator": {
+    "tool_path": "tools/lab/intraday_historical_5m_manual_intake_validator.py",
+    "commit": "ccf7342",
+    "specific_test": "9 passed",
+    "tests_lab": "271 passed, 2 warnings",
+    "contract_docs": [
+      "docs/research/aetfq3_intraday_historical_5m_manual_intake_contract.md",
+      "docs/research/aetfq3_intraday_historical_5m_manual_intake_contract.json",
+      "docs/research/aetfq3_intraday_historical_5m_manual_manifest_template.json"
+    ],
+    "supported_inbox": ".local_artifact_backup/aetfq3_lab_sources/intraday_historical_5m_manual_inbox",
+    "output_dir": ".local_research_outputs/aetfq3_lab/intraday_historical_5m_manual_intake",
+    "required_package_files": [
+      "source_note.md",
+      "MANIFEST.json",
+      "SHA256SUMS.txt"
+    ],
+    "allowed_data_files": [
+      ".csv",
+      ".zip",
+      ".parquet when supported by the local Python environment"
+    ],
+    "source_note_checks": [
+      "source_name",
+      "source_type",
+      "export_method",
+      "exported_at",
+      "date_range",
+      "etf_universe",
+      "frequency=5m",
+      "whether_qmt_export",
+      "whether_account_related",
+      "whether_order_related",
+      "whether_contains_trades_or_fills",
+      "whether_contains_secret",
+      "whether_stable_bundle",
+      "human_authorized=true"
+    ],
+    "manifest_checks": [
+      "manifest matches docs/research/aetfq3_intraday_historical_5m_manual_manifest_template.json",
+      "SHA256SUMS.txt present",
+      "hashes match package inventory"
+    ],
+    "forbidden_field_checks": [
+      "account",
+      "position",
+      "order",
+      "trade",
+      "fill",
+      "OrderIntent",
+      "target_weight",
+      "final_buy_action",
+      "secret-like fields"
+    ],
+    "schema_mapping": {
+      "required": [
+        "trade_date",
+        "datetime",
+        "etf_code",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume"
+      ],
+      "recommended": [
+        "amount",
+        "vwap"
+      ],
+      "amount_missing_policy": "allowed_and_recorded",
+      "vwap_missing_policy": "compute only when amount and volume are present and volume > 0; do not fabricate"
+    },
+    "data_quality_checks": [
+      "duplicate bars",
+      "datetime monotonicity",
+      "OHLC consistency",
+      "nonnegative volume",
+      "nonnegative amount when present",
+      "bars per ETF/day"
+    ],
+    "strict_oop_readiness_checks": {
+      "anchor_dates_outside_sprint_window": "outside 2026-04-09 to 2026-06-03",
+      "required_strict_oop_anchors": 10,
+      "required_etf_count": 5,
+      "required_group_count": 50,
+      "requires_t_plus_1_t_plus_3_daily_coverage": true
+    },
+    "default_waiting_decision": "MANUAL_HISTORICAL_5M_PACKAGE_NOT_FOUND_WAITING_FOR_INPUT",
+    "manual_intake_validator_ready": true
+  },
+  "current_data_status": {
+    "online_historical_5m_backfill_status": "HISTORICAL_5M_BACKFILL_BLOCKED_NO_USABLE_SOURCE",
+    "rolling_oop_pool_status": "ROLLING_OOP_POOL_LIMITED_ACCUMULATING",
+    "eligible_oop_anchors": 2,
+    "group_count": 16,
+    "required_oop_anchors": 10,
+    "required_group_count": 50,
+    "manual_intake_validator_ready": true,
+    "manual_package_present": false,
+    "manual_package_readiness_decision": "MANUAL_HISTORICAL_5M_PACKAGE_NOT_FOUND_WAITING_FOR_INPUT",
+    "fixed_shortlist_oop_validation_ready": false
+  },
+  "manual_package_trigger": {
+    "condition": "A compliant legal historical ETF 5m package appears in the ignored manual inbox.",
+    "inbox": ".local_artifact_backup/aetfq3_lab_sources/intraday_historical_5m_manual_inbox",
+    "command": ".\\.venv\\Scripts\\python.exe tools\\lab\\intraday_historical_5m_manual_intake_validator.py --inbox .local_artifact_backup\\aetfq3_lab_sources\\intraday_historical_5m_manual_inbox --out-dir .local_research_outputs\\aetfq3_lab\\intraday_historical_5m_manual_intake",
+    "requires_legal_source": true,
+    "requires_human_authorized": true,
+    "requires_no_secret": true,
+    "requires_no_account_position_order_trade_fill": true,
+    "requires_no_order_intent": true,
+    "requires_not_stable_bundle": true
+  },
+  "readiness_trigger": {
+    "required_validator_decision": "MANUAL_HISTORICAL_5M_PACKAGE_READY_FOR_FIXED_SHORTLIST_OOP_VALIDATION",
+    "allowed_next_task": "Separate fixed-shortlist OOP no-save validation task after human review.",
+    "fixed_shortlist_oop_validation_ready": false,
+    "validation_allowed_by_this_closeout": false
+  },
+  "boundary": {
+    "access_mode": "READ_ONLY",
+    "final_action_change_allowed": false,
+    "contains_live_order": false,
+    "contains_secret": false,
+    "requires_human_review": true,
+    "promotion_gate_required": true,
+    "stable_allowed": false,
+    "qmt_allowed": false,
+    "qmt_account_connection_allowed": false,
+    "account_position_order_trade_fill_access_allowed": false,
+    "order_intent_allowed": false,
+    "advisory_allowed": false,
+    "write_output_allowed": false,
+    "write_stable_runtime_output_allowed": false,
+    "create_lab_advisory_allowed": false,
+    "label_generation_allowed": false,
+    "oop_validation_allowed": false,
+    "model_training_allowed": false,
+    "formal_training_ready": false,
+    "model_save_allowed": false,
+    "scaler_save_allowed": false,
+    "checkpoint_save_allowed": false,
+    "torchrun_allowed": false,
+    "gpu_allowed": false,
+    "automatic_promotion_ready": false,
+    "trading_advice": false
+  },
+  "final_review_status": {
+    "manual_intake_validator_ready": true,
+    "manual_package_present": false,
+    "manual_package_readiness_decision": "MANUAL_HISTORICAL_5M_PACKAGE_NOT_FOUND_WAITING_FOR_INPUT",
+    "online_historical_5m_backfill_status": "HISTORICAL_5M_BACKFILL_BLOCKED_NO_USABLE_SOURCE",
+    "rolling_oop_pool_status": "ROLLING_OOP_POOL_LIMITED_ACCUMULATING",
+    "fixed_shortlist_oop_validation_ready": false,
+    "stable_promotion_ready": false,
+    "formal_training_ready": false,
+    "qmt_ready": false,
+    "order_intent_ready": false,
+    "automatic_promotion_ready": false,
+    "metrics_are_effectiveness_evidence": false,
+    "not_stable_evidence": true,
+    "not_trading_advice": true,
+    "direct_stable_submission_allowed": false
+  }
+}

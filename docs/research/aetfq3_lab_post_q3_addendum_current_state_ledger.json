@@ -104,16 +104,22 @@
       "status": "TRANSFORM_AWARE_NO_SAVE_DIAGNOSTIC_SMOKE_COMPLETED_REVIEW_REQUIRED"
     },
     {
-      "commit": "this_closeout_commit",
-      "short_commit": "this_closeout_commit",
-      "work": "F public intraday rolling OOP pool capture runner closeout / ledger update",
-      "status": "ROLLING_OOP_POOL_LIMITED_ACCUMULATING_FIXED_SHORTLIST_VALIDATION_BLOCKED"
-    },
-    {
       "commit": "a5ae839",
       "short_commit": "a5ae839",
       "work": "F public intraday rolling OOP pool capture runner",
       "status": "ROLLING_OOP_POOL_LIMITED_ACCUMULATING"
+    },
+    {
+      "commit": "ccf7342",
+      "short_commit": "ccf7342",
+      "work": "F public intraday historical 5m manual/export intake validator",
+      "status": "MANUAL_HISTORICAL_5M_PACKAGE_NOT_FOUND_WAITING_FOR_INPUT"
+    },
+    {
+      "commit": "this_closeout_commit",
+      "short_commit": "this_closeout_commit",
+      "work": "F public intraday historical 5m manual intake closeout / post-Q3 ledger update",
+      "status": "ROLLING_OOP_POOL_LIMITED_ACCUMULATING_MANUAL_5M_INTAKE_READY_WAITING_FOR_PACKAGE_FIXED_SHORTLIST_VALIDATION_BLOCKED"
     }
   ],
   "current_state": {
@@ -149,8 +155,8 @@
       "trading_advice": false
     },
     "F_public": {
-      "status": "F_PUBLIC_STATUS=ROLLING_OOP_POOL_LIMITED_ACCUMULATING_FIXED_SHORTLIST_VALIDATION_BLOCKED",
-      "summary": "Rolling OOP pool capture runner is complete. Current public pool has 15760 5m rows, 336 daily rows, coverage 2026-04-09 to 2026-06-10, 2 eligible strict OOP anchors, and group_count 16. Fixed-shortlist OOP validation is blocked until 10 anchors and 50 groups are accumulated. Previous transform-aware diagnostic smoke remains no formal model evidence.",
+      "status": "F_PUBLIC_STATUS=ROLLING_OOP_POOL_LIMITED_ACCUMULATING_MANUAL_5M_INTAKE_READY_WAITING_FOR_PACKAGE_FIXED_SHORTLIST_VALIDATION_BLOCKED",
+      "summary": "Online historical 5m source acquisition is blocked. Rolling OOP pool capture runner is complete, but current public pool has only 2 eligible strict OOP anchors and group_count 16. Manual/export historical 5m intake validator is ready, but no legal external 1y/3y ETF 5m package is present yet. Fixed-shortlist OOP validation remains blocked. Previous transform-aware diagnostic smoke remains no formal model evidence.",
       "evidence_docs": [
         "docs/research/aetfq3_intraday_public_no_label_tensor_validation.md",
         "docs/research/aetfq3_intraday_public_no_label_tensor_validation.json",
@@ -187,6 +193,11 @@
         "docs/research/aetfq3_intraday_group_level_transform_aware_no_save_smoke.json",
         "docs/research/aetfq3_intraday_group_level_transform_aware_smoke_closeout.md",
         "docs/research/aetfq3_intraday_group_level_transform_aware_smoke_closeout.json",
+        "docs/research/aetfq3_intraday_historical_5m_manual_intake_contract.md",
+        "docs/research/aetfq3_intraday_historical_5m_manual_intake_contract.json",
+        "docs/research/aetfq3_intraday_historical_5m_manual_manifest_template.json",
+        "docs/research/aetfq3_intraday_historical_5m_manual_intake_closeout.md",
+        "docs/research/aetfq3_intraday_historical_5m_manual_intake_closeout.json",
         ".local_research_outputs/aetfq3_lab/intraday_larger_eligible_anchor_readiness/readiness_decision.json",
         ".local_research_outputs/aetfq3_lab/intraday_larger_eligible_anchor_no_save_smoke/intraday_larger_eligible_anchor_no_save_smoke_report.json",
         ".local_research_outputs/aetfq3_lab/intraday_larger_eligible_anchor_no_save_repeatability_check/intraday_larger_eligible_anchor_no_save_repeatability_report.json",
@@ -214,12 +225,14 @@
         ".local_research_outputs/aetfq3_lab/intraday_group_level_transform_aware_no_save_smoke/readiness_decision.json",
         ".local_research_outputs/aetfq3_lab/intraday_signal_recovery_rolling_oop_pool_readiness/rolling_oop_capture_report.json",
         ".local_research_outputs/aetfq3_lab/intraday_signal_recovery_rolling_oop_pool_readiness/rolling_oop_readiness_decision.json",
-        ".local_research_outputs/aetfq3_lab/intraday_signal_recovery_rolling_oop_pool_readiness/rolling_oop_anchor_readiness.json"
+        ".local_research_outputs/aetfq3_lab/intraday_signal_recovery_rolling_oop_pool_readiness/rolling_oop_anchor_readiness.json",
+        ".local_research_outputs/aetfq3_lab/intraday_historical_5m_manual_intake/manual_intake_readiness_decision.json",
+        ".local_research_outputs/aetfq3_lab/intraday_historical_5m_broad_backfill/historical_5m_oop_readiness.json"
       ],
-      "blocker": "Fixed-shortlist OOP validation is blocked because only 2 eligible strict OOP anchors and 16 groups are available; required thresholds are 10 anchors and 50 groups.",
-      "next_trigger": "Accumulated strict OOP anchors >= 10 and group_count >= 50.",
-      "allowed_next_action": "Periodic Lab-only rolling OOP capture. If threshold is reached, create a separate fixed-shortlist OOP no-save validation task after human review.",
-      "forbidden_action": "Stable promotion, QMT, OrderIntent, advisory package, formal training, model deployment, checkpoint/model/scaler save, automatic promotion, or fixed-shortlist OOP validation before threshold.",
+      "blocker": "Fixed-shortlist OOP validation is blocked because the rolling pool has only 2 eligible strict OOP anchors and 16 groups, and the manual/export path has no legal external historical 5m package yet.",
+      "next_trigger": "Either accumulated strict OOP anchors >= 10 and group_count >= 50, or a compliant manual/export historical 5m package appears and the validator returns MANUAL_HISTORICAL_5M_PACKAGE_READY_FOR_FIXED_SHORTLIST_OOP_VALIDATION.",
+      "allowed_next_action": "Periodic Lab-only rolling OOP capture; manual intake validation only after a legal package appears; if readiness threshold is reached, create a separate fixed-shortlist OOP no-save validation task after human review.",
+      "forbidden_action": "Stable promotion, QMT, OrderIntent, advisory package, formal training, model deployment, checkpoint/model/scaler save, automatic promotion, or fixed-shortlist OOP validation before threshold / manual readiness.",
       "target": "three_day_positive_label",
       "models_run": [
         "dummy_most_frequent",
@@ -228,7 +241,7 @@
         "logistic_regression_balanced_scaled",
         "logistic_regression_log1p_scaled_balanced"
       ],
-      "effective_readiness_decision": "ROLLING_OOP_POOL_LIMITED_ACCUMULATING_FIXED_SHORTLIST_VALIDATION_BLOCKED",
+      "effective_readiness_decision": "ROLLING_OOP_POOL_LIMITED_ACCUMULATING_MANUAL_5M_INTAKE_READY_WAITING_FOR_PACKAGE_FIXED_SHORTLIST_VALIDATION_BLOCKED",
       "larger_data_summary": {
         "readiness_decision": "LARGER_ELIGIBLE_ANCHOR_DATA_COLLECTION_PASSED_READINESS_REVIEW_REQUIRED",
         "anchors": 37,
@@ -364,6 +377,24 @@
         "rolling_oop_capture_mechanism_ready": true,
         "oop_validation_allowed_now": false
       },
+      "manual_historical_5m_intake_summary": {
+        "validator_commit": "ccf7342",
+        "tool_path": "tools/lab/intraday_historical_5m_manual_intake_validator.py",
+        "specific_test": "9 passed",
+        "tests_lab": "271 passed, 2 warnings",
+        "manual_intake_validator_ready": true,
+        "manual_package_present": false,
+        "manual_package_readiness_decision": "MANUAL_HISTORICAL_5M_PACKAGE_NOT_FOUND_WAITING_FOR_INPUT",
+        "online_historical_5m_backfill_status": "HISTORICAL_5M_BACKFILL_BLOCKED_NO_USABLE_SOURCE",
+        "readiness_trigger": "MANUAL_HISTORICAL_5M_PACKAGE_READY_FOR_FIXED_SHORTLIST_OOP_VALIDATION",
+        "fixed_shortlist_oop_validation_ready": false,
+        "validation_allowed_by_closeout": false,
+        "stable_promotion_ready": false,
+        "formal_training_ready": false,
+        "qmt_ready": false,
+        "order_intent_ready": false,
+        "automatic_promotion_ready": false
+      },
       "fixed_shortlist_oop_validation_ready": false,
       "rolling_oop_capture_mechanism_ready": true
     },
@@ -415,11 +446,21 @@
     {
       "line": "F_public",
       "blocker": "F public rolling OOP pool accumulating: fixed-shortlist OOP validation is blocked because only 2 eligible strict OOP anchors and 16 groups are available; required thresholds are 10 anchors and 50 groups.",
-      "status": "ROLLING_OOP_POOL_LIMITED_ACCUMULATING_FIXED_SHORTLIST_VALIDATION_BLOCKED",
+      "status": "ROLLING_OOP_POOL_LIMITED_ACCUMULATING_MANUAL_5M_INTAKE_READY_WAITING_FOR_PACKAGE_FIXED_SHORTLIST_VALIDATION_BLOCKED",
       "eligible_oop_anchors": 2,
       "required_oop_anchors": 10,
       "group_count": 16,
       "required_group_count": 50,
+      "fixed_shortlist_oop_validation_ready": false,
+      "metrics_are_effectiveness_evidence": false,
+      "stable_promotion_ready": false
+    },
+    {
+      "line": "F_public",
+      "blocker": "F public manual/export historical 5m intake validator is ready, but no legal external 1y/3y ETF 5m package is present yet.",
+      "status": "MANUAL_HISTORICAL_5M_PACKAGE_NOT_FOUND_WAITING_FOR_INPUT",
+      "manual_intake_validator_ready": true,
+      "manual_package_present": false,
       "fixed_shortlist_oop_validation_ready": false,
       "metrics_are_effectiveness_evidence": false,
       "stable_promotion_ready": false
@@ -474,7 +515,15 @@
     "rolling_oop_pool_readiness_allows_qmt": false,
     "rolling_oop_pool_readiness_allows_order_intent": false,
     "rolling_oop_capture_runner_allows_periodic_capture": true,
-    "rolling_oop_fixed_shortlist_validation_requires_separate_task_after_threshold": true
+    "rolling_oop_fixed_shortlist_validation_requires_separate_task_after_threshold": true,
+    "manual_historical_5m_intake_readiness_is_package_validation": false,
+    "manual_historical_5m_intake_readiness_is_fixed_shortlist_validation": false,
+    "manual_historical_5m_intake_readiness_is_model_effectiveness_evidence": false,
+    "manual_historical_5m_intake_readiness_allows_stable_promotion": false,
+    "manual_historical_5m_intake_readiness_allows_qmt": false,
+    "manual_historical_5m_intake_readiness_allows_order_intent": false,
+    "manual_historical_5m_intake_requires_legal_package_before_validator_run": true,
+    "manual_historical_5m_ready_decision_requires_separate_fixed_shortlist_oop_task": true
   },
   "next_triggers": [
     {
@@ -492,6 +541,10 @@
     {
       "id": "F_REAL_PROVIDER_OR_EXPORT",
       "condition": "F safe real provider / compliant export appears"
+    },
+    {
+      "id": "F_PUBLIC_MANUAL_HISTORICAL_5M_PACKAGE",
+      "condition": "A legal external historical ETF 5m manual/export package appears in the ignored inbox and passes manual intake validation"
     }
   ],
   "boundary": {
@@ -525,7 +578,7 @@
     "label_generation_ready": false,
     "training_ready": false,
     "automatic_promotion_ready": false,
-    "f_public_status": "ROLLING_OOP_POOL_LIMITED_ACCUMULATING_FIXED_SHORTLIST_VALIDATION_BLOCKED",
+    "f_public_status": "ROLLING_OOP_POOL_LIMITED_ACCUMULATING_MANUAL_5M_INTAKE_READY_WAITING_FOR_PACKAGE_FIXED_SHORTLIST_VALIDATION_BLOCKED",
     "f_public_larger_eligible_anchor_status": "LARGER_NO_SAVE_REPEATABILITY_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED",
     "f_public_group_level_model_signal_status": "GROUP_LEVEL_DIAGNOSTIC_SMOKE_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED_NO_FORMAL_EVIDENCE",
     "f_public_group_level_transform_aware_status": "TRANSFORM_AWARE_DIAGNOSTIC_SMOKE_COMPLETED_REVIEW_REQUIRED_NO_FORMAL_EVIDENCE",
@@ -543,7 +596,11 @@
     "f_public_rolling_oop_eligible_anchors": 2,
     "f_public_rolling_oop_required_anchors": 10,
     "f_public_rolling_oop_group_count": 16,
-    "f_public_rolling_oop_required_group_count": 50
+    "f_public_rolling_oop_required_group_count": 50,
+    "f_public_manual_5m_intake_validator_ready": true,
+    "f_public_manual_5m_package_present": false,
+    "f_public_manual_5m_package_readiness_decision": "MANUAL_HISTORICAL_5M_PACKAGE_NOT_FOUND_WAITING_FOR_INPUT",
+    "f_public_online_historical_5m_backfill_status": "HISTORICAL_5M_BACKFILL_BLOCKED_NO_USABLE_SOURCE"
   },
   "stable_allowed": false,
   "qmt_allowed": false,
