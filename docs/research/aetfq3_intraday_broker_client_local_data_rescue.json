@@ -1,0 +1,48 @@
+{
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "research_artifact": "aetfq3_intraday_broker_client_local_data_rescue",
+  "scope": "Lab-only read-only broker-client local market-data rescue and empty export diagnosis",
+  "target_etfs": [
+    "159915",
+    "510050",
+    "510300",
+    "510500",
+    "512100",
+    "588000",
+    "159949",
+    "512880"
+  ],
+  "authorized_read_roots": [
+    "E:\\CGS\\T0002\\export\\",
+    "E:\\CGS\\T0002\\",
+    "E:\\XGS\\T0002\\export\\",
+    "E:\\XGS\\T0002\\",
+    ".local_artifact_backup\\aetfq3_lab_sources\\intraday_historical_5m_raw_exports\\"
+  ],
+  "allowed_report_output_dir": ".local_research_outputs\\aetfq3_lab\\intraday_broker_client_local_data_rescue\\",
+  "allowed_rescued_artifact_dir": ".local_artifact_backup\\aetfq3_lab_sources\\intraday_historical_5m_raw_exports_rescued\\",
+  "forbidden": {
+    "broker_login": false,
+    "broker_network": false,
+    "gui_control": false,
+    "qmt": false,
+    "xtdata": false,
+    "account_position_order_trade_fill_files": false,
+    "secrets_tokens_passwords_cookies": false,
+    "model_training": false,
+    "labels": false,
+    "order_intent": false,
+    "stable_output": false,
+    "advisory": false
+  },
+  "decision_values": [
+    "BROKER_CLIENT_LOCAL_5M_RESCUE_READY_FOR_MANUAL_INTAKE",
+    "BROKER_CLIENT_LOCAL_5M_RESCUE_VALIDATOR_READY_FOR_FIXED_SHORTLIST_OOP_VALIDATION",
+    "BROKER_CLIENT_LOCAL_5M_RESCUE_BLOCKED_EMPTY_EXPORT_ONLY",
+    "BROKER_CLIENT_LOCAL_5M_RESCUE_BLOCKED_NO_LOCAL_5M_FILES_FOUND",
+    "BROKER_CLIENT_LOCAL_5M_RESCUE_BLOCKED_UNSUPPORTED_LOCAL_FORMAT",
+    "BROKER_CLIENT_LOCAL_5M_RESCUE_BLOCKED_FORBIDDEN_ACCOUNT_OR_TRADE_FILES",
+    "BROKER_CLIENT_LOCAL_5M_RESCUE_BLOCKED_DATA_QUALITY"
+  ],
+  "readiness_interpretation": "Manual-intake data readiness only; not model validity evidence, not trading advice, and not Stable evidence."
+}
