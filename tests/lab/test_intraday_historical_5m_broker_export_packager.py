@@ -87,6 +87,26 @@ def test_valid_english_columns_csv_package_generated(tmp_path: Path, monkeypatch
     assert (tmp_path / ".local_artifact_backup/aetfq3_lab_sources/intraday_historical_5m_manual_inbox/MANIFEST.json").exists()
 
 
+def test_tdx_gbk_tab_preamble_filename_code_package_generated(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    text = "\n".join(
+        [
+            "510300 沪深300ETF 5分钟线 前复权",
+            "      日期\t    时间\t    开盘\t    最高\t    最低\t    收盘\t    成交量\t    成交额",
+            "2025/03/03\t0935\t3.995\t4.005\t3.988\t3.991\t72297200\t288940800.00",
+            "2025/03/03\t0940\t3.991\t4.000\t3.991\t3.997\t30844800\t123239184.00",
+        ]
+    )
+    (raw_dir(tmp_path) / "SH#510300.csv").write_bytes(text.encode("gbk"))
+
+    result = packager.package_exports(config_for(tmp_path, monkeypatch))
+
+    assert result["decision"] == "BROKER_EXPORT_PACKAGE_READY_FOR_MANUAL_INTAKE_VALIDATOR"
+    manual_csv = tmp_path / ".local_artifact_backup/aetfq3_lab_sources/intraday_historical_5m_manual_inbox/historical_5m_manual_export.csv"
+    packaged = pd.read_csv(manual_csv, dtype={"etf_code": str})
+    assert packaged["etf_code"].tolist() == ["510300", "510300"]
+    assert packaged["datetime"].tolist() == ["2025-03-03 09:35:00", "2025-03-03 09:40:00"]
+
+
 def test_forbidden_account_order_trade_field_blocked(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     pd.DataFrame(
         [

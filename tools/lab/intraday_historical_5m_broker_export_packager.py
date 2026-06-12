@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
+import io
 import json
 import re
 import subprocess
@@ -30,7 +31,7 @@ MANUAL_INTAKE_VALIDATOR = Path("tools/lab/intraday_historical_5m_manual_intake_v
 
 ALLOWED_ARTIFACT_ROOT = ".local_artifact_backup"
 ALLOWED_REPORT_ROOT = ".local_research_outputs"
-ALLOWED_SUFFIXES = {".csv", ".zip", ".parquet"}
+ALLOWED_SUFFIXES = {".csv", ".txt", ".zip", ".parquet"}
 MANAGED_INBOX_FILES = [
     "historical_5m_manual_export.csv",
     "source_note.md",
@@ -69,7 +70,7 @@ BOUNDARY_FIELDS = {
 }
 
 FIELD_ALIASES = {
-    "etf_code": ["证券代码", "代码", "symbol", "code", "etf_code"],
+    "etf_code": ["证券代码", "代码", "symbol", "code", "etf_code", "__source_file_code"],
     "trade_date": ["日期", "交易日期", "date", "trade_date"],
     "datetime": ["时间", "日期时间", "datetime", "time", "bar_time"],
     "open": ["开盘", "open"],
@@ -194,16 +195,66 @@ def detect_forbidden_values(values: Iterable[str]) -> list[str]:
     return sorted({str(value) for value in values if contains_forbidden_token(str(value))})
 
 
-def read_csv_with_fallback(path: Path) -> pd.DataFrame:
-    last_error: Exception | None = None
-    for encoding in ("utf-8-sig", "utf-8", "gbk"):
+def decode_text_with_fallback(raw: bytes) -> str:
+    last_error: UnicodeDecodeError | None = None
+    for encoding in ("utf-8-sig", "utf-8", "gbk", "cp936"):
         try:
-            return pd.read_csv(path, dtype=str, encoding=encoding)
+            return raw.decode(encoding)
         except UnicodeDecodeError as exc:
             last_error = exc
     if last_error is not None:
         raise last_error
-    return pd.read_csv(path, dtype=str)
+    return raw.decode("utf-8", errors="replace")
+
+
+def header_score(line: str) -> int:
+    normalized = normalize_name(line)
+    score = 0
+    for aliases in FIELD_ALIASES.values():
+        if any(normalize_name(alias) in normalized for alias in aliases if not alias.startswith("__")):
+            score += 1
+    return score
+
+
+def extract_etf_code_from_name(value: str) -> str | None:
+    match = re.search(r"(\d{6})", value)
+    return match.group(1) if match else None
+
+
+def normalize_time_token(value: str) -> str:
+    token = str(value).strip()
+    if re.fullmatch(r"\d{3,4}", token):
+        padded = token.zfill(4)
+        return f"{padded[:2]}:{padded[2:]}"
+    if re.fullmatch(r"\d{5,6}", token):
+        padded = token.zfill(6)
+        return f"{padded[:2]}:{padded[2:4]}:{padded[4:]}"
+    return token
+
+
+def parse_delimited_text(text: str, source_name: str) -> pd.DataFrame:
+    lines = text.splitlines()
+    header_index = 0
+    for index, line in enumerate(lines[:50]):
+        if header_score(line) >= 4:
+            header_index = index
+            break
+    frame = pd.read_csv(
+        io.StringIO(text),
+        dtype=str,
+        sep=r"\t|,",
+        engine="python",
+        skiprows=header_index,
+    )
+    frame.columns = [str(column).strip() for column in frame.columns]
+    if "__source_file_code" not in frame.columns:
+        frame["__source_file_code"] = extract_etf_code_from_name(source_name) or extract_etf_code_from_name(lines[0] if lines else "") or ""
+    frame["__source_file_name"] = source_name
+    return frame
+
+
+def read_csv_with_fallback(path: Path) -> pd.DataFrame:
+    return parse_delimited_text(decode_text_with_fallback(path.read_bytes()), path.name)
 
 
 def read_zip_frames(path: Path) -> tuple[list[pd.DataFrame], list[str], list[str]]:
@@ -216,14 +267,17 @@ def read_zip_frames(path: Path) -> tuple[list[pd.DataFrame], list[str], list[str
                 continue
             inner_names.append(name)
             suffix = Path(name).suffix.lower()
-            if suffix not in {".csv", ".parquet"}:
+            if suffix not in {".csv", ".txt", ".parquet"}:
                 continue
             try:
                 with zf.open(name) as handle:
-                    if suffix == ".csv":
-                        frames.append(pd.read_csv(handle, dtype=str))
+                    if suffix in {".csv", ".txt"}:
+                        frames.append(parse_delimited_text(decode_text_with_fallback(handle.read()), name))
                     else:
-                        frames.append(pd.read_parquet(handle))
+                        frame = pd.read_parquet(handle)
+                        frame["__source_file_code"] = extract_etf_code_from_name(name) or ""
+                        frame["__source_file_name"] = name
+                        frames.append(frame)
             except Exception as exc:  # noqa: BLE001 - report exact import/read failure.
                 errors.append(f"{path.name}!{name}: {type(exc).__name__}: {exc}")
     return frames, inner_names, errors
@@ -231,10 +285,13 @@ def read_zip_frames(path: Path) -> tuple[list[pd.DataFrame], list[str], list[str
 
 def load_export_file(path: Path) -> tuple[list[pd.DataFrame], list[str], list[str]]:
     suffix = path.suffix.lower()
-    if suffix == ".csv":
+    if suffix in {".csv", ".txt"}:
         return [read_csv_with_fallback(path)], [], []
     if suffix == ".parquet":
-        return [pd.read_parquet(path)], [], []
+        frame = pd.read_parquet(path)
+        frame["__source_file_code"] = extract_etf_code_from_name(path.name) or ""
+        frame["__source_file_name"] = path.name
+        return [frame], [], []
     if suffix == ".zip":
         return read_zip_frames(path)
     return [], [], [f"unsupported suffix: {path.name}"]
@@ -276,7 +333,7 @@ def build_column_mapping(columns: Sequence[str]) -> dict[str, str]:
 
 
 def parse_datetime_columns(frame: pd.DataFrame, mapping: dict[str, str]) -> pd.Series:
-    raw_datetime = frame[mapping["datetime"]].astype(str).str.strip()
+    raw_datetime = frame[mapping["datetime"]].astype(str).map(normalize_time_token)
     trade_date = frame[mapping["trade_date"]].astype(str).str.strip()
     datetime_has_date = raw_datetime.str.contains(r"\d{4}[-/]?\d{1,2}[-/]?\d{1,2}", regex=True, na=False)
     combined = raw_datetime.where(datetime_has_date, trade_date + " " + raw_datetime)
@@ -290,6 +347,7 @@ def standardize_frame(frame: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, Any]
         "source_columns": [str(column) for column in frame.columns],
         "column_mapping": mapping,
         "missing_required_columns": missing,
+        "raw_rows_by_source_file": frame["__source_file_name"].value_counts().to_dict() if "__source_file_name" in frame.columns else {},
     }
     if missing:
         return pd.DataFrame(columns=STANDARD_COLUMNS), report
@@ -308,9 +366,13 @@ def standardize_frame(frame: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, Any]
     volume = pd.to_numeric(out["volume"], errors="coerce")
     out.loc[volume > 0, "vwap"] = amount[volume > 0] / volume[volume > 0]
     before_filter_rows = int(len(out))
+    if "__source_file_name" in frame.columns:
+        out["__source_file_name"] = frame["__source_file_name"].astype(str)
     out = out[out["etf_code"].isin(TARGET_ETFS)]
     report["target_etf_filtered_rows"] = before_filter_rows - int(len(out))
     out = out.dropna(subset=REQUIRED_COLUMNS)
+    if "__source_file_name" in out.columns:
+        report["standardized_rows_by_source_file"] = {str(key): int(value) for key, value in out["__source_file_name"].value_counts().items()}
     return out[STANDARD_COLUMNS], report
 
 
@@ -349,6 +411,8 @@ def validate_data_quality(frame: pd.DataFrame) -> dict[str, Any]:
         "ohlc_consistency_passed": ohlc_passed,
         "volume_nonnegative_passed": volume_passed,
         "amount_nonnegative_passed": amount_passed,
+        "amount_available": bool(not amount_values.empty),
+        "amount_nonnull_rows": int(len(amount_values)),
         "trade_date_start": str(frame["trade_date"].min()),
         "trade_date_end": str(frame["trade_date"].max()),
         "etf_count": int(frame["etf_code"].nunique()),
@@ -615,10 +679,13 @@ def package_exports(config: PackagerConfig) -> dict[str, Any]:
         "package_hashes": package_hashes,
         "source_column_mapping": schema.get("column_mapping", {}),
         "missing_required_columns": schema.get("missing_required_columns", []),
+        "raw_rows_by_source_file": schema.get("raw_rows_by_source_file", {}),
+        "standardized_rows_by_source_file": schema.get("standardized_rows_by_source_file", {}),
         "forbidden_file_names": filename_forbidden + zip_forbidden,
         "forbidden_fields": field_forbidden,
         "read_errors": read_errors,
         "standardized_rows": int(len(standardized)),
+        "parsed_etf_codes": sorted(standardized["etf_code"].astype(str).unique().tolist()) if not standardized.empty else [],
         "etf_count": int(standardized["etf_code"].nunique()) if not standardized.empty else 0,
         "date_range": date_range,
         "data_quality": quality,
