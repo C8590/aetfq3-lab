@@ -1,0 +1,25 @@
+{
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "document_type": "aetfq3_intraday_lab_monitor_refresh_gate",
+  "readiness_decision": "LAB_MONITOR_REFRESH_NOT_DUE",
+  "candidate_id": "label_ret3d_gt_100bp|base_39_plus_scale_transform_policy|logistic_balanced_scaled_variants|scale_transform_policy",
+  "current_monitor_status": "LAB_MONITOR_CANDIDATE_REVIEW_READY",
+  "refresh_due": false,
+  "refresh_reason": "no new raw/manual package and no post-sprint threshold refresh trigger",
+  "next_allowed_task": "wait_for_new_data_or_manual_review",
+  "forbidden_next_tasks": [
+    "stable_promotion",
+    "qmt_trading",
+    "order_intent_generation",
+    "formal_training",
+    "threshold_tuning",
+    "target_weight_change",
+    "final_buy_action_change"
+  ],
+  "stable_promotion_ready": false,
+  "stable_evidence": false,
+  "formal_training_ready": false,
+  "qmt_ready": false,
+  "order_intent_ready": false,
+  "automatic_promotion_ready": false
+}
