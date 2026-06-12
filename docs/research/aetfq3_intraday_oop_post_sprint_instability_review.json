@@ -1,0 +1,51 @@
+{
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "document_type": "aetfq3_intraday_oop_post_sprint_instability_review",
+  "status": "blocked",
+  "readiness_decision": "POST_SPRINT_INSTABILITY_REVIEW_BLOCKED_MISSING_OOP_OUTPUTS",
+  "post_sprint_oop_underpowered": true,
+  "flags": {
+    "post_sprint_oop_underpowered": true,
+    "label_shift_observed": false,
+    "etf_concentration_observed": true,
+    "date_concentration_observed": true,
+    "feature_shift_observed": false,
+    "missing_row_level_predictions": true,
+    "data_quality_blocked": false
+  },
+  "sample_power": {
+    "post_sprint_anchor_count": 1,
+    "post_sprint_group_count": 1,
+    "post_sprint_oop_underpowered": true,
+    "minimum_anchor_count": 10,
+    "minimum_group_count": 50
+  },
+  "candidate_specific_diagnosis": {
+    "family_id": "label_safe_positive_3d|base_39_plus_scale_transform_policy|logistic_balanced_scaled_variants|scale_transform_policy",
+    "combined_strict_oop_minimum_metrics_pass": true,
+    "diagnostic_signal_survives_minimum_standard": false,
+    "combined_better_mainly_from_pre_sprint": false,
+    "pre_group_share_of_combined": 0.5,
+    "pre_balanced_accuracy": "0.4",
+    "post_balanced_accuracy": "0.4",
+    "combined_balanced_accuracy": "0.4",
+    "post_reversal_observed": true,
+    "probability_collapse": true,
+    "threshold_sensitivity": "unavailable_missing_row_level_probabilities",
+    "label_definition_degradation_risk": "review_required: label_safe_positive_3d depends on both positive ret3d and max_drawdown_3d; post window is underpowered",
+    "post_sprint_oop_underpowered": true
+  },
+  "stable_promotion_ready": false,
+  "formal_training_ready": false,
+  "qmt_ready": false,
+  "order_intent_ready": false,
+  "automatic_promotion_ready": false,
+  "stable_evidence": false,
+  "p0_blockers": [],
+  "p1_warnings": [
+    "P1_POST_SPRINT_OOP_UNDERPOWERED_REVIEW_REQUIRED",
+    "P1_ROW_LEVEL_PREDICTIONS_MISSING_FP_FN_UNAVAILABLE",
+    "P1_NO_STABLE_PROMOTION_WITHOUT_PROMOTION_GATE",
+    "P1_REVIEW_ONLY_NOT_TRADING_ADVICE"
+  ]
+}
