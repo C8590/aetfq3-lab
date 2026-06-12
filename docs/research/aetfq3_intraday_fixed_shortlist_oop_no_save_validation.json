@@ -1,0 +1,33 @@
+{
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "document_type": "aetfq3_intraday_fixed_shortlist_oop_no_save_validation",
+  "status": "completed",
+  "readiness_decision": "FIXED_SHORTLIST_OOP_NO_SAVE_VALIDATION_COMPLETED_REVIEW_REQUIRED",
+  "source": {
+    "manual_inbox": ".local_artifact_backup\\aetfq3_lab_sources\\intraday_historical_5m_manual_inbox",
+    "manual_csv": "E:\\aetfq3-lab\\.local_artifact_backup\\aetfq3_lab_sources\\intraday_historical_5m_manual_inbox\\historical_5m_manual_export.csv",
+    "manual_manifest": "E:\\aetfq3-lab\\.local_artifact_backup\\aetfq3_lab_sources\\intraday_historical_5m_manual_inbox\\MANIFEST.json",
+    "source": "broker terminal manual export",
+    "stable_bundle": false
+  },
+  "strict_oop": {
+    "start": "2026-04-09",
+    "end": "2026-06-03"
+  },
+  "candidate_count": 3,
+  "survived_candidate_count": 0,
+  "formal_training": false,
+  "model_saved": false,
+  "scaler_saved": false,
+  "stable_promotion_ready": false,
+  "qmt_ready": false,
+  "order_intent_ready": false,
+  "stable_evidence": false,
+  "p0_blockers": [],
+  "p1_warnings": [
+    "P1_DIAGNOSTIC_ONLY_NOT_FORMAL_MODEL_EVIDENCE",
+    "P1_REQUIRES_HUMAN_REVIEW",
+    "P1_NO_STABLE_PROMOTION_WITHOUT_PROMOTION_GATE",
+    "P1_STRICT_OOP_SIGNAL_NOT_SURVIVED"
+  ]
+}
