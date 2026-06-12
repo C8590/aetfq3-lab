@@ -1,0 +1,91 @@
+{
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "document_type": "aetfq3_intraday_lab_monitor_candidate_paper_pnl_replay",
+  "phase": "intraday_lab_monitor_candidate_paper_pnl_replay",
+  "candidate": {
+    "candidate_id": "label_ret3d_gt_100bp|base_39_plus_scale_transform_policy|logistic_balanced_scaled_variants|scale_transform_policy",
+    "label_policy": "label_ret3d_gt_100bp",
+    "feature_set": "base_39_plus_scale_transform_policy",
+    "model_family": "logistic_balanced_scaled_variants",
+    "transform_policy": "scale_transform_policy",
+    "model_row_filter": "logistic_balanced_scaled",
+    "fixed_candidate_only": true,
+    "new_candidate_allowed": false
+  },
+  "signal_source": {
+    "required_file": ".local_research_outputs/aetfq3_lab/intraday_rolling_origin_walk_forward_no_save_validation/rolling_origin_row_level_predictions.csv",
+    "existing_predictions_only": true,
+    "prediction_positive_means_paper_long": true,
+    "prediction_zero_means_cash": true,
+    "threshold": 0.5,
+    "threshold_tuning_allowed": false,
+    "prediction_regeneration_allowed": false
+  },
+  "price_source": {
+    "manual_inbox": ".local_artifact_backup/aetfq3_lab_sources/intraday_historical_5m_manual_inbox/",
+    "broker_exported_5m_allowed": true,
+    "account_or_order_data_allowed": false,
+    "qmt_api_allowed": false
+  },
+  "execution_protocol": {
+    "entry": "next_trading_day_first_available_5m_open",
+    "exit": "t_plus_3_trading_day_last_available_5m_close",
+    "missing_entry_or_exit_action": "skip_trade_and_record_reason",
+    "initial_cash": 1000000,
+    "sleeve_budget_fraction": 0.3333333333333333,
+    "positive_etfs_equal_weighted": true,
+    "overlapping_sleeves_allowed": true,
+    "max_risk_budget": 1.0,
+    "no_leverage": true,
+    "no_short": true,
+    "cash_earns_zero": true
+  },
+  "costs": {
+    "base_commission_bps_per_side": 3,
+    "base_slippage_bps_per_side": 5,
+    "base_total_cost_bps_per_side": 8,
+    "cost_sensitivity_bps_per_side": [0, 5, 8, 10, 20],
+    "cost_sensitivity_for_parameter_selection": false
+  },
+  "required_outputs": [
+    "paper_pnl_replay_report.md",
+    "paper_pnl_replay_report.json",
+    "paper_pnl_nav.csv",
+    "paper_pnl_sleeves.csv",
+    "paper_pnl_simulated_trades.csv",
+    "paper_pnl_monthly_returns.csv",
+    "paper_pnl_etf_contribution.csv",
+    "paper_pnl_cost_sensitivity.csv",
+    "paper_pnl_benchmark_comparison.csv",
+    "paper_pnl_decision.json"
+  ],
+  "decision_values": [
+    "PAPER_PNL_REPLAY_COMPLETED_REVIEW_REQUIRED",
+    "PAPER_PNL_REPLAY_PROFITABILITY_OBSERVED_REVIEW_REQUIRED",
+    "PAPER_PNL_REPLAY_NO_PROFITABILITY_OBSERVED_REVIEW_REQUIRED",
+    "PAPER_PNL_REPLAY_BLOCKED_MISSING_ROW_LEVEL_PREDICTIONS",
+    "PAPER_PNL_REPLAY_BLOCKED_PRICE_DATA",
+    "PAPER_PNL_REPLAY_BLOCKED_DATA_QUALITY",
+    "PAPER_PNL_REPLAY_BLOCKED_SIGNAL_EMPTY"
+  ],
+  "boundary": {
+    "paper_trading_only": true,
+    "real_order_routing": false,
+    "order_intent_generated": false,
+    "stable_evidence": false,
+    "stable_promotion_ready": false,
+    "qmt_ready": false,
+    "formal_training_ready": false,
+    "order_intent_ready": false,
+    "automatic_promotion_ready": false,
+    "training_allowed": false,
+    "model_save_allowed": false,
+    "scaler_save_allowed": false,
+    "checkpoint_save_allowed": false,
+    "gpu_allowed": false,
+    "torchrun_allowed": false,
+    "stable_runtime_write_allowed": false,
+    "output_write_allowed": false,
+    "advisory_package_allowed": false
+  }
+}
