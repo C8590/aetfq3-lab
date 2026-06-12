@@ -11,6 +11,8 @@ Lab-only strict OOP diagnostic validation. It does not save models/scalers, does
 - combined_strict_oop_anchor_count: 275
 - candidate_count: 3
 - survived_candidate_count: 0
+- row_level_predictions_emitted: true
+- row_level_prediction_row_count: 41352
 - model_saved: false
 - scaler_saved: false
 - stable_promotion_ready: false

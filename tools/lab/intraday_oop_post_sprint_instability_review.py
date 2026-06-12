@@ -20,8 +20,10 @@ from tools.lab.intraday_fixed_shortlist_oop_no_save_validation import (  # noqa:
     BASE_39_FEATURES,
     DEFAULT_MANUAL_INBOX,
     MANUAL_CSV_NAME,
+    ROW_LEVEL_PREDICTION_FILE,
     build_feature_rows,
     load_csv_rows,
+    row_level_prediction_columns,
     to_float,
 )
 from tools.lab.intraday_supervised_no_save_smoke import check_model_artifacts  # noqa: E402
@@ -42,6 +44,7 @@ DECISION_DATE_CONCENTRATION = "POST_SPRINT_INSTABILITY_REVIEW_DATE_CONCENTRATION
 DECISION_FEATURE_SHIFT = "POST_SPRINT_INSTABILITY_REVIEW_FEATURE_SHIFT_OBSERVED"
 DECISION_CONTINUE = "POST_SPRINT_INSTABILITY_REVIEW_NO_CLEAR_SINGLE_CAUSE_CONTINUE_OOP_ACCUMULATION"
 DECISION_BLOCKED_MISSING = "POST_SPRINT_INSTABILITY_REVIEW_BLOCKED_MISSING_OOP_OUTPUTS"
+DECISION_BLOCKED_ROW_LEVEL_SCHEMA = "POST_SPRINT_INSTABILITY_REVIEW_BLOCKED_ROW_LEVEL_SCHEMA_MISMATCH"
 DECISION_BLOCKED_DATA = "POST_SPRINT_INSTABILITY_REVIEW_BLOCKED_DATA_QUALITY"
 REQUIRED_OOP_FILES = [
     "fixed_shortlist_oop_validation_report.json",
@@ -109,6 +112,7 @@ def validate_oop_outputs(oop_dir: Path) -> dict[str, Any]:
     missing = [name for name in REQUIRED_OOP_FILES if not (oop_dir / name).exists()]
     prediction_summary = oop_dir / "fixed_shortlist_oop_predictions_summary.csv"
     row_prediction_files = [
+        oop_dir / ROW_LEVEL_PREDICTION_FILE,
         oop_dir / "fixed_shortlist_oop_row_predictions.csv",
         oop_dir / "fixed_shortlist_oop_predictions.csv",
     ]
@@ -117,7 +121,7 @@ def validate_oop_outputs(oop_dir: Path) -> dict[str, Any]:
     row_level_reason = "row-level prediction file not found"
     if row_level_file is not None:
         rows = load_csv_dicts(row_level_file)
-        required = {"anchor_date", "etf_code", "label", "prediction", "probability"}
+        required = set(row_level_prediction_columns())
         columns = set(rows[0].keys()) if rows else set()
         row_level_prediction_available = required.issubset(columns)
         row_level_reason = "row-level prediction columns found" if row_level_prediction_available else "row-level prediction file lacks required columns"
@@ -131,6 +135,8 @@ def validate_oop_outputs(oop_dir: Path) -> dict[str, Any]:
         "missing_files": missing,
         "row_level_prediction_available": row_level_prediction_available,
         "row_level_prediction_reason": row_level_reason,
+        "row_level_prediction_file": str(row_level_file) if row_level_file else None,
+        "row_level_schema_mismatch": row_level_file is not None and not row_level_prediction_available,
         "p0_blockers": [f"missing OOP output file: {name}" for name in missing],
     }
 
@@ -226,16 +232,121 @@ def feature_shift_rows(rows_by_split: dict[str, list[dict[str, Any]]], features:
     }
 
 
-def anchor_breakdown_rows(rows_by_split: dict[str, list[dict[str, Any]]], metrics_rows: Sequence[dict[str, str]], prediction_rows: Sequence[dict[str, str]]) -> list[dict[str, Any]]:
+def load_row_level_predictions(oop_dir: Path, oop_check: dict[str, Any]) -> list[dict[str, str]]:
+    path_text = oop_check.get("row_level_prediction_file")
+    if not path_text or not oop_check.get("row_level_prediction_available"):
+        return []
+    return load_csv_dicts(Path(path_text))
+
+
+def focus_prediction_rows(row_level_rows: Sequence[dict[str, str]], split_name: str | None = None) -> list[dict[str, str]]:
+    rows = [
+        row
+        for row in row_level_rows
+        if row.get("candidate_id") == FOCUS_FAMILY_ID
+        and row.get("model") == "logistic_balanced_scaled"
+        and (split_name is None or row.get("split_name") == split_name)
+    ]
+    return rows
+
+
+def error_distribution(rows: Sequence[dict[str, Any]]) -> dict[str, int]:
+    return {name: sum(1 for row in rows if row.get("error_type") == name) for name in ["TP", "TN", "FP", "FN", "NA"]}
+
+
+def prediction_positive_rate(rows: Sequence[dict[str, Any]]) -> float | None:
+    values = [to_float(row.get("prediction")) for row in rows if to_float(row.get("prediction")) is not None]
+    return sum(values) / len(values) if values else None
+
+
+def row_level_balanced_accuracy(rows: Sequence[dict[str, Any]]) -> float | None:
+    counts = error_distribution(rows)
+    pos_total = counts["TP"] + counts["FN"]
+    neg_total = counts["TN"] + counts["FP"]
+    if not pos_total or not neg_total:
+        return None
+    return ((counts["TP"] / pos_total) + (counts["TN"] / neg_total)) / 2
+
+
+def row_level_error_rate(rows: Sequence[dict[str, Any]]) -> float | None:
+    total = len(rows)
+    return (sum(1 for row in rows if row.get("error_type") in {"FP", "FN"}) / total) if total else None
+
+
+def row_level_label_distribution(rows: Sequence[dict[str, Any]]) -> dict[str, Any]:
+    labels = [label_value(row.get("label")) for row in rows]
+    valid = [value for value in labels if value is not None]
+    zeros = sum(value == 0 for value in valid)
+    ones = sum(value == 1 for value in valid)
+    total = len(valid)
+    return {
+        "group_count": total,
+        "label_0_count": zeros,
+        "label_1_count": ones,
+        "positive_rate": ones / total if total else None,
+    }
+
+
+def threshold_sensitivity_rows(row_level_rows: Sequence[dict[str, str]], split_name: str = "post_sprint_oop") -> list[dict[str, Any]]:
+    rows = focus_prediction_rows(row_level_rows, split_name)
+    output: list[dict[str, Any]] = []
+    for threshold in [0.3, 0.4, 0.5, 0.6, 0.7]:
+        evaluated: list[dict[str, Any]] = []
+        for row in rows:
+            label = label_value(row.get("label"))
+            probability = to_float(row.get("probability"))
+            if label is None or probability is None:
+                continue
+            prediction = int(probability >= threshold)
+            evaluated.append({"label": label, "prediction": prediction, "error_type": error_type_from_values(label, prediction)})
+        counts = error_distribution(evaluated)
+        output.append(
+            {
+                "split_name": split_name,
+                "threshold": threshold,
+                "row_count": len(evaluated),
+                "balanced_accuracy": row_level_balanced_accuracy(evaluated),
+                "error_rate": row_level_error_rate(evaluated),
+                "false_positive": counts["FP"],
+                "false_negative": counts["FN"],
+                "prediction_positive_rate": prediction_positive_rate(evaluated),
+            }
+        )
+    return output
+
+
+def error_type_from_values(label: int | None, prediction: int | None) -> str:
+    if label is None or prediction is None:
+        return "NA"
+    if label == 1 and prediction == 1:
+        return "TP"
+    if label == 0 and prediction == 0:
+        return "TN"
+    if label == 0 and prediction == 1:
+        return "FP"
+    if label == 1 and prediction == 0:
+        return "FN"
+    return "NA"
+
+
+def anchor_breakdown_rows(
+    rows_by_split: dict[str, list[dict[str, Any]]],
+    metrics_rows: Sequence[dict[str, str]],
+    prediction_rows: Sequence[dict[str, str]],
+    row_level_rows: Sequence[dict[str, str]] | None = None,
+) -> list[dict[str, Any]]:
     post_rows = rows_by_split["post_sprint_oop"]
-    grouped = group_by(post_rows, "trade_date")
+    focus_post_rows = focus_prediction_rows(row_level_rows or [], "post_sprint_oop")
+    grouped = group_by(focus_post_rows, "anchor_date") if focus_post_rows else group_by(post_rows, "trade_date")
     post_summary = find_prediction_summary(prediction_rows, FOCUS_FAMILY_ID, "logistic_balanced_scaled", "post_sprint_oop")
     metric_summary = find_metric(metrics_rows, FOCUS_FAMILY_ID, "logistic_balanced_scaled", "post_sprint_oop")
-    total_groups = len(post_rows)
+    total_groups = len(focus_post_rows) if focus_post_rows else len(post_rows)
     rows: list[dict[str, Any]] = []
     for anchor_date, selected in sorted(grouped.items()):
-        labels = label_distribution(selected, FOCUS_LABEL)
+        labels = row_level_label_distribution(selected) if focus_post_rows else label_distribution(selected, FOCUS_LABEL)
         returns = numeric_values(selected, "future_return_3d")
+        errors = error_distribution(selected)
+        has_row_level = bool(focus_post_rows)
         rows.append(
             {
                 "anchor_date": anchor_date,
@@ -249,12 +360,14 @@ def anchor_breakdown_rows(rows_by_split: dict[str, list[dict[str, Any]]], metric
                 "candidate_balanced_accuracy": metric_summary.get("balanced_accuracy"),
                 "candidate_roc_auc": metric_summary.get("roc_auc"),
                 "candidate_pr_auc": metric_summary.get("pr_auc"),
-                "error_count": "unavailable_missing_row_level_predictions",
-                "false_positive": "unavailable_missing_row_level_predictions",
-                "false_negative": "unavailable_missing_row_level_predictions",
-                "probability_min": post_summary.get("probability_min"),
-                "probability_max": post_summary.get("probability_max"),
-                "probability_mean": post_summary.get("probability_mean"),
+                "error_count": errors["FP"] + errors["FN"] if has_row_level else "unavailable_missing_row_level_predictions",
+                "false_positive": errors["FP"] if has_row_level else "unavailable_missing_row_level_predictions",
+                "false_negative": errors["FN"] if has_row_level else "unavailable_missing_row_level_predictions",
+                "error_type_distribution": json.dumps(errors, sort_keys=True) if has_row_level else "unavailable_missing_row_level_predictions",
+                "prediction_positive_rate": prediction_positive_rate(selected) if has_row_level else "unavailable_missing_row_level_predictions",
+                "probability_min": min(numeric_values(selected, "probability")) if has_row_level and numeric_values(selected, "probability") else post_summary.get("probability_min"),
+                "probability_max": max(numeric_values(selected, "probability")) if has_row_level and numeric_values(selected, "probability") else post_summary.get("probability_max"),
+                "probability_mean": mean(numeric_values(selected, "probability")) if has_row_level and numeric_values(selected, "probability") else post_summary.get("probability_mean"),
                 "daily_return_mean": mean(returns) if returns else None,
                 "daily_return_min": min(returns) if returns else None,
                 "daily_return_max": max(returns) if returns else None,
@@ -264,13 +377,18 @@ def anchor_breakdown_rows(rows_by_split: dict[str, list[dict[str, Any]]], metric
     return rows
 
 
-def etf_breakdown_rows(rows_by_split: dict[str, list[dict[str, Any]]]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+def etf_breakdown_rows(
+    rows_by_split: dict[str, list[dict[str, Any]]],
+    row_level_rows: Sequence[dict[str, str]] | None = None,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     post_rows = rows_by_split["post_sprint_oop"]
-    grouped = group_by(post_rows, "etf_code")
-    total = len(post_rows)
+    focus_post_rows = focus_prediction_rows(row_level_rows or [], "post_sprint_oop")
+    grouped = group_by(focus_post_rows, "etf_code") if focus_post_rows else group_by(post_rows, "etf_code")
+    total = len(focus_post_rows) if focus_post_rows else len(post_rows)
     output: list[dict[str, Any]] = []
     for etf_code, selected in sorted(grouped.items()):
-        labels = label_distribution(selected, FOCUS_LABEL)
+        labels = row_level_label_distribution(selected) if focus_post_rows else label_distribution(selected, FOCUS_LABEL)
+        has_row_level = bool(focus_post_rows)
         output.append(
             {
                 "etf_code": etf_code,
@@ -279,19 +397,25 @@ def etf_breakdown_rows(rows_by_split: dict[str, list[dict[str, Any]]]) -> tuple[
                 "label_0_count": labels["label_0_count"],
                 "label_1_count": labels["label_1_count"],
                 "positive_rate": labels["positive_rate"],
-                "prediction_positive_rate": "unavailable_missing_row_level_predictions",
-                "balanced_accuracy": "unavailable_missing_row_level_predictions",
-                "error_rate": "unavailable_missing_row_level_predictions",
+                "prediction_positive_rate": prediction_positive_rate(selected) if has_row_level else "unavailable_missing_row_level_predictions",
+                "balanced_accuracy": row_level_balanced_accuracy(selected) if has_row_level else "unavailable_missing_row_level_predictions",
+                "error_rate": row_level_error_rate(selected) if has_row_level else "unavailable_missing_row_level_predictions",
+                "false_positive": error_distribution(selected)["FP"] if has_row_level else "unavailable_missing_row_level_predictions",
+                "false_negative": error_distribution(selected)["FN"] if has_row_level else "unavailable_missing_row_level_predictions",
             }
         )
     max_share = max((row["group_share_of_post"] or 0 for row in output), default=0)
     concentration = max_share >= 0.4
+    row_level_available = bool(focus_post_rows)
+    worst = max(output, key=lambda row: to_float(row.get("error_rate")) or -1.0, default={})
+    best = min(output, key=lambda row: to_float(row.get("error_rate")) if to_float(row.get("error_rate")) is not None else 999.0, default={})
     return output, {
         "etf_concentration_observed": concentration,
         "max_group_share": max_share,
-        "worst_etf": "unavailable_missing_row_level_predictions",
-        "best_etf": "unavailable_missing_row_level_predictions",
-        "note": "ETF-level error leadership requires row-level prediction output.",
+        "worst_etf": worst.get("etf_code") if row_level_available else "unavailable_missing_row_level_predictions",
+        "best_etf": best.get("etf_code") if row_level_available else "unavailable_missing_row_level_predictions",
+        "row_level_error_leadership_available": row_level_available,
+        "note": "ETF-level error leadership computed from row-level prediction output." if row_level_available else "ETF-level error leadership requires row-level prediction output.",
     }
 
 
@@ -321,7 +445,13 @@ def sample_power_check(split_manifest: dict[str, Any], post_rows: Sequence[dict[
     }
 
 
-def candidate_specific_diagnosis(oop_report: dict[str, Any], metrics_rows: Sequence[dict[str, str]], prediction_rows: Sequence[dict[str, str]], sample_power: dict[str, Any]) -> dict[str, Any]:
+def candidate_specific_diagnosis(
+    oop_report: dict[str, Any],
+    metrics_rows: Sequence[dict[str, str]],
+    prediction_rows: Sequence[dict[str, str]],
+    row_level_rows: Sequence[dict[str, str]],
+    sample_power: dict[str, Any],
+) -> dict[str, Any]:
     candidate = next((item for item in oop_report.get("candidate_results", []) if item.get("family_id") == FOCUS_FAMILY_ID), {})
     pre_metric = find_metric(metrics_rows, FOCUS_FAMILY_ID, "logistic_balanced_scaled", "pre_sprint_oop")
     post_metric = find_metric(metrics_rows, FOCUS_FAMILY_ID, "logistic_balanced_scaled", "post_sprint_oop")
@@ -330,6 +460,11 @@ def candidate_specific_diagnosis(oop_report: dict[str, Any], metrics_rows: Seque
     pre_count = to_float(pre_metric.get("row_count")) or 0
     post_count = to_float(post_metric.get("row_count")) or 0
     combined_from_pre_share = pre_count / (pre_count + post_count) if pre_count + post_count else None
+    sensitivity = threshold_sensitivity_rows(row_level_rows, "post_sprint_oop")
+    current_threshold = next((row for row in sensitivity if row["threshold"] == 0.5), {})
+    best_threshold = max(sensitivity, key=lambda row: to_float(row.get("balanced_accuracy")) or -1.0, default={})
+    focus_post_rows = focus_prediction_rows(row_level_rows, "post_sprint_oop")
+    errors = error_distribution(focus_post_rows)
     return {
         "family_id": FOCUS_FAMILY_ID,
         "combined_strict_oop_minimum_metrics_pass": candidate.get("combined_strict_oop_minimum_metrics_pass"),
@@ -341,15 +476,25 @@ def candidate_specific_diagnosis(oop_report: dict[str, Any], metrics_rows: Seque
         "combined_balanced_accuracy": combined_metric.get("balanced_accuracy"),
         "post_reversal_observed": to_float(post_metric.get("balanced_accuracy")) is not None and float(post_metric["balanced_accuracy"]) < 0.5,
         "probability_collapse": post_summary.get("probability_min") == post_summary.get("probability_max"),
-        "threshold_sensitivity": "unavailable_missing_row_level_probabilities",
+        "threshold_sensitivity": {
+            "available": bool(sensitivity and focus_post_rows),
+            "current_threshold_0_5": current_threshold,
+            "best_threshold_by_balanced_accuracy": best_threshold,
+            "false_positive_count": errors["FP"],
+            "false_negative_count": errors["FN"],
+        }
+        if focus_post_rows
+        else "unavailable_missing_row_level_probabilities",
         "label_definition_degradation_risk": "review_required: label_safe_positive_3d depends on both positive ret3d and max_drawdown_3d; post window is underpowered",
         "post_sprint_oop_underpowered": sample_power["post_sprint_oop_underpowered"],
     }
 
 
-def decide(flags: dict[str, Any], missing_outputs: bool) -> str:
+def decide(flags: dict[str, Any], missing_outputs: bool, row_level_schema_mismatch: bool = False) -> str:
     if flags.get("data_quality_blocked"):
         return DECISION_BLOCKED_DATA
+    if row_level_schema_mismatch:
+        return DECISION_BLOCKED_ROW_LEVEL_SCHEMA
     if missing_outputs:
         return DECISION_BLOCKED_MISSING
     if flags.get("post_sprint_oop_underpowered"):
@@ -387,6 +532,7 @@ def run_review(
     split_manifest = load_json(resolved_oop_dir / "fixed_shortlist_oop_split_manifest.json") if not oop_check["missing_files"] else {}
     metrics_rows = load_csv_dicts(resolved_oop_dir / "fixed_shortlist_oop_metrics.csv") if (resolved_oop_dir / "fixed_shortlist_oop_metrics.csv").exists() else []
     prediction_rows = load_csv_dicts(resolved_oop_dir / "fixed_shortlist_oop_predictions_summary.csv") if (resolved_oop_dir / "fixed_shortlist_oop_predictions_summary.csv").exists() else []
+    row_level_rows = load_row_level_predictions(resolved_oop_dir, oop_check)
     bar_rows, _columns = load_csv_rows(resolved_manual_inbox / MANUAL_CSV_NAME) if (resolved_manual_inbox / MANUAL_CSV_NAME).exists() else ([], [])
     feature_rows, feature_build_report = build_feature_rows(bar_rows) if bar_rows else ([], {})
     rows_by_split = split_rows(feature_rows, split_manifest) if feature_rows and split_manifest else {"train": [], "pre_sprint_oop": [], "post_sprint_oop": [], "combined_strict_oop": []}
@@ -394,10 +540,11 @@ def run_review(
     sample_power = sample_power_check(split_manifest, rows_by_split["post_sprint_oop"])
     label_rows, label_shift = label_shift_rows(rows_by_split, ["label_ret3d_gt_100bp", FOCUS_LABEL])
     feature_rows_table, feature_shift = feature_shift_rows(rows_by_split, BASE_39_FEATURES)
-    anchor_rows = anchor_breakdown_rows(rows_by_split, metrics_rows, prediction_rows)
-    etf_rows, etf_check = etf_breakdown_rows(rows_by_split)
+    anchor_rows = anchor_breakdown_rows(rows_by_split, metrics_rows, prediction_rows, row_level_rows)
+    etf_rows, etf_check = etf_breakdown_rows(rows_by_split, row_level_rows)
+    threshold_rows = threshold_sensitivity_rows(row_level_rows, "post_sprint_oop")
     date_check = date_concentration_check(anchor_rows)
-    candidate_diagnosis = candidate_specific_diagnosis(oop_report, metrics_rows, prediction_rows, sample_power)
+    candidate_diagnosis = candidate_specific_diagnosis(oop_report, metrics_rows, prediction_rows, row_level_rows, sample_power)
     artifact_check = check_model_artifacts(resolved_out_dir)
     p0_blockers.extend(artifact_check["p0_blockers"])
     missing_row_predictions = not oop_check["row_level_prediction_available"]
@@ -408,9 +555,10 @@ def run_review(
         "date_concentration_observed": date_check["date_concentration_observed"],
         "feature_shift_observed": feature_shift["feature_shift_observed"],
         "missing_row_level_predictions": missing_row_predictions,
+        "row_level_schema_mismatch": oop_check["row_level_schema_mismatch"],
         "data_quality_blocked": bool(p0_blockers),
     }
-    readiness_decision = decide(flags, missing_row_predictions)
+    readiness_decision = decide(flags, missing_row_predictions, oop_check["row_level_schema_mismatch"])
     report = {
         "lab_declaration": LAB_DECLARATION,
         "report_type": REPORT_TYPE,
@@ -430,6 +578,7 @@ def run_review(
         "feature_shift_table": feature_rows_table,
         "etf_level_dispersion": etf_check,
         "date_level_instability": date_check,
+        "threshold_sensitivity": threshold_rows,
         "candidate_specific_diagnosis": candidate_diagnosis,
         "feature_build_report": feature_build_report,
         "flags": flags,
@@ -460,7 +609,7 @@ def run_review(
         "metrics_are_effectiveness_evidence": False,
         "not_trading_advice": True,
     }
-    write_outputs(resolved_out_dir, repo_root, report, anchor_rows, etf_rows, label_rows, feature_rows_table)
+    write_outputs(resolved_out_dir, repo_root, report, anchor_rows, etf_rows, label_rows, feature_rows_table, threshold_rows)
     return report
 
 
@@ -472,6 +621,7 @@ def write_outputs(
     etf_rows: Sequence[dict[str, Any]],
     label_rows: Sequence[dict[str, Any]],
     feature_rows_table: Sequence[dict[str, Any]],
+    threshold_rows: Sequence[dict[str, Any]],
 ) -> None:
     write_json(out_dir / "post_sprint_instability_review_report.json", report)
     write_json(
@@ -495,6 +645,7 @@ def write_outputs(
     write_csv(out_dir / "post_sprint_etf_breakdown.csv", etf_rows, etf_columns())
     write_csv(out_dir / "post_sprint_label_distribution.csv", label_rows, label_columns())
     write_csv(out_dir / "post_sprint_prediction_error_breakdown.csv", anchor_rows, anchor_columns())
+    write_csv(out_dir / "post_sprint_threshold_sensitivity.csv", threshold_rows, threshold_columns())
     docs_json, docs_md = docs_report(report)
     write_json(repo_root / "docs/research/aetfq3_intraday_oop_post_sprint_instability_review.json", docs_json)
     (repo_root / "docs/research/aetfq3_intraday_oop_post_sprint_instability_review.md").write_text(docs_md, encoding="utf-8")
@@ -549,6 +700,7 @@ def build_p1_warnings(flags: dict[str, Any]) -> list[str]:
     warnings = [
         "P1_POST_SPRINT_OOP_UNDERPOWERED_REVIEW_REQUIRED" if flags.get("post_sprint_oop_underpowered") else "",
         "P1_ROW_LEVEL_PREDICTIONS_MISSING_FP_FN_UNAVAILABLE" if flags.get("missing_row_level_predictions") else "",
+        "P1_ROW_LEVEL_SCHEMA_MISMATCH_REVIEW_BLOCKED" if flags.get("row_level_schema_mismatch") else "",
         "P1_NO_STABLE_PROMOTION_WITHOUT_PROMOTION_GATE",
         "P1_REVIEW_ONLY_NOT_TRADING_ADVICE",
     ]
@@ -571,6 +723,8 @@ def anchor_columns() -> list[str]:
         "error_count",
         "false_positive",
         "false_negative",
+        "error_type_distribution",
+        "prediction_positive_rate",
         "probability_min",
         "probability_max",
         "probability_mean",
@@ -592,6 +746,21 @@ def etf_columns() -> list[str]:
         "prediction_positive_rate",
         "balanced_accuracy",
         "error_rate",
+        "false_positive",
+        "false_negative",
+    ]
+
+
+def threshold_columns() -> list[str]:
+    return [
+        "split_name",
+        "threshold",
+        "row_count",
+        "balanced_accuracy",
+        "error_rate",
+        "false_positive",
+        "false_negative",
+        "prediction_positive_rate",
     ]
 
 

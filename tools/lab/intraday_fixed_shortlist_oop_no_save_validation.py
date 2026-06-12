@@ -51,6 +51,7 @@ ALLOWED_OUTPUT_DIR = Path(".local_research_outputs/aetfq3_lab/intraday_fixed_sho
 DEFAULT_MANUAL_INBOX = Path(".local_artifact_backup/aetfq3_lab_sources/intraday_historical_5m_manual_inbox")
 DEFAULT_OUT_DIR = ALLOWED_OUTPUT_DIR
 MANUAL_CSV_NAME = "historical_5m_manual_export.csv"
+ROW_LEVEL_PREDICTION_FILE = "fixed_shortlist_oop_row_level_predictions.csv"
 SPRINT_START = "2026-04-09"
 SPRINT_END = "2026-06-03"
 BASE_39_FEATURES = CORE_FEATURES + OPTIONAL_ANCHOR_FEATURES + CROSS_SECTIONAL_FEATURES
@@ -442,15 +443,17 @@ def fit_models_for_candidate(split: dict[str, Any]) -> dict[str, Any]:
     }
     metrics: dict[str, Any] = {}
     predictions_summary: list[dict[str, Any]] = []
+    row_level_predictions: list[dict[str, Any]] = []
     for model_name, model in models.items():
         train_matrix = scaled_by_eval["combined_strict_oop"]["x_train"] if model_name == "logistic_balanced_scaled" else rows_to_matrix(train_rows, feature_columns)
         model.fit(train_matrix, y_train)
         metrics[model_name] = {}
+        row_eval_sets = {
+            "train": train_rows,
+            **eval_sets,
+        }
         for split_name, eval_rows in eval_sets.items():
-            if model_name == "logistic_balanced_scaled":
-                x_eval = scaled_by_eval[split_name]["x_eval"]
-            else:
-                x_eval = rows_to_matrix(eval_rows, feature_columns)
+            x_eval = matrix_for_model_split(model_name, split_name, eval_rows, train_matrix, feature_columns, scaled_by_eval)
             y_eval = rows_to_labels(eval_rows, split["label_policy"])
             predictions = [int(value) for value in model.predict(x_eval)] if eval_rows else []
             scores = probability_scores(model, x_eval, predictions)
@@ -467,11 +470,79 @@ def fit_models_for_candidate(split: dict[str, Any]) -> dict[str, Any]:
                     "probability_mean": score["probability_summary"]["mean"],
                 }
             )
+        for split_name, eval_rows in row_eval_sets.items():
+            x_eval = matrix_for_model_split(model_name, split_name, eval_rows, train_matrix, feature_columns, scaled_by_eval)
+            predictions = [int(value) for value in model.predict(x_eval)] if eval_rows else []
+            scores = probability_scores(model, x_eval, predictions)
+            row_level_predictions.extend(build_row_level_prediction_rows(split_name, eval_rows, split["label_policy"], model_name, predictions, scores))
     return {
         "metrics": metrics,
         "scaler_audit": scaled_by_eval["combined_strict_oop"]["audit"],
         "prediction_summary_rows": predictions_summary,
+        "row_level_prediction_rows": row_level_predictions,
     }
+
+
+def matrix_for_model_split(
+    model_name: str,
+    split_name: str,
+    eval_rows: Sequence[dict[str, Any]],
+    train_matrix: Sequence[Sequence[float]],
+    feature_columns: Sequence[str],
+    scaled_by_eval: dict[str, dict[str, Any]],
+) -> Sequence[Sequence[float]]:
+    if model_name != "logistic_balanced_scaled":
+        return rows_to_matrix(eval_rows, feature_columns)
+    if split_name == "train":
+        return train_matrix
+    return scaled_by_eval[split_name]["x_eval"]
+
+
+def build_row_level_prediction_rows(
+    split_name: str,
+    rows: Sequence[dict[str, Any]],
+    label_policy: str,
+    model_name: str,
+    predictions: Sequence[int],
+    scores: Sequence[float],
+) -> list[dict[str, Any]]:
+    output: list[dict[str, Any]] = []
+    for row, prediction, probability in zip(rows, predictions, scores, strict=True):
+        label = label_value(row.get(label_policy))
+        output.append(
+            {
+                "model": model_name,
+                "label_policy": label_policy,
+                "split_name": split_name,
+                "anchor_date": row.get("anchor_date") or row.get("trade_date"),
+                "etf_code": row.get("etf_code"),
+                "label": label,
+                "prediction": prediction,
+                "probability": probability,
+                "is_correct": label == prediction if label is not None else False,
+                "error_type": prediction_error_type(label, prediction),
+                "future_return_3d": row.get("future_return_3d"),
+                "train_or_oop": "train" if split_name == "train" else "oop",
+                "is_pre_sprint_oop": split_name == "pre_sprint_oop",
+                "is_post_sprint_oop": split_name == "post_sprint_oop",
+                "is_combined_oop": split_name == "combined_strict_oop",
+            }
+        )
+    return output
+
+
+def prediction_error_type(label: int | None, prediction: int | None) -> str:
+    if label is None or prediction is None:
+        return "NA"
+    if label == 1 and prediction == 1:
+        return "TP"
+    if label == 0 and prediction == 0:
+        return "TN"
+    if label == 0 and prediction == 1:
+        return "FP"
+    if label == 1 and prediction == 0:
+        return "FN"
+    return "NA"
 
 
 def probability_scores(model: Any, x_eval: Sequence[Sequence[float]], predictions: Sequence[int]) -> list[float]:
@@ -677,6 +748,9 @@ def build_docs_report(report: dict[str, Any]) -> tuple[dict[str, Any], str]:
         "qmt_ready": False,
         "order_intent_ready": False,
         "stable_evidence": False,
+        "row_level_predictions_emitted": report["row_level_predictions_emitted"],
+        "row_level_prediction_file": report["row_level_prediction_file"],
+        "row_level_prediction_row_count": report["row_level_prediction_row_count"],
         "p0_blockers": report["p0_blockers"],
         "p1_warnings": report["p1_warnings"],
     }
@@ -694,6 +768,8 @@ def build_docs_report(report: dict[str, Any]) -> tuple[dict[str, Any], str]:
         f"- combined_strict_oop_anchor_count: {len(report['split_manifest']['combined_strict_oop_anchor_dates'])}",
         f"- candidate_count: {len(report['candidate_results'])}",
         f"- survived_candidate_count: {summary['survived_candidate_count']}",
+        f"- row_level_predictions_emitted: {str(report['row_level_predictions_emitted']).lower()}",
+        f"- row_level_prediction_row_count: {report['row_level_prediction_row_count']}",
         f"- model_saved: {str(report['model_saved']).lower()}",
         f"- scaler_saved: {str(report['scaler_saved']).lower()}",
         f"- stable_promotion_ready: {str(report['stable_promotion_ready']).lower()}",
@@ -739,6 +815,7 @@ def run_validation(
     candidate_results: list[dict[str, Any]] = []
     metrics_rows: list[dict[str, Any]] = []
     prediction_rows: list[dict[str, Any]] = []
+    row_level_prediction_rows: list[dict[str, Any]] = []
     if not blockers:
         for candidate in SHORTLIST:
             features = feature_columns_for_set(candidate["feature_set"])
@@ -777,6 +854,17 @@ def run_validation(
             result["diagnostic_signal_survives_minimum_standard"] = candidate_survives(result)
             candidate_results.append(result)
             prediction_rows.extend({**row, "family_id": candidate["family_id"]} for row in model_result["prediction_summary_rows"])
+            row_level_prediction_rows.extend(
+                {
+                    **row,
+                    "candidate_id": candidate["family_id"],
+                    "family_id": candidate["family_id"],
+                    "label_policy": candidate["label_policy"],
+                    "feature_set": candidate["feature_set"],
+                    "model_family": candidate["model_family"],
+                }
+                for row in model_result["row_level_prediction_rows"]
+            )
             for model_name, by_split in model_result["metrics"].items():
                 for split_name, metric in by_split.items():
                     metrics_rows.append(flat_metric_row(candidate, model_name, split_name, metric))
@@ -814,6 +902,11 @@ def run_validation(
         "data_build_report": build_report_payload,
         "split_manifest": split_manifest,
         "candidate_results": candidate_results,
+        "row_level_predictions_emitted": True,
+        "row_level_prediction_file": ROW_LEVEL_PREDICTION_FILE,
+        "row_level_prediction_row_count": len(row_level_prediction_rows),
+        "row_level_prediction_counts_by_split": summarize_row_level_counts(row_level_prediction_rows),
+        "row_level_prediction_required_columns": row_level_prediction_columns(),
         "artifact_check_before": artifact_before,
         "artifact_check_after": artifact_after,
         "p0_blockers": dedupe(blockers),
@@ -860,6 +953,9 @@ def run_validation(
             "qmt_ready": False,
             "order_intent_ready": False,
             "stable_evidence": False,
+            "row_level_predictions_emitted": report["row_level_predictions_emitted"],
+            "row_level_prediction_file": report["row_level_prediction_file"],
+            "row_level_prediction_row_count": report["row_level_prediction_row_count"],
         },
     )
     write_csv(resolved_out_dir / "fixed_shortlist_oop_metrics.csv", metrics_rows, metric_columns())
@@ -868,6 +964,7 @@ def run_validation(
         prediction_rows,
         ["family_id", "model", "split", "row_count", "prediction_distribution", "probability_min", "probability_max", "probability_mean"],
     )
+    write_csv(resolved_out_dir / ROW_LEVEL_PREDICTION_FILE, row_level_prediction_rows, row_level_prediction_columns())
     (resolved_out_dir / "fixed_shortlist_oop_validation_report.md").write_text(docs_md, encoding="utf-8")
     write_json(repo_root / "docs/research/aetfq3_intraday_fixed_shortlist_oop_no_save_validation.json", docs_json)
     (repo_root / "docs/research/aetfq3_intraday_fixed_shortlist_oop_no_save_validation.md").write_text(docs_md, encoding="utf-8")
@@ -921,6 +1018,45 @@ def metric_columns() -> list[str]:
         "probability_min",
         "probability_max",
         "probability_mean",
+    ]
+
+
+def row_level_prediction_columns() -> list[str]:
+    return [
+        "candidate_id",
+        "family_id",
+        "label_policy",
+        "feature_set",
+        "model_family",
+        "model",
+        "split_name",
+        "anchor_date",
+        "etf_code",
+        "label",
+        "prediction",
+        "probability",
+        "is_correct",
+        "error_type",
+        "future_return_3d",
+        "train_or_oop",
+        "is_pre_sprint_oop",
+        "is_post_sprint_oop",
+        "is_combined_oop",
+    ]
+
+
+def summarize_row_level_counts(rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[tuple[str, str, str], int] = defaultdict(int)
+    for row in rows:
+        grouped[(str(row.get("candidate_id", "")), str(row.get("model", "")), str(row.get("split_name", "")))] += 1
+    return [
+        {
+            "candidate_id": candidate_id,
+            "model": model,
+            "split_name": split_name,
+            "row_count": row_count,
+        }
+        for (candidate_id, model, split_name), row_count in sorted(grouped.items())
     ]
 
 

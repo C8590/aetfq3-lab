@@ -1,21 +1,22 @@
 {
   "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
   "document_type": "aetfq3_intraday_oop_post_sprint_instability_review",
-  "status": "blocked",
-  "readiness_decision": "POST_SPRINT_INSTABILITY_REVIEW_BLOCKED_MISSING_OOP_OUTPUTS",
+  "status": "completed",
+  "readiness_decision": "POST_SPRINT_INSTABILITY_REVIEW_COMPLETED_SAMPLE_TOO_SMALL_REVIEW_REQUIRED",
   "post_sprint_oop_underpowered": true,
   "flags": {
     "post_sprint_oop_underpowered": true,
-    "label_shift_observed": false,
-    "etf_concentration_observed": true,
+    "label_shift_observed": true,
+    "etf_concentration_observed": false,
     "date_concentration_observed": true,
-    "feature_shift_observed": false,
-    "missing_row_level_predictions": true,
+    "feature_shift_observed": true,
+    "missing_row_level_predictions": false,
+    "row_level_schema_mismatch": false,
     "data_quality_blocked": false
   },
   "sample_power": {
-    "post_sprint_anchor_count": 1,
-    "post_sprint_group_count": 1,
+    "post_sprint_anchor_count": 7,
+    "post_sprint_group_count": 32,
     "post_sprint_oop_underpowered": true,
     "minimum_anchor_count": 10,
     "minimum_group_count": 50
@@ -24,14 +25,38 @@
     "family_id": "label_safe_positive_3d|base_39_plus_scale_transform_policy|logistic_balanced_scaled_variants|scale_transform_policy",
     "combined_strict_oop_minimum_metrics_pass": true,
     "diagnostic_signal_survives_minimum_standard": false,
-    "combined_better_mainly_from_pre_sprint": false,
-    "pre_group_share_of_combined": 0.5,
-    "pre_balanced_accuracy": "0.4",
-    "post_balanced_accuracy": "0.4",
-    "combined_balanced_accuracy": "0.4",
+    "combined_better_mainly_from_pre_sprint": true,
+    "pre_group_share_of_combined": 0.9852941176470589,
+    "pre_balanced_accuracy": "0.510288024307893",
+    "post_balanced_accuracy": "0.487012987012987",
+    "combined_balanced_accuracy": "0.5110493757809123",
     "post_reversal_observed": true,
-    "probability_collapse": true,
-    "threshold_sensitivity": "unavailable_missing_row_level_probabilities",
+    "probability_collapse": false,
+    "threshold_sensitivity": {
+      "available": true,
+      "current_threshold_0_5": {
+        "split_name": "post_sprint_oop",
+        "threshold": 0.5,
+        "row_count": 32,
+        "balanced_accuracy": 0.487012987012987,
+        "error_rate": 0.53125,
+        "false_positive": 12,
+        "false_negative": 5,
+        "prediction_positive_rate": 0.5625
+      },
+      "best_threshold_by_balanced_accuracy": {
+        "split_name": "post_sprint_oop",
+        "threshold": 0.4,
+        "row_count": 32,
+        "balanced_accuracy": 0.5974025974025974,
+        "error_rate": 0.5,
+        "false_positive": 15,
+        "false_negative": 1,
+        "prediction_positive_rate": 0.78125
+      },
+      "false_positive_count": 12,
+      "false_negative_count": 5
+    },
     "label_definition_degradation_risk": "review_required: label_safe_positive_3d depends on both positive ret3d and max_drawdown_3d; post window is underpowered",
     "post_sprint_oop_underpowered": true
   },
@@ -44,7 +69,6 @@
   "p0_blockers": [],
   "p1_warnings": [
     "P1_POST_SPRINT_OOP_UNDERPOWERED_REVIEW_REQUIRED",
-    "P1_ROW_LEVEL_PREDICTIONS_MISSING_FP_FN_UNAVAILABLE",
     "P1_NO_STABLE_PROMOTION_WITHOUT_PROMOTION_GATE",
     "P1_REVIEW_ONLY_NOT_TRADING_ADVICE"
   ]

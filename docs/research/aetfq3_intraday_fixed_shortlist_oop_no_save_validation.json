@@ -23,6 +23,9 @@
   "qmt_ready": false,
   "order_intent_ready": false,
   "stable_evidence": false,
+  "row_level_predictions_emitted": true,
+  "row_level_prediction_file": "fixed_shortlist_oop_row_level_predictions.csv",
+  "row_level_prediction_row_count": 41352,
   "p0_blockers": [],
   "p1_warnings": [
     "P1_DIAGNOSTIC_ONLY_NOT_FORMAL_MODEL_EVIDENCE",

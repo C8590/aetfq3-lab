@@ -8,6 +8,8 @@ import pytest
 
 from tools.lab.intraday_oop_post_sprint_instability_review import (
     DECISION_BLOCKED_MISSING,
+    DECISION_BLOCKED_ROW_LEVEL_SCHEMA,
+    FOCUS_FAMILY_ID,
     BASE_39_FEATURES,
     date_concentration_check,
     decide,
@@ -17,6 +19,7 @@ from tools.lab.intraday_oop_post_sprint_instability_review import (
     resolve_output_dir,
     run_review,
     sample_power_check,
+    threshold_sensitivity_rows,
     validate_oop_outputs,
 )
 
@@ -83,6 +86,15 @@ def test_etf_concentration_detection() -> None:
     assert check["max_group_share"] > 0.5
 
 
+def test_etf_error_breakdown_uses_row_level_predictions() -> None:
+    rows, check = etf_breakdown_rows(rows_by_split(), row_level_prediction_rows())
+
+    assert check["row_level_error_leadership_available"] is True
+    assert check["worst_etf"] == "510050"
+    assert any(row["etf_code"] == "159915" and row["false_positive"] == 1 for row in rows)
+    assert any(row["etf_code"] == "510050" and row["false_negative"] == 1 for row in rows)
+
+
 def test_date_concentration_detection() -> None:
     anchor_rows = [
         {"anchor_date": "2026-06-04", "group_share_of_post": 0.8, "positive_rate": 1.0},
@@ -109,6 +121,29 @@ def test_missing_oop_outputs_blocked(tmp_path: Path) -> None:
 
     assert check["passed"] is False
     assert decision == DECISION_BLOCKED_MISSING
+
+
+def test_row_level_schema_mismatch_blocked(tmp_path: Path) -> None:
+    write_minimal_oop_outputs(tmp_path)
+    write_csv(
+        tmp_path / "fixed_shortlist_oop_row_level_predictions.csv",
+        [{"anchor_date": "2026-06-04", "etf_code": "159915"}],
+        ["anchor_date", "etf_code"],
+    )
+
+    check = validate_oop_outputs(tmp_path)
+    decision = decide({"data_quality_blocked": False}, missing_outputs=True, row_level_schema_mismatch=check["row_level_schema_mismatch"])
+
+    assert check["row_level_schema_mismatch"] is True
+    assert decision == DECISION_BLOCKED_ROW_LEVEL_SCHEMA
+
+
+def test_threshold_sensitivity_computed_from_probability() -> None:
+    rows = threshold_sensitivity_rows(row_level_prediction_rows(), "post_sprint_oop")
+
+    assert len(rows) == 5
+    assert rows[0]["threshold"] == 0.3
+    assert any(row["threshold"] == 0.5 and row["false_positive"] == 1 and row["false_negative"] == 1 for row in rows)
 
 
 def test_output_path_outside_local_rejected(tmp_path: Path) -> None:
@@ -200,6 +235,57 @@ def write_minimal_oop_outputs(oop_dir: Path) -> None:
         ],
         ["family_id", "model", "split", "row_count", "prediction_distribution", "probability_min", "probability_max", "probability_mean"],
     )
+
+
+def row_level_prediction_rows() -> list[dict[str, object]]:
+    base = {
+        "candidate_id": FOCUS_FAMILY_ID,
+        "family_id": FOCUS_FAMILY_ID,
+        "label_policy": "label_safe_positive_3d",
+        "feature_set": "base_39_plus_scale_transform_policy",
+        "model_family": "logistic_balanced_scaled_variants",
+        "model": "logistic_balanced_scaled",
+        "split_name": "post_sprint_oop",
+        "train_or_oop": "oop",
+        "is_pre_sprint_oop": False,
+        "is_post_sprint_oop": True,
+        "is_combined_oop": False,
+    }
+    return [
+        {
+            **base,
+            "anchor_date": "2026-06-04",
+            "etf_code": "159915",
+            "label": 0,
+            "prediction": 1,
+            "probability": 0.8,
+            "is_correct": False,
+            "error_type": "FP",
+            "future_return_3d": -0.01,
+        },
+        {
+            **base,
+            "anchor_date": "2026-06-04",
+            "etf_code": "159915",
+            "label": 1,
+            "prediction": 1,
+            "probability": 0.7,
+            "is_correct": True,
+            "error_type": "TP",
+            "future_return_3d": 0.02,
+        },
+        {
+            **base,
+            "anchor_date": "2026-06-05",
+            "etf_code": "510050",
+            "label": 1,
+            "prediction": 0,
+            "probability": 0.2,
+            "is_correct": False,
+            "error_type": "FN",
+            "future_return_3d": 0.01,
+        },
+    ]
 
 
 def write_minimal_manual_csv(manual_inbox: Path) -> None:
