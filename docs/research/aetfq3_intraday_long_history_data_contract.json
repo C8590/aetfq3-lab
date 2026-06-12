@@ -1,0 +1,134 @@
+{
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "document_type": "aetfq3_intraday_long_history_data_contract",
+  "version": "v0",
+  "input_support": {
+    "suffixes": [
+      ".csv",
+      ".txt",
+      ".zip",
+      ".parquet"
+    ],
+    "frequencies": [
+      "1m",
+      "5m"
+    ],
+    "header_languages": [
+      "english",
+      "chinese"
+    ],
+    "encodings": [
+      "utf-8-sig",
+      "utf-8",
+      "gbk",
+      "ansi"
+    ],
+    "delimiters": [
+      "csv",
+      "tab",
+      "auto"
+    ],
+    "file_name_code_patterns": [
+      "SH#",
+      "SZ#",
+      "six_digit_code"
+    ]
+  },
+  "standard_columns": [
+    "trade_date",
+    "datetime",
+    "etf_code",
+    "open",
+    "high",
+    "low",
+    "close",
+    "volume",
+    "amount",
+    "vwap",
+    "frequency",
+    "source_file"
+  ],
+  "quality_checks": [
+    "duplicate_bars",
+    "datetime_monotonic",
+    "ohlc_consistency",
+    "volume_nonnegative",
+    "amount_nonnegative",
+    "bars_per_etf_day",
+    "date_coverage",
+    "etf_coverage",
+    "frequency_detection",
+    "missing_fields",
+    "conflict_rows"
+  ],
+  "resample_rules": {
+    "1m_to": [
+      "5m",
+      "15m",
+      "30m"
+    ],
+    "open": "first",
+    "high": "max",
+    "low": "min",
+    "close": "last",
+    "volume": "sum",
+    "amount": "sum",
+    "vwap": "amount / volume if volume is nonzero"
+  },
+  "signal_clocks": [
+    "10:00",
+    "10:30",
+    "11:00",
+    "11:30",
+    "13:30",
+    "14:00",
+    "14:30",
+    "14:50"
+  ],
+  "time_censored_intraday_features": [
+    "return_since_open",
+    "high_so_far_vs_open",
+    "low_so_far_vs_open",
+    "close_now_vs_open",
+    "close_now_vs_vwap_so_far",
+    "volume_so_far",
+    "amount_so_far",
+    "last_3_bar_return",
+    "last_6_bar_return",
+    "intraday_volatility_so_far",
+    "range_so_far",
+    "drawdown_so_far",
+    "rebound_from_low_so_far",
+    "price_above_vwap_ratio_so_far",
+    "volume_acceleration_so_far"
+  ],
+  "diagnostic_labels": [
+    "ret_1d_gt_0bp",
+    "ret_1d_gt_20bp",
+    "ret_3d_gt_0bp",
+    "ret_3d_gt_100bp",
+    "safe_positive_3d",
+    "drawdown_limited_positive_3d"
+  ],
+  "outcomes": [
+    "future_return_1d",
+    "future_return_3d",
+    "max_drawdown_3d",
+    "entry_to_exit_return"
+  ],
+  "future_labels_or_outcomes_allowed_as_features": false,
+  "boundary": {
+    "access_mode": "READ_ONLY",
+    "final_action_change_allowed": false,
+    "contains_live_order": false,
+    "contains_secret": false,
+    "requires_human_review": true,
+    "promotion_gate_required": true,
+    "stable_promotion_ready": false,
+    "qmt_ready": false,
+    "order_intent_ready": false,
+    "model_saved": false,
+    "scaler_saved": false,
+    "checkpoint_saved": false
+  }
+}

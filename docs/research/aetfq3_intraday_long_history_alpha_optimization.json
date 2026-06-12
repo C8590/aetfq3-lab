@@ -1,0 +1,85 @@
+{
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "document_type": "aetfq3_intraday_long_history_alpha_optimization_contract",
+  "version": "v0",
+  "scope": "Lab-only long-history intraday data lake plus bounded alpha optimizer",
+  "boundary": {
+    "access_mode": "READ_ONLY",
+    "final_action_change_allowed": false,
+    "contains_live_order": false,
+    "contains_secret": false,
+    "requires_human_review": true,
+    "promotion_gate_required": true,
+    "formal_training": false,
+    "model_saved": false,
+    "scaler_saved": false,
+    "checkpoint_saved": false,
+    "stable_promotion_ready": false,
+    "stable_evidence": false,
+    "qmt_ready": false,
+    "order_intent_ready": false,
+    "order_intent_generated": false,
+    "automatic_promotion_ready": false
+  },
+  "allowed_search_dimensions": [
+    "signal_clock",
+    "feature_set",
+    "label_policy",
+    "holding_period",
+    "entry_rule",
+    "exit_rule",
+    "cost_bps",
+    "model_family"
+  ],
+  "forbidden_search_dimensions": [
+    "Stable BUY/PROBE",
+    "target_weight",
+    "final_buy_action",
+    "OrderIntent",
+    "QMT execution"
+  ],
+  "validation_protocol": {
+    "primary_split": "rolling_origin_walk_forward",
+    "fold_unit": "monthly",
+    "train_window": "expanding",
+    "min_train_anchors": 60,
+    "min_validation_anchors": 10,
+    "min_validation_groups": 50,
+    "embargo_days": 3,
+    "random_split_primary_conclusion_allowed": false
+  },
+  "pnl_objectives": [
+    "net_total_return",
+    "annualized_return",
+    "max_drawdown",
+    "calmar_like_ratio",
+    "sharpe_like_diagnostic",
+    "win_rate",
+    "profit_factor",
+    "average_trade_return",
+    "monthly_win_rate",
+    "turnover",
+    "average_exposure",
+    "cost_paid",
+    "net_vs_equal_weight_benchmark",
+    "net_vs_cash",
+    "worst_month",
+    "best_month",
+    "etf_contribution",
+    "month_concentration",
+    "etf_concentration"
+  ],
+  "candidate_status_allowed": [
+    "LAB_DIAGNOSTIC_ALPHA_CANDIDATE_REVIEW_REQUIRED"
+  ],
+  "decision_values": [
+    "LONG_HISTORY_ALPHA_OPTIMIZATION_COMPLETED_CANDIDATES_FOUND_REVIEW_REQUIRED",
+    "LONG_HISTORY_ALPHA_OPTIMIZATION_COMPLETED_NO_CANDIDATES_FOUND",
+    "LONG_HISTORY_ALPHA_OPTIMIZATION_BLOCKED_WAITING_LONG_HISTORY_PACKAGE",
+    "LONG_HISTORY_ALPHA_OPTIMIZATION_BLOCKED_DATA_QUALITY",
+    "LONG_HISTORY_ALPHA_OPTIMIZATION_BLOCKED_LEAKAGE_RISK",
+    "LONG_HISTORY_ALPHA_OPTIMIZATION_BLOCKED_RUNTIME_ERROR"
+  ],
+  "not_stable_evidence": true,
+  "not_trading_advice": true
+}
