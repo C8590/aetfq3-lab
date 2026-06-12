@@ -1,0 +1,213 @@
+{
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "document_type": "aetfq3_intraday_oop_post_sprint_reversal_attribution",
+  "status": "completed",
+  "readiness_decision": "POST_SPRINT_REVERSAL_ATTRIBUTION_SAMPLE_TOO_SMALL_PRIMARY",
+  "sample_power": {
+    "post_sprint_anchor_count": 7,
+    "post_sprint_group_count": 32,
+    "post_sprint_oop_underpowered": true,
+    "minimum_anchor_count": 10,
+    "minimum_group_count": 50
+  },
+  "date_level_attribution": {
+    "post_sprint_row_count": 32,
+    "post_sprint_total_error": 17,
+    "date_dominates_reversal": true,
+    "front_back_regime_reversal_observed": true,
+    "front_half_fp": 12,
+    "front_half_fn": 0,
+    "back_half_fp": 0,
+    "back_half_fn": 5
+  },
+  "etf_level_attribution": {
+    "etf_concentration_primary": false,
+    "max_error_share": 0.23529411764705882,
+    "max_group_share": 0.125,
+    "note": "single ETF error_rate alone is not treated as primary unless group share and error share are both concentrated"
+  },
+  "threshold_sensitivity_attribution": {
+    "threshold_selection_allowed": false,
+    "threshold_tuned_on_post_sprint": false,
+    "threshold_sensitivity_is_diagnostic_only": true,
+    "post_threshold_0_5": {
+      "split_name": "post_sprint_oop",
+      "threshold": 0.5,
+      "row_count": 32,
+      "balanced_accuracy": 0.487012987012987,
+      "fp": 12,
+      "fn": 5,
+      "tp": 6,
+      "tn": 9,
+      "error_rate": 0.53125,
+      "prediction_positive_rate": 0.5625,
+      "threshold_selection_allowed": false,
+      "threshold_tuned_on_post_sprint": false,
+      "threshold_sensitivity_is_diagnostic_only": true
+    },
+    "post_best_threshold_by_balanced_accuracy": {
+      "split_name": "post_sprint_oop",
+      "threshold": 0.45,
+      "row_count": 32,
+      "balanced_accuracy": 0.6688311688311688,
+      "fp": 12,
+      "fn": 1,
+      "tp": 10,
+      "tn": 9,
+      "error_rate": 0.40625,
+      "prediction_positive_rate": 0.6875,
+      "threshold_selection_allowed": false,
+      "threshold_tuned_on_post_sprint": false,
+      "threshold_sensitivity_is_diagnostic_only": true
+    },
+    "post_best_minus_0_5_balanced_accuracy": 0.18181818181818177,
+    "pre_and_combined_inconsistent_with_post_best": true,
+    "threshold_sensitivity_primary": true
+  },
+  "label_regime_attribution": {
+    "label_shift_primary": true,
+    "post_positive_rate": 0.34375,
+    "post_delta_vs_train": 0.24070945945945943,
+    "post_delta_vs_pre": 0.2024253731343284
+  },
+  "feature_shift_attribution": {
+    "feature_shift_primary": true,
+    "top_shifted_features": [
+      {
+        "feature": "volume_spike_ratio",
+        "feature_group": "volume",
+        "train_mean": 3.7579709218159993,
+        "pre_mean": 4.405267135162784,
+        "post_mean": 4.853886436906543,
+        "train_vs_post_smd": 0.8161032601694054,
+        "pre_vs_post_smd": 0.28121235380787973,
+        "abs_train_vs_post_smd": 0.8161032601694054,
+        "abs_pre_vs_post_smd": 0.28121235380787973,
+        "whether_feature_shift_likely_contributes_to_reversal": true
+      },
+      {
+        "feature": "amount_spike_ratio",
+        "feature_group": "amount",
+        "train_mean": 3.756430225010456,
+        "pre_mean": 4.406368352044458,
+        "post_mean": 4.847816749599171,
+        "train_vs_post_smd": 0.8102947788971194,
+        "pre_vs_post_smd": 0.27608423618591993,
+        "abs_train_vs_post_smd": 0.8102947788971194,
+        "abs_pre_vs_post_smd": 0.27608423618591993,
+        "whether_feature_shift_likely_contributes_to_reversal": true
+      },
+      {
+        "feature": "volume_second_half_ratio",
+        "feature_group": "volume",
+        "train_mean": 0.4202802971580734,
+        "pre_mean": 0.4270332069581994,
+        "post_mean": 0.4673770616538279,
+        "train_vs_post_smd": 0.5155590656926389,
+        "pre_vs_post_smd": 0.4170336043290611,
+        "abs_train_vs_post_smd": 0.5155590656926389,
+        "abs_pre_vs_post_smd": 0.4170336043290611,
+        "whether_feature_shift_likely_contributes_to_reversal": false
+      },
+      {
+        "feature": "amount_second_half_ratio",
+        "feature_group": "amount",
+        "train_mean": 0.4204572362768026,
+        "pre_mean": 0.42705154092989894,
+        "post_mean": 0.4666278361536675,
+        "train_vs_post_smd": 0.5073606085493795,
+        "pre_vs_post_smd": 0.4107140006054923,
+        "abs_train_vs_post_smd": 0.5073606085493795,
+        "abs_pre_vs_post_smd": 0.4107140006054923,
+        "whether_feature_shift_likely_contributes_to_reversal": false
+      },
+      {
+        "feature": "intraday_return_std",
+        "feature_group": "volatility",
+        "train_mean": 0.0018290834969262638,
+        "pre_mean": 0.0015197229450952207,
+        "post_mean": 0.0021781362334888682,
+        "train_vs_post_smd": 0.4021336579965206,
+        "pre_vs_post_smd": 0.8120405934592219,
+        "abs_train_vs_post_smd": 0.4021336579965206,
+        "abs_pre_vs_post_smd": 0.8120405934592219,
+        "whether_feature_shift_likely_contributes_to_reversal": true
+      },
+      {
+        "feature": "afternoon_return",
+        "feature_group": "intraday_return",
+        "train_mean": 0.0005786166030176987,
+        "pre_mean": 0.0002919631478235276,
+        "post_mean": -0.0031371062399345243,
+        "train_vs_post_smd": -0.3782328432457166,
+        "pre_vs_post_smd": -0.37740013745519685,
+        "abs_train_vs_post_smd": 0.3782328432457166,
+        "abs_pre_vs_post_smd": 0.37740013745519685,
+        "whether_feature_shift_likely_contributes_to_reversal": false
+      },
+      {
+        "feature": "last_hour_return",
+        "feature_group": "intraday_return",
+        "train_mean": 0.0002783965457386452,
+        "pre_mean": 0.00020246069367927123,
+        "post_mean": -0.0015537918421370533,
+        "train_vs_post_smd": -0.3658402795617527,
+        "pre_vs_post_smd": -0.39773851993121495,
+        "abs_train_vs_post_smd": 0.3658402795617527,
+        "abs_pre_vs_post_smd": 0.39773851993121495,
+        "whether_feature_shift_likely_contributes_to_reversal": false
+      },
+      {
+        "feature": "vwap_slope_proxy",
+        "feature_group": "position/range",
+        "train_mean": 0.0007648478183107392,
+        "pre_mean": 0.000134828823014668,
+        "post_mean": -0.00293893963605597,
+        "train_vs_post_smd": -0.36284245641601337,
+        "pre_vs_post_smd": -0.3193744309186775,
+        "abs_train_vs_post_smd": 0.36284245641601337,
+        "abs_pre_vs_post_smd": 0.3193744309186775,
+        "whether_feature_shift_likely_contributes_to_reversal": false
+      },
+      {
+        "feature": "close_vs_intraday_high",
+        "feature_group": "position/range",
+        "train_mean": -0.009614939653084967,
+        "pre_mean": -0.008449347023984876,
+        "post_mean": -0.013551037244208818,
+        "train_vs_post_smd": -0.3604526343149885,
+        "pre_vs_post_smd": -0.5148678910184176,
+        "abs_train_vs_post_smd": 0.3604526343149885,
+        "abs_pre_vs_post_smd": 0.5148678910184176,
+        "whether_feature_shift_likely_contributes_to_reversal": false
+      },
+      {
+        "feature": "amount_first_half_sum",
+        "feature_group": "amount",
+        "train_mean": 2259375994.404561,
+        "pre_mean": 1643129603.4132276,
+        "post_mean": 1874938515.953125,
+        "train_vs_post_smd": -0.3492778634734537,
+        "pre_vs_post_smd": 0.19124035143728108,
+        "abs_train_vs_post_smd": 0.3492778634734537,
+        "abs_pre_vs_post_smd": 0.19124035143728108,
+        "whether_feature_shift_likely_contributes_to_reversal": false
+      }
+    ],
+    "feature_shift_is_not_trading_rule": true
+  },
+  "fixed_shortlist_oop_validation_ready_for_stable": false,
+  "stable_promotion_ready": false,
+  "formal_training_ready": false,
+  "qmt_ready": false,
+  "order_intent_ready": false,
+  "automatic_promotion_ready": false,
+  "stable_evidence": false,
+  "p0_blockers": [],
+  "p1_warnings": [
+    "P1_POST_SPRINT_OOP_UNDERPOWERED_REVIEW_REQUIRED",
+    "P1_THRESHOLD_SENSITIVITY_DIAGNOSTIC_ONLY_NO_PARAMETER_UPDATE",
+    "P1_NO_STABLE_PROMOTION_WITHOUT_PROMOTION_GATE",
+    "P1_REVIEW_ONLY_NOT_TRADING_ADVICE"
+  ]
+}
