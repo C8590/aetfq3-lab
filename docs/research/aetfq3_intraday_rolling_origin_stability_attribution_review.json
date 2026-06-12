@@ -1,0 +1,28 @@
+{
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "document_type": "aetfq3_intraday_rolling_origin_stability_attribution_review",
+  "status": "completed",
+  "candidate_classification": "LAB_MONITOR_CANDIDATE_REVIEW_READY",
+  "readiness_decision": "ROLLING_ORIGIN_STABILITY_ATTRIBUTION_LAB_MONITOR_CANDIDATE_REVIEW_READY",
+  "winning_candidate": "label_ret3d_gt_100bp|base_39_plus_scale_transform_policy|logistic_balanced_scaled_variants|scale_transform_policy",
+  "fold_count": 11,
+  "positive_fold_count": 8,
+  "below_baseline_fold_count": 3,
+  "month_concentration_observed": false,
+  "etf_concentration_observed": false,
+  "threshold_sensitivity_observed": false,
+  "stable_promotion_ready": false,
+  "stable_evidence": false,
+  "formal_training_ready": false,
+  "qmt_ready": false,
+  "order_intent_ready": false,
+  "automatic_promotion_ready": false,
+  "p0_blockers": [],
+  "p1_warnings": [
+    "P1_DIAGNOSTIC_ONLY_NOT_STABLE_EVIDENCE",
+    "P1_REQUIRES_HUMAN_REVIEW",
+    "P1_NO_STABLE_PROMOTION_WITHOUT_PROMOTION_GATE",
+    "P1_ROLLING_ORIGIN_MONITOR_ONLY_IF_ACCEPTED_BY_HUMAN_REVIEW",
+    "P1_LAB_MONITOR_CANDIDATE_REVIEW_READY_NOT_TRADING_ADVICE"
+  ]
+}
