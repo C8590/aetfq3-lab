@@ -1,0 +1,85 @@
+{
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "document_type": "aetfq3_intraday_lab_monitor_refresh_gate_closeout",
+  "phase": "post-Q3 Lab monitor refresh gate closeout",
+  "status": "LAB_MONITOR_REFRESH_GATE_CLOSEOUT_COMPLETED_REFRESH_NOT_DUE_STABLE_BLOCKED",
+  "purpose": "Close out the Lab monitor refresh gate and evaluable-group accounting patch. This is not a validation rerun, not model training, not threshold tuning, and not Stable evidence.",
+  "refresh_gate": {
+    "tool": "tools/lab/intraday_lab_monitor_refresh_gate.py",
+    "initial_commit": "ff14cb8",
+    "accounting_patch_commit": "52585c3",
+    "latest_tests": "366 passed, 5 warnings",
+    "refresh_decision": "LAB_MONITOR_REFRESH_NOT_DUE",
+    "monitor_candidate": "label_ret3d_gt_100bp|base_39_plus_scale_transform_policy|logistic_balanced_scaled_variants|scale_transform_policy",
+    "monitor_status": "LAB_MONITOR_CANDIDATE_REVIEW_READY"
+  },
+  "accounting_patch": {
+    "raw_group_count_recorded": true,
+    "evaluable_group_count_recorded": true,
+    "gate_group_count_recorded": true,
+    "group_count_basis": "evaluable_groups",
+    "raw_groups_do_not_drive_gate": true,
+    "fallback_to_raw_groups_allowed": false,
+    "evaluable_group_unavailable_decision": "LAB_MONITOR_REFRESH_REVIEW_REQUIRED"
+  },
+  "current_gate_status": {
+    "refresh_decision": "LAB_MONITOR_REFRESH_NOT_DUE",
+    "post_sprint_anchor_count": 7,
+    "post_sprint_anchor_threshold": 10,
+    "post_sprint_raw_group_count": 56,
+    "post_sprint_evaluable_group_count": 32,
+    "post_sprint_gate_group_count": 32,
+    "post_sprint_evaluable_group_threshold": 50,
+    "group_count_basis": "evaluable_groups",
+    "t_plus_1_coverage_passed": true,
+    "t_plus_3_coverage_passed": false,
+    "rerun_gate_passed": false,
+    "reason": "no new data and evaluable groups below threshold",
+    "stable_promotion_ready": false,
+    "stable_evidence": false,
+    "formal_training_ready": false,
+    "qmt_ready": false,
+    "order_intent_ready": false,
+    "automatic_promotion_ready": false
+  },
+  "allowed_next_task": {
+    "current": "wait_for_new_data_or_manual_review",
+    "if_new_raw_export": "run_broker_export_packager_and_manual_intake_validator",
+    "if_new_anchors_and_evaluable_groups_pass_gate": "rerun_fixed_shortlist_oop_no_save_validation_and_attribution"
+  },
+  "forbidden_next_tasks": [
+    "Stable promotion",
+    "QMT trading",
+    "OrderIntent generation",
+    "formal training",
+    "threshold tuning",
+    "target_weight change",
+    "final_buy_action change"
+  ],
+  "boundary": {
+    "access_mode": "READ_ONLY",
+    "final_action_change_allowed": false,
+    "contains_live_order": false,
+    "contains_secret": false,
+    "requires_human_review": true,
+    "promotion_gate_required": true,
+    "stable_promotion_ready": false,
+    "stable_evidence": false,
+    "formal_training_ready": false,
+    "qmt_ready": false,
+    "order_intent_ready": false,
+    "automatic_promotion_ready": false,
+    "model_saved": false,
+    "scaler_saved": false,
+    "checkpoint_saved": false,
+    "not_trading_advice": true
+  },
+  "final_review_status": {
+    "f_public_status": "F_PUBLIC_STATUS=LAB_MONITOR_CANDIDATE_REVIEW_READY_REFRESH_NOT_DUE_STABLE_BLOCKED",
+    "monitor_candidate_active": true,
+    "rolling_origin_stability_observed": true,
+    "refresh_gate_not_due": true,
+    "post_sprint_evaluable_groups_below_threshold": true,
+    "stable_blocked": true
+  }
+}
