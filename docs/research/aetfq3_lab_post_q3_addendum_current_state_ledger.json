@@ -120,6 +120,24 @@
       "short_commit": "this_closeout_commit",
       "work": "F public intraday historical 5m manual intake closeout / post-Q3 ledger update",
       "status": "ROLLING_OOP_POOL_LIMITED_ACCUMULATING_MANUAL_5M_INTAKE_READY_WAITING_FOR_PACKAGE_FIXED_SHORTLIST_VALIDATION_BLOCKED"
+    },
+    {
+      "commit": "eb9b9dd",
+      "short_commit": "eb9b9dd",
+      "work": "F intraday rolling-origin walk-forward no-save validation",
+      "status": "ROLLING_ORIGIN_WALK_FORWARD_DIAGNOSTIC_STABILITY_OBSERVED_REVIEW_REQUIRED"
+    },
+    {
+      "commit": "cb966bc",
+      "short_commit": "cb966bc",
+      "work": "F intraday rolling-origin stability attribution",
+      "status": "ROLLING_ORIGIN_STABILITY_ATTRIBUTION_LAB_MONITOR_CANDIDATE_REVIEW_READY"
+    },
+    {
+      "commit": "this_monitor_candidate_protocol_commit",
+      "short_commit": "this_monitor_candidate_protocol_commit",
+      "work": "F intraday Lab monitor candidate protocol / closeout / ledger update",
+      "status": "LAB_MONITOR_CANDIDATE_STATUS_ACTIVE_REVIEW_READY"
     }
   ],
   "current_state": {
@@ -155,8 +173,8 @@
       "trading_advice": false
     },
     "F_public": {
-      "status": "F_PUBLIC_STATUS=ROLLING_OOP_POOL_LIMITED_ACCUMULATING_MANUAL_5M_INTAKE_READY_WAITING_FOR_PACKAGE_FIXED_SHORTLIST_VALIDATION_BLOCKED",
-      "summary": "Online historical 5m source acquisition is blocked. Rolling OOP pool capture runner is complete, but current public pool has only 2 eligible strict OOP anchors and group_count 16. Manual/export historical 5m intake validator is ready, but no legal external 1y/3y ETF 5m package is present yet. Fixed-shortlist OOP validation remains blocked. Previous transform-aware diagnostic smoke remains no formal model evidence.",
+      "status": "F_PUBLIC_STATUS=LAB_MONITOR_CANDIDATE_REVIEW_READY_ROLLING_ORIGIN_STABILITY_OBSERVED_STABLE_BLOCKED",
+      "summary": "A unique Lab-only monitor candidate is review-ready after rolling-origin stability attribution. This is not Stable evidence and does not authorize Stable promotion, QMT, OrderIntent, advisory, formal training, model/scaler/checkpoint save, or automatic promotion.",
       "evidence_docs": [
         "docs/research/aetfq3_intraday_public_no_label_tensor_validation.md",
         "docs/research/aetfq3_intraday_public_no_label_tensor_validation.json",
@@ -210,7 +228,17 @@
         "docs/research/aetfq3_intraday_rolling_oop_pool_capture.md",
         "docs/research/aetfq3_intraday_rolling_oop_pool_capture.json",
         "docs/research/aetfq3_intraday_rolling_oop_pool_capture_closeout.md",
-        "docs/research/aetfq3_intraday_rolling_oop_pool_capture_closeout.json"
+        "docs/research/aetfq3_intraday_rolling_oop_pool_capture_closeout.json",
+        "docs/research/aetfq3_intraday_fixed_shortlist_oop_no_save_validation.md",
+        "docs/research/aetfq3_intraday_fixed_shortlist_oop_no_save_validation.json",
+        "docs/research/aetfq3_intraday_rolling_origin_walk_forward_no_save_validation.md",
+        "docs/research/aetfq3_intraday_rolling_origin_walk_forward_no_save_validation.json",
+        "docs/research/aetfq3_intraday_rolling_origin_stability_attribution_review.md",
+        "docs/research/aetfq3_intraday_rolling_origin_stability_attribution_review.json",
+        "docs/research/aetfq3_intraday_lab_monitor_candidate_protocol.md",
+        "docs/research/aetfq3_intraday_lab_monitor_candidate_protocol.json",
+        "docs/research/aetfq3_intraday_lab_monitor_candidate_closeout.md",
+        "docs/research/aetfq3_intraday_lab_monitor_candidate_closeout.json"
       ],
       "ignored_reports": [
         ".local_research_outputs/aetfq3_lab/intraday_larger_eligible_anchor_readiness/readiness_decision.json",
@@ -229,10 +257,10 @@
         ".local_research_outputs/aetfq3_lab/intraday_historical_5m_manual_intake/manual_intake_readiness_decision.json",
         ".local_research_outputs/aetfq3_lab/intraday_historical_5m_broad_backfill/historical_5m_oop_readiness.json"
       ],
-      "blocker": "Fixed-shortlist OOP validation is blocked because the rolling pool has only 2 eligible strict OOP anchors and 16 groups, and the manual/export path has no legal external historical 5m package yet.",
-      "next_trigger": "Either accumulated strict OOP anchors >= 10 and group_count >= 50, or a compliant manual/export historical 5m package appears and the validator returns MANUAL_HISTORICAL_5M_PACKAGE_READY_FOR_FIXED_SHORTLIST_OOP_VALIDATION.",
-      "allowed_next_action": "Periodic Lab-only rolling OOP capture; manual intake validation only after a legal package appears; if readiness threshold is reached, create a separate fixed-shortlist OOP no-save validation task after human review.",
-      "forbidden_action": "Stable promotion, QMT, OrderIntent, advisory package, formal training, model deployment, checkpoint/model/scaler save, automatic promotion, or fixed-shortlist OOP validation before threshold / manual readiness.",
+      "blocker": "Stable remains blocked. Post-sprint forward-only evidence remains underpowered, and rolling-origin monitor readiness cannot trigger Stable/QMT/OrderIntent/formal training/advisory/automatic promotion.",
+      "next_trigger": "Explicit Lab-only periodic monitor refresh with compliant data and read-only boundaries.",
+      "allowed_next_action": "Lab-only monitor protocol / periodic data refresh; no-save read-only diagnostics; human review of continuation/review/retire gates.",
+      "forbidden_action": "Stable promotion, QMT, OrderIntent, advisory package, formal training, model deployment, checkpoint/model/scaler save, automatic promotion, BUY/PROBE threshold change, target_weight change, or final_buy_action change.",
       "target": "three_day_positive_label",
       "models_run": [
         "dummy_most_frequent",
@@ -241,7 +269,7 @@
         "logistic_regression_balanced_scaled",
         "logistic_regression_log1p_scaled_balanced"
       ],
-      "effective_readiness_decision": "ROLLING_OOP_POOL_LIMITED_ACCUMULATING_MANUAL_5M_INTAKE_READY_WAITING_FOR_PACKAGE_FIXED_SHORTLIST_VALIDATION_BLOCKED",
+      "effective_readiness_decision": "LAB_MONITOR_CANDIDATE_REVIEW_READY_ROLLING_ORIGIN_STABILITY_OBSERVED_STABLE_BLOCKED",
       "larger_data_summary": {
         "readiness_decision": "LARGER_ELIGIBLE_ANCHOR_DATA_COLLECTION_PASSED_READINESS_REVIEW_REQUIRED",
         "anchors": 37,
@@ -396,7 +424,31 @@
         "automatic_promotion_ready": false
       },
       "fixed_shortlist_oop_validation_ready": false,
-      "rolling_oop_capture_mechanism_ready": true
+      "rolling_oop_capture_mechanism_ready": true,
+      "lab_monitor_candidate_summary": {
+        "status_decision": "LAB_MONITOR_CANDIDATE_STATUS_ACTIVE_REVIEW_READY",
+        "candidate_id": "label_ret3d_gt_100bp|base_39_plus_scale_transform_policy|logistic_balanced_scaled_variants|scale_transform_policy",
+        "monitor_status": "LAB_MONITOR_CANDIDATE_REVIEW_READY",
+        "fold_count": 11,
+        "positive_fold_count": 8,
+        "below_baseline_fold_count": 3,
+        "balanced_accuracy_mean": 0.5250427062607832,
+        "roc_auc_mean": 0.5402503552514337,
+        "pr_auc_mean": 0.45873334802519694,
+        "above_baseline_fraction": 0.7272727272727273,
+        "month_concentration": false,
+        "etf_concentration": false,
+        "threshold_sensitivity_observed": false,
+        "continuation_gate_passed": true,
+        "review_gate_triggered": false,
+        "retire_gate_triggered": false,
+        "stable_promotion_ready": false,
+        "stable_evidence": false,
+        "formal_training_ready": false,
+        "qmt_ready": false,
+        "order_intent_ready": false,
+        "automatic_promotion_ready": false
+      }
     },
     "F_real_qmt": {
       "status": "F_REAL_QMT_STATUS=BLOCKED_NO_SAFE_REAL_PROVIDER_OR_COMPLIANT_EXPORT",
@@ -523,7 +575,14 @@
     "manual_historical_5m_intake_readiness_allows_qmt": false,
     "manual_historical_5m_intake_readiness_allows_order_intent": false,
     "manual_historical_5m_intake_requires_legal_package_before_validator_run": true,
-    "manual_historical_5m_ready_decision_requires_separate_fixed_shortlist_oop_task": true
+    "manual_historical_5m_ready_decision_requires_separate_fixed_shortlist_oop_task": true,
+    "lab_monitor_candidate_readiness_is_stable_evidence": false,
+    "lab_monitor_candidate_allows_stable_promotion": false,
+    "lab_monitor_candidate_allows_formal_training": false,
+    "lab_monitor_candidate_allows_qmt": false,
+    "lab_monitor_candidate_allows_order_intent": false,
+    "lab_monitor_candidate_allows_advisory": false,
+    "lab_monitor_candidate_allows_automatic_promotion": false
   },
   "next_triggers": [
     {
@@ -545,6 +604,10 @@
     {
       "id": "F_PUBLIC_MANUAL_HISTORICAL_5M_PACKAGE",
       "condition": "A legal external historical ETF 5m manual/export package appears in the ignored inbox and passes manual intake validation"
+    },
+    {
+      "id": "F_PUBLIC_LAB_MONITOR_PERIODIC_REFRESH",
+      "condition": "A Lab-only periodic monitor refresh is explicitly requested with compliant data and read-only boundaries"
     }
   ],
   "boundary": {
@@ -578,7 +641,7 @@
     "label_generation_ready": false,
     "training_ready": false,
     "automatic_promotion_ready": false,
-    "f_public_status": "ROLLING_OOP_POOL_LIMITED_ACCUMULATING_MANUAL_5M_INTAKE_READY_WAITING_FOR_PACKAGE_FIXED_SHORTLIST_VALIDATION_BLOCKED",
+    "f_public_status": "LAB_MONITOR_CANDIDATE_REVIEW_READY_ROLLING_ORIGIN_STABILITY_OBSERVED_STABLE_BLOCKED",
     "f_public_larger_eligible_anchor_status": "LARGER_NO_SAVE_REPEATABILITY_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED",
     "f_public_group_level_model_signal_status": "GROUP_LEVEL_DIAGNOSTIC_SMOKE_COMPLETED_MODEL_SIGNAL_REVIEW_REQUIRED_NO_FORMAL_EVIDENCE",
     "f_public_group_level_transform_aware_status": "TRANSFORM_AWARE_DIAGNOSTIC_SMOKE_COMPLETED_REVIEW_REQUIRED_NO_FORMAL_EVIDENCE",
@@ -600,7 +663,12 @@
     "f_public_manual_5m_intake_validator_ready": true,
     "f_public_manual_5m_package_present": false,
     "f_public_manual_5m_package_readiness_decision": "MANUAL_HISTORICAL_5M_PACKAGE_NOT_FOUND_WAITING_FOR_INPUT",
-    "f_public_online_historical_5m_backfill_status": "HISTORICAL_5M_BACKFILL_BLOCKED_NO_USABLE_SOURCE"
+    "f_public_online_historical_5m_backfill_status": "HISTORICAL_5M_BACKFILL_BLOCKED_NO_USABLE_SOURCE",
+    "f_public_lab_monitor_automatic_promotion_ready": false,
+    "f_public_lab_monitor_candidate_status": "LAB_MONITOR_CANDIDATE_STATUS_ACTIVE_REVIEW_READY",
+    "f_public_lab_monitor_candidate_id": "label_ret3d_gt_100bp|base_39_plus_scale_transform_policy|logistic_balanced_scaled_variants|scale_transform_policy",
+    "f_public_lab_monitor_stable_evidence": false,
+    "stable_evidence": false
   },
   "stable_allowed": false,
   "qmt_allowed": false,

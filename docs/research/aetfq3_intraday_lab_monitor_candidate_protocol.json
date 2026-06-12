@@ -1,0 +1,70 @@
+{
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "document_type": "aetfq3_intraday_lab_monitor_candidate_protocol",
+  "candidate_identity": {
+    "candidate_id": "label_ret3d_gt_100bp|base_39_plus_scale_transform_policy|logistic_balanced_scaled_variants|scale_transform_policy",
+    "label_policy": "label_ret3d_gt_100bp",
+    "feature_set": "base_39_plus_scale_transform_policy",
+    "model_family": "logistic_balanced_scaled_variants",
+    "transform_policy": "scale_transform_policy",
+    "auto_replace_label_feature_model_threshold_allowed": false
+  },
+  "monitor_status": "LAB_MONITOR_CANDIDATE_REVIEW_READY",
+  "not_stable_candidate": true,
+  "not_trading_strategy": true,
+  "not_advisory_signal": true,
+  "not_order_intent_source": true,
+  "not_qmt_ready_model": true,
+  "not_formal_trained_model": true,
+  "continuation_gates": {
+    "min_evaluable_folds": 6,
+    "min_fraction_ba_gt_0_5": 0.6,
+    "min_fraction_roc_auc_gt_0_5": 0.6,
+    "min_fraction_pr_auc_not_below_prevalence": 0.6,
+    "prediction_non_collapse_required": true,
+    "no_month_concentration_required": true,
+    "no_etf_concentration_required": true,
+    "no_leakage_assertion_failed": true,
+    "no_model_scaler_saved": true
+  },
+  "review_gates": [
+    "two_new_months_below_dummy_baseline",
+    "ba_mean_lte_0_5",
+    "roc_auc_mean_lte_0_5",
+    "single_class_prediction_collapse",
+    "label_regime_shift",
+    "feature_shift",
+    "month_concentration",
+    "etf_concentration",
+    "post_sprint_forward_only_underpowered"
+  ],
+  "retire_gates": [
+    "at_least_60pct_folds_below_dummy_baseline",
+    "combined_rolling_origin_mean_ba_lte_0_5",
+    "combined_roc_auc_lte_0_5",
+    "repeated_collapse",
+    "data_quality_blocker",
+    "leakage_blocker",
+    "source_integrity_blocker"
+  ],
+  "promotion_boundary": {
+    "stable_promotion_ready": false,
+    "stable_evidence": false,
+    "formal_training_ready": false,
+    "qmt_ready": false,
+    "order_intent_ready": false,
+    "automatic_promotion_ready": false,
+    "requires_human_review_promotion_gate": true,
+    "minimum_future_reviews": [
+      "cost_slippage_diagnostic",
+      "capacity_turnover_diagnostic",
+      "formal_training_design",
+      "no_save_to_save_transition_review",
+      "Stable adapter review",
+      "no BUY/PROBE threshold change",
+      "no target_weight change",
+      "no final_buy_action change",
+      "no OrderIntent generation"
+    ]
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "document_type": "aetfq3_intraday_lab_monitor_candidate_closeout",
+  "status_decision": "LAB_MONITOR_CANDIDATE_STATUS_ACTIVE_REVIEW_READY",
+  "candidate_id": "label_ret3d_gt_100bp|base_39_plus_scale_transform_policy|logistic_balanced_scaled_variants|scale_transform_policy",
+  "completed_chain": [
+    "manual broker 5m data chain completed",
+    "fixed-shortlist OOP completed",
+    "row-level diagnostics completed",
+    "post-sprint reversal attribution completed",
+    "rolling-origin walk-forward completed",
+    "rolling-origin stability attribution completed",
+    "unique Lab monitor candidate identified"
+  ],
+  "current_not_stable_evidence": true,
+  "next_step": "Lab-only monitor protocol / periodic data refresh",
+  "promotion_boundary": {
+    "stable_promotion_ready": false,
+    "stable_evidence": false,
+    "formal_training_ready": false,
+    "qmt_ready": false,
+    "order_intent_ready": false,
+    "automatic_promotion_ready": false,
+    "requires_human_review_promotion_gate": true,
+    "minimum_future_reviews": [
+      "cost_slippage_diagnostic",
+      "capacity_turnover_diagnostic",
+      "formal_training_design",
+      "no_save_to_save_transition_review",
+      "Stable adapter review",
+      "no BUY/PROBE threshold change",
+      "no target_weight change",
+      "no final_buy_action change",
+      "no OrderIntent generation"
+    ]
+  }
+}
