@@ -16,6 +16,13 @@
     "target_weight_change",
     "final_buy_action_change"
   ],
+  "post_sprint_raw_group_count": 56,
+  "post_sprint_evaluable_group_count": 32,
+  "post_sprint_gate_group_count": 32,
+  "group_count_basis": "evaluable_groups",
+  "t_plus_1_coverage_passed": true,
+  "t_plus_3_coverage_passed": false,
+  "evaluable_group_count_source": "fixed_shortlist_oop_split_manifest.post_sprint_oop.t_plus_3_covered_group_count",
   "stable_promotion_ready": false,
   "stable_evidence": false,
   "formal_training_ready": false,

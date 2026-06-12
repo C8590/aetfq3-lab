@@ -13,6 +13,7 @@ from tools.lab.intraday_lab_monitor_refresh_gate import (
     DECISION_DUE_NEW_MANUAL,
     DECISION_DUE_NEW_RAW,
     DECISION_NOT_DUE,
+    DECISION_REVIEW,
     FOCUS_CANDIDATE_ID,
     FORBIDDEN_NEXT_TASKS,
     resolve_output_dir,
@@ -27,8 +28,35 @@ def test_no_new_data_refresh_not_due(tmp_path: Path) -> None:
 
     assert report["readiness_decision"] == DECISION_NOT_DUE
     assert report["refresh_due"] is False
+    assert report["post_sprint_raw_group_count"] == 56
+    assert report["post_sprint_evaluable_group_count"] == 32
+    assert report["post_sprint_gate_group_count"] == 32
+    assert report["post_sprint_group_count"] == 32
+    assert report["group_count_basis"] == "evaluable_groups"
     assert report["next_allowed_task"] == "wait_for_new_data_or_manual_review"
     assert report["stable_evidence"] is False
+
+
+def test_raw_groups_and_evaluable_groups_are_distinct(tmp_path: Path) -> None:
+    paths = write_fixture_tree(tmp_path, post_sprint_group_count=56, post_sprint_evaluable_group_count=32)
+
+    report = run_refresh_gate(**paths, out_dir=tmp_path / "out", repo_root=tmp_path, enforce_output_dir=False)
+
+    assert report["post_sprint_raw_group_count"] == 56
+    assert report["post_sprint_evaluable_group_count"] == 32
+    assert report["post_sprint_gate_group_count"] == 32
+    assert report["t_plus_3_coverage_passed"] is False
+
+
+def test_gate_uses_evaluable_groups_not_raw_groups(tmp_path: Path) -> None:
+    paths = write_fixture_tree(tmp_path, post_sprint_anchor_count=10, post_sprint_group_count=80, post_sprint_evaluable_group_count=32)
+
+    report = run_refresh_gate(**paths, out_dir=tmp_path / "out", repo_root=tmp_path, enforce_output_dir=False)
+
+    assert report["readiness_decision"] == DECISION_NOT_DUE
+    assert report["post_sprint_raw_group_count"] == 80
+    assert report["post_sprint_gate_group_count"] == 32
+    assert report["rerun_gate_passed"] is False
 
 
 def test_new_raw_export_detected_due_new_raw_export(tmp_path: Path) -> None:
@@ -56,14 +84,48 @@ def test_new_manual_package_detected_due_new_manual_package(tmp_path: Path) -> N
 
 
 def test_new_post_sprint_anchor_threshold_passed_due_new_anchors(tmp_path: Path) -> None:
-    paths = write_fixture_tree(tmp_path, post_sprint_anchor_count=10, post_sprint_group_count=80)
+    paths = write_fixture_tree(tmp_path, post_sprint_anchor_count=10, post_sprint_group_count=80, post_sprint_evaluable_group_count=80)
 
     report = run_refresh_gate(**paths, out_dir=tmp_path / "out", repo_root=tmp_path, enforce_output_dir=False)
 
     assert report["readiness_decision"] == DECISION_DUE_NEW_ANCHORS
     assert report["post_sprint_anchor_count"] == 10
+    assert report["post_sprint_raw_group_count"] == 80
+    assert report["post_sprint_evaluable_group_count"] == 80
+    assert report["post_sprint_gate_group_count"] == 80
     assert report["post_sprint_group_count"] == 80
     assert report["next_allowed_task"] == "rerun_fixed_shortlist_oop_no_save_validation_and_attribution"
+
+
+def test_raw_groups_above_threshold_but_evaluable_below_threshold_not_ready(tmp_path: Path) -> None:
+    paths = write_fixture_tree(tmp_path, post_sprint_anchor_count=10, post_sprint_group_count=80, post_sprint_evaluable_group_count=49)
+
+    report = run_refresh_gate(**paths, out_dir=tmp_path / "out", repo_root=tmp_path, enforce_output_dir=False)
+
+    assert report["readiness_decision"] == DECISION_NOT_DUE
+    assert report["post_sprint_raw_group_count"] == 80
+    assert report["post_sprint_gate_group_count"] == 49
+    assert report["rerun_gate_passed"] is False
+
+
+def test_evaluable_group_count_unavailable_review_required(tmp_path: Path) -> None:
+    paths = write_fixture_tree(tmp_path, evaluable_available=False)
+
+    report = run_refresh_gate(**paths, out_dir=tmp_path / "out", repo_root=tmp_path, enforce_output_dir=False)
+
+    assert report["readiness_decision"] == DECISION_REVIEW
+    assert report["evaluable_group_count_available"] is False
+    assert report["refresh_reason"] == "evaluable_group_count_unavailable"
+
+
+def test_t_plus_3_missing_groups_not_counted_as_evaluable(tmp_path: Path) -> None:
+    paths = write_fixture_tree(tmp_path, post_sprint_group_count=56, post_sprint_evaluable_group_count=32)
+
+    report = run_refresh_gate(**paths, out_dir=tmp_path / "out", repo_root=tmp_path, enforce_output_dir=False)
+
+    assert report["post_sprint_raw_group_count"] == 56
+    assert report["post_sprint_evaluable_group_count"] == 32
+    assert report["t_plus_3_coverage_passed"] is False
 
 
 def test_missing_outputs_due_missing_outputs(tmp_path: Path) -> None:
@@ -133,13 +195,17 @@ def write_fixture_tree(
     status_decision: str = "LAB_MONITOR_CANDIDATE_STATUS_ACTIVE_REVIEW_READY",
     post_sprint_anchor_count: int = 7,
     post_sprint_group_count: int = 56,
+    post_sprint_evaluable_group_count: int = 32,
+    evaluable_available: bool = True,
 ) -> dict[str, Path]:
     manual_inbox = tmp_path / "manual_inbox"
     raw_export_dir = tmp_path / "raw_exports"
     candidate_status_dir = tmp_path / "candidate_status"
     rolling_origin_dir = tmp_path / "rolling"
     attribution_dir = tmp_path / "attribution"
-    for directory in [manual_inbox, raw_export_dir, candidate_status_dir, rolling_origin_dir, attribution_dir]:
+    fixed_oop_dir = tmp_path / "fixed_oop"
+    reversal_dir = tmp_path / "reversal"
+    for directory in [manual_inbox, raw_export_dir, candidate_status_dir, rolling_origin_dir, attribution_dir, fixed_oop_dir, reversal_dir]:
         directory.mkdir(parents=True)
 
     write_json(
@@ -202,6 +268,24 @@ def write_fixture_tree(
         attribution_dir / "rolling_origin_stability_attribution_decision.json",
         {"readiness_decision": "ROLLING_ORIGIN_STABILITY_ATTRIBUTION_LAB_MONITOR_CANDIDATE_REVIEW_READY"},
     )
+    if evaluable_available:
+        write_json(
+            fixed_oop_dir / "fixed_shortlist_oop_split_manifest.json",
+            {
+                "post_sprint_oop": {
+                    "anchor_count": post_sprint_anchor_count,
+                    "etf_count": 8,
+                    "group_count": post_sprint_group_count,
+                    "t_plus_3_covered_group_count": post_sprint_evaluable_group_count,
+                    "label_distribution": {"label_ret3d_gt_100bp": {"0": post_sprint_evaluable_group_count, "1": 0}},
+                }
+            },
+        )
+        write_post_sprint_row_level_csv(fixed_oop_dir / "fixed_shortlist_oop_row_level_predictions.csv", post_sprint_evaluable_group_count)
+        write_json(
+            reversal_dir / "post_sprint_reversal_attribution_report.json",
+            {"sample_power": {"post_sprint_anchor_count": post_sprint_anchor_count, "post_sprint_group_count": post_sprint_evaluable_group_count}},
+        )
 
     for path in [
         manual_inbox / "MANIFEST.json",
@@ -218,6 +302,8 @@ def write_fixture_tree(
         attribution_dir / "rolling_origin_stability_attribution_decision.json",
     ]:
         set_mtime(path, 200)
+    for path in list(fixed_oop_dir.glob("*")) + list(reversal_dir.glob("*")):
+        set_mtime(path, 200)
     for path in [
         candidate_status_dir / "lab_monitor_candidate_status_report.json",
         candidate_status_dir / "lab_monitor_candidate_protocol_decision.json",
@@ -230,6 +316,8 @@ def write_fixture_tree(
         "candidate_status_dir": candidate_status_dir,
         "rolling_origin_dir": rolling_origin_dir,
         "attribution_dir": attribution_dir,
+        "fixed_oop_dir": fixed_oop_dir,
+        "reversal_dir": reversal_dir,
     }
 
 
@@ -240,6 +328,31 @@ def write_manual_csv(path: Path) -> None:
         "2026-06-01,2026-06-01 09:35:00,159915,1,1,1,1,100,100",
         "2026-06-05,2026-06-05 09:35:00,510300,1,1,1,1,100,100",
     ]
+    path.write_text("\n".join(rows) + "\n", encoding="utf-8")
+
+
+def write_post_sprint_row_level_csv(path: Path, row_count: int) -> None:
+    header = [
+        "candidate_id",
+        "model",
+        "is_post_sprint_oop",
+        "anchor_date",
+        "etf_code",
+        "label",
+        "future_return_3d",
+    ]
+    rows = [",".join(header)]
+    dates = ["2026-06-04", "2026-06-05", "2026-06-08", "2026-06-09", "2026-06-10", "2026-06-11", "2026-06-12"]
+    etfs = ["159915", "159949", "510050", "510300", "510500", "512100", "512880", "588000"]
+    emitted = 0
+    for date in dates:
+        for etf in etfs:
+            if emitted >= row_count:
+                break
+            rows.append(f"{FOCUS_CANDIDATE_ID},logistic_balanced_scaled,True,{date},{etf},1,0.01")
+            emitted += 1
+        if emitted >= row_count:
+            break
     path.write_text("\n".join(rows) + "\n", encoding="utf-8")
 
 

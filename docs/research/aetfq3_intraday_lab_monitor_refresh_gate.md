@@ -10,7 +10,10 @@ Read-only freshness gate for the registered Lab monitor candidate. It checks man
 - manual_package_latest_date: 2026-06-12
 - last_rolling_origin_latest_date: 2026-06-12
 - post_sprint_anchor_count: 7
-- post_sprint_group_count: 56
+- post_sprint_raw_group_count: 56
+- post_sprint_evaluable_group_count: 32
+- post_sprint_gate_group_count: 32
+- group_count_basis: evaluable_groups
 - refresh_due: false
 - next_allowed_task: `wait_for_new_data_or_manual_review`
 - stable_promotion_ready: false
