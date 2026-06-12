@@ -1,0 +1,128 @@
+{
+  "lab_declaration": "本任务属于 aetfq3-lab / Lab，不属于 V2.1 Stable。",
+  "document_type": "aetfq3_intraday_long_history_alpha_risk_overlay_optimizer_contract",
+  "version": "v1",
+  "scope": "Lab-only top-rejected drawdown attribution plus bounded risk overlay search",
+  "boundary": {
+    "access_mode": "READ_ONLY",
+    "final_action_change_allowed": false,
+    "contains_live_order": false,
+    "contains_secret": false,
+    "requires_human_review": true,
+    "promotion_gate_required": true,
+    "formal_training": false,
+    "model_saved": false,
+    "scaler_saved": false,
+    "checkpoint_saved": false,
+    "stable_promotion_ready": false,
+    "stable_evidence": false,
+    "formal_training_ready": false,
+    "qmt_ready": false,
+    "order_intent_ready": false,
+    "order_intent_generated": false,
+    "automatic_promotion_ready": false
+  },
+  "top_rejected_selection": {
+    "top_by_net_total_return": 10,
+    "top_by_calmar_like_ratio": 10,
+    "top_by_profit_factor": 10,
+    "deduplicate": true,
+    "stable_candidates_excluded": true
+  },
+  "attribution_dimensions": [
+    "month",
+    "etf_code",
+    "signal_clock",
+    "holding_period",
+    "cost_impact",
+    "worst_drawdown_period"
+  ],
+  "allowed_risk_overlays": {
+    "top_k_per_day": [
+      1,
+      2,
+      3,
+      "all"
+    ],
+    "sort_key": "probability_only",
+    "min_probability": [
+      0.5,
+      0.55,
+      0.6,
+      0.65
+    ],
+    "threshold_search_lab_only": true,
+    "max_daily_sleeve_exposure": [
+      0.25,
+      0.33
+    ],
+    "max_total_exposure": [
+      0.75,
+      1.0
+    ],
+    "max_etf_weight_per_sleeve": [
+      0.25,
+      0.5
+    ],
+    "holding_period": [
+      "1d",
+      "2d",
+      "3d"
+    ],
+    "stop_loss": [
+      "none",
+      -0.015,
+      -0.025,
+      -0.04
+    ],
+    "take_profit": [
+      "none",
+      0.02,
+      0.035,
+      0.05
+    ],
+    "volatility_regime_filter": [
+      "none",
+      "skip_highest_vol_quartile"
+    ],
+    "liquidity_regime_filter": [
+      "none",
+      "skip_lowest_liquidity_quartile"
+    ],
+    "month_drawdown_throttle": [
+      "none",
+      -0.05,
+      -0.1
+    ]
+  },
+  "validation_protocol": {
+    "primary_split": "rolling_origin_walk_forward",
+    "fold_unit": "monthly",
+    "train_window": "expanding",
+    "min_train_anchors": 60,
+    "min_validation_anchors": 10,
+    "min_validation_groups": 50,
+    "embargo_days": 3,
+    "random_split_primary_conclusion_allowed": false,
+    "validation_fit_allowed": false
+  },
+  "composite_score": {
+    "formula": "rank(net_total_return)+rank(Calmar-like)+rank(profit_factor)+rank(monthly_win_rate)-penalty(max_drawdown)-penalty(month_concentration)-penalty(etf_concentration)",
+    "transparent_report_required": true
+  },
+  "candidate_status_allowed": [
+    "LAB_DIAGNOSTIC_ALPHA_CANDIDATE_REVIEW_REQUIRED",
+    "PROMISING_BUT_DRAWDOWN_UNCONTROLLED_REVIEW_REQUIRED"
+  ],
+  "decision_values": [
+    "LONG_HISTORY_RISK_OVERLAY_OPTIMIZATION_COMPLETED_CANDIDATES_FOUND_REVIEW_REQUIRED",
+    "LONG_HISTORY_RISK_OVERLAY_OPTIMIZATION_PROMISING_BUT_DRAWDOWN_UNCONTROLLED",
+    "LONG_HISTORY_RISK_OVERLAY_OPTIMIZATION_COMPLETED_NO_CANDIDATES_FOUND",
+    "LONG_HISTORY_RISK_OVERLAY_OPTIMIZATION_BLOCKED_MISSING_V0_OUTPUTS",
+    "LONG_HISTORY_RISK_OVERLAY_OPTIMIZATION_BLOCKED_DATA_QUALITY",
+    "LONG_HISTORY_RISK_OVERLAY_OPTIMIZATION_BLOCKED_LEAKAGE_RISK",
+    "LONG_HISTORY_RISK_OVERLAY_OPTIMIZATION_BLOCKED_RUNTIME_ERROR"
+  ],
+  "not_stable_evidence": true,
+  "not_trading_advice": true
+}
